@@ -1,0 +1,14 @@
+# Nome do Autor: Jossian Brito
+# Data: 19/06/2026
+# Versão: 1.1.0
+
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/gemini"
+  to = "/.netlify/functions/gemini"
+  status = 200
