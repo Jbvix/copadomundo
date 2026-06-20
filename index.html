@@ -1752,7 +1752,7 @@
                 const itemHtml = `
                     <div onclick="selecionarJogoAPI('${jogo.id}')" class="p-3.5 rounded-xl border ${borderClass} transition-all duration-150 cursor-pointer flex flex-col gap-2">
                         <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                            <span>Grupo ${jogo.group || 'N/A'} • Rodada ${jogo.matchday || '1'}</span>
+                            <span>${obterFaseNome(jogo)}</span>
                             ${statusBadge}
                         </div>
                         <div class="flex items-center justify-between gap-1">
@@ -1811,6 +1811,26 @@
             const ano = m[3];
             const resto = m[4] || '';
             return `${dia}/${mes}/${ano}${resto}`;
+        }
+
+        // Nome legível da fase do torneio (grupos x mata-mata) a partir do campo "type".
+        function obterFaseNome(jogo) {
+            const tipo = (jogo.type || '').toLowerCase();
+            switch (tipo) {
+                case 'group': return `Grupo ${jogo.group || 'N/A'} • Rodada ${jogo.matchday || '1'}`;
+                case 'r32': return '16-avos de Final';
+                case 'r16': return 'Oitavas de Final';
+                case 'qf': return 'Quartas de Final';
+                case 'sf': return 'Semifinal';
+                case 'third': return 'Disputa de 3º Lugar';
+                case 'final': return 'Final';
+                default: return jogo.group ? `Grupo ${jogo.group} • Rodada ${jogo.matchday || '1'}` : 'Fase Eliminatória';
+            }
+        }
+
+        // Atualização manual do placar ao vivo do jogo aberto (reaproveita o refresh silencioso).
+        async function atualizarJogoAoVivo() {
+            await autoAtualizarJogosAPI();
         }
 
         function selecionarJogoAPI(jogoId) {
@@ -1941,7 +1961,16 @@
             }
 
             let controlesSimulacaoHtml = '';
-            if (!isFinished && !isLive) {
+            if (isLive && !simState.active) {
+                controlesSimulacaoHtml = `
+                    <button onclick="atualizarJogoAoVivo()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition duration-155 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15">
+                        <i class="fa-solid fa-rotate"></i> Atualizar Placar ao Vivo
+                    </button>
+                    <button onclick="reiniciarSimulacaoJogo()" class="bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs px-4 py-2 rounded-xl transition duration-150 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-clapperboard"></i> Rever Lances
+                    </button>
+                `;
+            } else if (!isFinished && !isLive) {
                 if (!simState.active) {
                     controlesSimulacaoHtml = `
                         <button onclick="iniciarSimulacaoJogo()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition duration-155 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15">
@@ -2031,7 +2060,7 @@
                         </div>
                         
                         <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 mt-4 sm:mt-0 font-mono">
-                            ${jogo.type === 'group' ? `Grupo ${jogo.group}` : 'Fase Eliminatória'} • Rodada ${jogo.matchday}
+                            ${obterFaseNome(jogo)}
                         </div>
 
                         <!-- Times e Placar -->
