@@ -2720,11 +2720,13 @@
                     const box = new THREE.Box3().setFromObject(trophy);
                     const size = box.getSize(new THREE.Vector3());
                     const center = box.getCenter(new THREE.Vector3());
-                    trophy.position.sub(center);
                     const maxDim = Math.max(size.x, size.y, size.z) || 1;
-                    trophy.scale.setScalar(3.4 / maxDim);
+                    // Centraliza a geometria na origem do grupo e escala o GRUPO
+                    // (escalar a taça após deslocá-la jogaria o modelo para fora da câmera).
+                    trophy.position.sub(center);
                     trophyGroup = new THREE.Group();
                     trophyGroup.add(trophy);
+                    trophyGroup.scale.setScalar(3.4 / maxDim);
                     scene.add(trophyGroup);
                     if (window.splashSetStatus) window.splashSetStatus('Taça carregada! Preparando a arena...');
                 }, function (xhr) {
