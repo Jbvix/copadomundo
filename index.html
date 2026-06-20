@@ -2695,15 +2695,14 @@
                 });
             }
 
-            // Inicia a música imediatamente. Tenta com som; se o navegador bloquear,
-            // toca em mudo (autoplay permitido) e ativa o som no primeiro gesto do usuário.
+            // Inicia a música com som. Se o navegador bloquear o autoplay, a música
+            // simplesmente retoma no primeiro gesto do usuário — sem nunca mutar sozinha.
             (function autoIniciarMusica() {
                 musica.muted = false;
-                tentarTocar();
                 atualizarIconeSom();
+                tentarTocar();
                 function ativarNoGesto() {
-                    if (musica.paused) tentarTocar();
-                    if (musica.muted) { musica.muted = false; atualizarIconeSom(); }
+                    if (musica.paused && !musica.muted) tentarTocar();
                     ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
                         window.removeEventListener(ev, ativarNoGesto, true);
                     });
@@ -2711,10 +2710,6 @@
                 ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
                     window.addEventListener(ev, ativarNoGesto, { capture: true });
                 });
-                // Se em ~400ms o áudio não estiver tocando (bloqueio de autoplay), cai para mudo.
-                setTimeout(function () {
-                    if (musica.paused) { musica.muted = true; tentarTocar(); atualizarIconeSom(); }
-                }, 400);
             })();
         })();
     </script>
