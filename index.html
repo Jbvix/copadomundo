@@ -554,7 +554,7 @@
          * Versão: 2.2.2
          *
          * Modificações e Melhorias:
-         * - Tratamento refinado de erros na chamada ao backend proxy (/api/gemini).
+         * - Tratamento refinado de erros na chamada ao backend proxy (/api/ia).
          * - Adicionado balão de diagnóstico detalhado de UX/UI para Erros 404 e 500 para orientar o usuário em tempo de deploy.
          */
 
@@ -1336,10 +1336,12 @@
 
             if (tabId === 'live') {
                 setTimeout(() => {
-                    if (apiGames.length === 0) {
-                        carregarJogosAPI();
-                    } else {
+                    if (apiGames.length > 0) {
+                        // Render instantâneo a partir do cache local + atualização em segundo plano.
                         renderizarListaJogosAPI();
+                        carregarJogosAPI(true, true);
+                    } else {
+                        carregarJogosAPI();
                     }
                 }, 100);
                 iniciarAutoRefreshAPI();
@@ -1443,8 +1445,8 @@
 
                 Se o usuário te perguntar sobre o passado das Copas, estatísticas de artilharia, lendas ou momentos marcantes, debata com muito conhecimento e carisma de torcedor de bar. Corneteie os rivais, defenda a majestade do Pelé se alguém questionar, e brinque com as probabilidades que ele está gerando no painel!`;
 
-                // URL mapeada de forma segura através do Netlify Redirects (netlify.toml)
-                const functionUrl = '/api/gemini';
+                // URL mapeada de forma segura através de redirect no proxy (rota neutra)
+                const functionUrl = '/api/ia';
                 const options = {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1546,7 +1548,28 @@
         }
 
         // --- 12. ESTATÍSTICAS EM TEMPO REAL & SIMULADOR DA API ---
-        let apiGames = [];
+        // Cache local dos últimos jogos reais para carregamento instantâneo (offline-first).
+        const CACHE_JOGOS_KEY = 'wc2026_jogos_cache_v1';
+        const CACHE_JOGOS_TTL = 12 * 60 * 60 * 1000; // 12h
+
+        function salvarCacheJogos(jogos) {
+            try {
+                localStorage.setItem(CACHE_JOGOS_KEY, JSON.stringify({ ts: Date.now(), games: jogos }));
+            } catch (e) { /* localStorage indisponível/cheio */ }
+        }
+
+        function carregarCacheJogos() {
+            try {
+                const raw = localStorage.getItem(CACHE_JOGOS_KEY);
+                if (!raw) return [];
+                const obj = JSON.parse(raw);
+                if (!obj || !Array.isArray(obj.games)) return [];
+                if (Date.now() - (obj.ts || 0) > CACHE_JOGOS_TTL) return [];
+                return obj.games;
+            } catch (e) { return []; }
+        }
+
+        let apiGames = carregarCacheJogos();
         let filteredApiGames = [];
         let selectedGame = null;
         let simInterval = null;
@@ -1741,6 +1764,7 @@
                 
                 if (data && data.games) {
                     apiGames = data.games;
+                    salvarCacheJogos(apiGames);
                 } else {
                     throw new Error("Resposta da API em formato incorreto.");
                 }
@@ -1759,6 +1783,7 @@
                     const backup = await respBackup.json();
                     if (backup && Array.isArray(backup.matches) && backup.matches.length) {
                         apiGames = mapearOpenfootball(backup.matches);
+                        salvarCacheJogos(apiGames);
                         apiCarregando = false;
                         renderizarListaJogosAPI();
                         return;
@@ -2552,7 +2577,7 @@
                 Fale sobre a eficiência nas finalizações, a tática adotada e faça cornetas engraçadas ou elogios calorosos. Seja curto, direto e mantenha o tom de uma conversa calorosa com cerveja gelada na mão.
                 Dê conselhos táticos brincalhões (tipo "o técnico precisa tirar o zagueiro que tá comendo mosca" ou "o Brasil tem que soltar o Vini Jr").`;
 
-                const response = await fetchWithBackoff('/api/gemini', {
+                const response = await fetchWithBackoff('/api/ia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt, systemInstruction })
@@ -2633,8 +2658,23 @@
                 try { const p = musica.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
             }
 
+            let fadeTimer = null;
             function pararHino() {
-                try { musica.pause(); } catch (e) {}
+                // Fade-out suave (~800ms) antes de pausar, em vez de cortar abruptamente.
+                if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+                const volInicial = musica.volume;
+                if (musica.paused || volInicial <= 0.01) { try { musica.pause(); } catch (e) {} return; }
+                const passos = 16;
+                let i = 0;
+                fadeTimer = setInterval(function () {
+                    i++;
+                    const v = volInicial * (1 - i / passos);
+                    try { musica.volume = Math.max(0, v); } catch (e) {}
+                    if (i >= passos) {
+                        clearInterval(fadeTimer); fadeTimer = null;
+                        try { musica.pause(); musica.volume = volInicial; } catch (e) {}
+                    }
+                }, 50);
             }
 
             // Botão de alto-falante: apenas alterna mudo (e garante que está tocando).

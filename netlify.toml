@@ -11,7 +11,7 @@
   node_bundler = "esbuild"
 
 [[redirects]]
-  from = "/api/gemini"
+  from = "/api/ia"
   to = "/.netlify/functions/gemini"
   status = 200
 
