@@ -193,6 +193,9 @@
                 <button onclick="switchTab('live')" id="btn-tab-live" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-tower-broadcast mr-1"></i> Estatísticas
                 </button>
+                <button onclick="switchTab('stats')" id="btn-tab-stats" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
+                    <i class="fa-solid fa-ranking-star mr-1"></i> Números da Copa
+                </button>
                 <button onclick="switchTab('ia-chat')" id="btn-tab-ia-chat" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white flex items-center gap-1 whitespace-nowrap">
                     <span class="relative flex h-1.5 w-1.5 shrink-0">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
@@ -243,7 +246,7 @@
                             <h3 class="font-bold text-lg text-white flex items-center gap-2">
                                 <i class="fa-solid fa-chart-pie text-yellow-400"></i> Probabilidade de Título (%)
                             </h3>
-                            <span class="text-xs text-slate-400">Atualizado dinamicamente</span>
+                            <span id="prob-fonte-nota" class="text-xs text-slate-400">Modelo tático</span>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -531,6 +534,82 @@
             </div>
         </section>
 
+        <!-- ABA: NÚMEROS DA COPA -->
+        <section id="tab-stats" class="hidden space-y-6">
+            <!-- Banner -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-yellow-950/20 to-emerald-950/20 border border-yellow-500/20 p-6 shadow-xl">
+                <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="space-y-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-400/15 text-yellow-300 border border-yellow-500/20">
+                            <i class="fa-solid fa-ranking-star mr-1 text-yellow-400"></i> Dados Oficiais da Copa
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Números da Copa do Mundo 2026</h2>
+                        <p class="text-slate-300 max-w-xl text-sm leading-relaxed">
+                            Artilheiros, garçons, disciplina e as melhores seleções — além de comparações com as Copas de 2022 e 2018.
+                        </p>
+                    </div>
+                    <button onclick="carregarNumerosCopa(true)" class="bg-gradient-to-r from-yellow-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-lg transition duration-200 text-sm flex items-center justify-center gap-2 self-start md:self-center">
+                        <i class="fa-solid fa-rotate mr-1"></i> Atualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rankings de Jogadores -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-futbol text-yellow-400"></i> Artilheiros
+                    </h3>
+                    <div id="stats-scorers" class="space-y-2"></div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-shoe-prints text-emerald-400"></i> Garçons (Assistências)
+                    </h3>
+                    <div id="stats-assists" class="space-y-2"></div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-square text-amber-400"></i> Disciplina (Cartões)
+                    </h3>
+                    <div id="stats-cards" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Seleções: ataques e defesas -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-bolt text-yellow-400"></i> Melhores Ataques
+                    </h3>
+                    <div id="stats-attacks" class="space-y-2"></div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-shield-halved text-emerald-400"></i> Melhores Defesas
+                    </h3>
+                    <div id="stats-defenses" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Comparação histórica -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-yellow-400"></i> Comparação entre Copas
+                    </h3>
+                    <span class="text-xs text-slate-400">2026 · 2022 · 2018</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div class="h-[300px] relative">
+                        <canvas id="chartComparacaoCopas"></canvas>
+                    </div>
+                    <div id="stats-historico" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- RODAPÉ -->
@@ -690,7 +769,27 @@
             renderizarHistóricoCopas();
             renderizarJogos();
             renderizarJogadores();
+            aplicarDadosReaisNasProbabilidades();
         };
+
+        // Carrega a classificação real e, havendo jogos disputados, recalcula as
+        // probabilidades incorporando forma/saldo de gols. Roda em segundo plano.
+        async function aplicarDadosReaisNasProbabilidades() {
+            try {
+                await carregarFormaReal();
+                const algumComJogo = Object.values(formaRealMap).some(r => r && r.played > 0);
+                const nota = document.getElementById('prob-fonte-nota');
+                if (algumComJogo) {
+                    runMonteCarlo();
+                    if (nota) {
+                        nota.textContent = 'Ajustado com dados reais';
+                        nota.className = 'text-xs text-emerald-400 font-semibold';
+                    }
+                } else if (nota) {
+                    nota.textContent = 'Modelo tático (sem jogos ainda)';
+                }
+            } catch (e) { /* mantém o modelo tático puro */ }
+        }
 
         // --- 5. FUNÇÕES DE CÁLCULO DE SCORES (JOGADORES E TIMES) ---
         function calcularScoresJogadores() {
@@ -718,7 +817,21 @@
             const mediaScoreJogadores = jogadoresDoTime.reduce((acc, curr) => acc + curr.scoreIA, 0) / (jogadoresDoTime.length || 1);
 
             const scoreCalculado = (timeInfo.ratingBase * 0.4) + (mediaScoreJogadores * 0.6);
-            return scoreCalculado;
+            return scoreCalculado + ajusteFormaReal(timeNome);
+        }
+
+        // Ajuste das probabilidades com dados reais da Copa (classificação atual).
+        // Antes/no início do torneio não há jogos disputados, então o ajuste é zero
+        // e as probabilidades caem de volta no modelo tático tradicional.
+        function ajusteFormaReal(timePt) {
+            const en = MAPA_PT_EN[timePt];
+            const r = en && formaRealMap[en];
+            if (!r || !r.played) return 0;
+            const ppg = r.pts / r.played;            // pontos por jogo (0 a 3)
+            const sgpg = (r.gf - r.ga) / r.played;   // saldo de gols por jogo
+            // Centraliza em ~1.5 ppg; cada métrica desloca alguns pontos de rating.
+            const ajuste = (ppg - 1.5) * 2.2 + sgpg * 1.6;
+            return Math.max(-6, Math.min(6, ajuste));
         }
 
         // --- 6. MOTOR DE SIMULAÇÃO DE MONTE CARLO ---
@@ -1324,7 +1437,7 @@
             // Encerra o auto-refresh ao trocar de aba; ele só roda na aba de estatísticas.
             pararAutoRefreshAPI();
 
-            ['dashboard', 'history', 'players', 'live', 'ia-chat'].forEach(section => {
+            ['dashboard', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
                 if (section === tabId) {
                     el.classList.remove('hidden');
@@ -1333,7 +1446,7 @@
                 }
             });
 
-            ['dashboard', 'history', 'players', 'live', 'ia-chat'].forEach(section => {
+            ['dashboard', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const btn = document.getElementById(`btn-tab-${section}`);
                 if (btn) {
                     if (section === tabId) {
@@ -1361,6 +1474,10 @@
                     }
                 }, 100);
                 iniciarAutoRefreshAPI();
+            }
+
+            if (tabId === 'stats') {
+                setTimeout(() => carregarNumerosCopa(), 100);
             }
         }
 
@@ -1762,26 +1879,330 @@
         const AF_LEAGUE_ID = 1;
         const AF_SEASON = 2026;
         let afGrupoMap = null; // cache (1x por sessão) do mapa seleção -> letra do grupo.
+        let afStandingsRaw = null; // cache da tabela bruta (para grupos, forma real e ataques/defesas).
+
+        // Busca a tabela de grupos/classificação uma única vez (reaproveitada por grupos,
+        // ajuste real das probabilidades e ranking de ataques/defesas).
+        async function obterStandingsApiFootball() {
+            if (afStandingsRaw) return afStandingsRaw;
+            try {
+                const resp = await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000);
+                const data = await resp.json();
+                const standings = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
+                afStandingsRaw = Array.isArray(standings) ? standings : [];
+            } catch (e) {
+                afStandingsRaw = [];
+            }
+            return afStandingsRaw;
+        }
+
+        // Mapa de nomes PT (usados em SELECOES) -> nomes EN (retornados pela API-Football).
+        const MAPA_PT_EN = {
+            "Brasil": "Brazil", "França": "France", "Argentina": "Argentina", "Espanha": "Spain",
+            "Inglaterra": "England", "Alemanha": "Germany", "Portugal": "Portugal", "Itália": "Italy"
+        };
+        let formaRealMap = {}; // nome EN -> { played, pts, gf, ga } a partir da classificação real.
+
+        // Monta o mapa de forma real (pontos/gols por jogo) usado para ajustar as probabilidades.
+        async function carregarFormaReal() {
+            const standings = await obterStandingsApiFootball();
+            const map = {};
+            standings.forEach(grupo => {
+                (grupo || []).forEach(row => {
+                    const all = (row.all || {});
+                    const goals = (all.goals || {});
+                    if (row.team && row.team.name) {
+                        map[row.team.name] = {
+                            played: all.played || 0,
+                            pts: row.points || 0,
+                            gf: goals.for || 0,
+                            ga: goals.against || 0
+                        };
+                    }
+                });
+            });
+            formaRealMap = map;
+            return map;
+        }
 
         // Busca a tabela de grupos uma única vez para nomear os grupos das partidas.
         async function obterGruposApiFootball() {
             if (afGrupoMap) return afGrupoMap;
             const map = {};
-            try {
-                const resp = await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000);
-                const data = await resp.json();
-                const standings = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
-                if (Array.isArray(standings)) {
-                    standings.forEach(grupo => {
-                        (grupo || []).forEach(row => {
-                            const letra = (row.group || '').replace(/group\s*/i, '').trim();
-                            if (row.team && row.team.name) map[row.team.name] = letra;
-                        });
-                    });
-                }
-            } catch (e) { /* sem tabela: grupos ficam como "Fase de Grupos" */ }
+            const standings = await obterStandingsApiFootball();
+            standings.forEach(grupo => {
+                (grupo || []).forEach(row => {
+                    const letra = (row.group || '').replace(/group\s*/i, '').trim();
+                    if (row.team && row.team.name) map[row.team.name] = letra;
+                });
+            });
             afGrupoMap = map;
             return afGrupoMap;
+        }
+
+        // =====================================================================
+        // NÚMEROS DA COPA (estatísticas reais + comparação entre edições)
+        // =====================================================================
+        const STATS_TTL = 6 * 60 * 60 * 1000;        // rankings da edição atual: 6h
+        const STATS_HIST_TTL = 30 * 24 * 60 * 60 * 1000; // edições passadas: 30 dias
+        let numerosCopaCarregado = false;
+        let chartComparacao = null;
+
+        function statsCacheGet(key, ttl) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const o = JSON.parse(raw);
+                if (Date.now() - o.t > ttl) return null;
+                return o.d;
+            } catch (e) { return null; }
+        }
+        function statsCacheSet(key, data) {
+            try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), d: data })); } catch (e) { /* cota cheia */ }
+        }
+
+        // Busca um endpoint da API-Football com cache local; retorna o array "response".
+        async function afFetchCached(query, key, ttl, forcar) {
+            if (!forcar) {
+                const c = statsCacheGet(key, ttl);
+                if (c) return c;
+            }
+            const resp = await fetchWithBackoff(`/api/af?${query}`, {}, 2, 15000);
+            const data = await resp.json();
+            const arr = (data && data.response) || [];
+            if (arr.length) statsCacheSet(key, arr);
+            return arr;
+        }
+
+        function statsVazio(msg) {
+            return `<p class="text-xs text-slate-500 py-6 text-center">${msg}</p>`;
+        }
+        function statsCarregando() {
+            return `<div class="text-center py-6 text-slate-400 text-xs"><i class="fa-solid fa-spinner animate-spin text-emerald-400 text-xl mb-1 block"></i>Carregando...</div>`;
+        }
+
+        function linhaRankingJogador(pos, foto, nome, time, valor, sufixo) {
+            const cor = pos === 1 ? 'text-yellow-400' : (pos === 2 ? 'text-slate-300' : (pos === 3 ? 'text-amber-600' : 'text-slate-500'));
+            const fotoHtml = foto
+                ? `<img src="${foto}" alt="" class="w-8 h-8 rounded-full object-cover border border-slate-700" onerror="this.style.display='none'">`
+                : `<span class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs">⚽</span>`;
+            return `
+                <div class="flex items-center gap-3 bg-slate-800/40 rounded-lg px-3 py-2">
+                    <span class="font-extrabold w-5 text-center ${cor}">${pos}</span>
+                    ${fotoHtml}
+                    <div class="min-w-0 flex-grow">
+                        <p class="text-sm font-semibold text-white truncate">${nome}</p>
+                        <p class="text-[11px] text-slate-400 truncate">${time}</p>
+                    </div>
+                    <span class="text-sm font-bold text-emerald-400 whitespace-nowrap">${valor}<span class="text-[10px] text-slate-500 ml-0.5">${sufixo}</span></span>
+                </div>`;
+        }
+
+        function renderRankingJogadores(containerId, lista, tipo, forcar) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            if (!lista || !lista.length) {
+                el.innerHTML = statsVazio('Sem dados desta edição ainda. Os números aparecem conforme os jogos acontecem.');
+                return;
+            }
+            const linhas = lista.slice(0, 10).map((item, i) => {
+                const jogador = item.player || {};
+                const stats = (item.statistics && item.statistics[0]) || {};
+                const time = (stats.team && stats.team.name) ? traduzirSelecao(stats.team.name) : '';
+                let valor = 0, sufixo = 'g';
+                if (tipo === 'goals') { valor = (stats.goals && stats.goals.total) || 0; sufixo = 'gols'; }
+                else if (tipo === 'assists') { valor = (stats.goals && stats.goals.assists) || 0; sufixo = 'assist.'; }
+                else if (tipo === 'cards') {
+                    const c = stats.cards || {};
+                    valor = (c.yellow || 0) + (c.red || 0); sufixo = 'cart.';
+                }
+                return linhaRankingJogador(i + 1, jogador.photo, jogador.name || 'Jogador', time, valor, sufixo);
+            }).join('');
+            el.innerHTML = linhas;
+        }
+
+        function renderRankingSelecoes(containerId, lista, tipo) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            if (!lista || !lista.length) {
+                el.innerHTML = statsVazio('Classificação ainda não disponível para esta edição.');
+                return;
+            }
+            const linhas = lista.slice(0, 10).map((row, i) => {
+                const nomePt = traduzirSelecao(row.nome);
+                const bandeira = obterBandeiraPorNome(nomePt);
+                const valor = tipo === 'gf' ? row.gf : row.ga;
+                const sub = `${row.played} jogo(s)`;
+                const cor = tipo === 'gf' ? 'text-yellow-400' : 'text-emerald-400';
+                return `
+                    <div class="flex items-center gap-3 bg-slate-800/40 rounded-lg px-3 py-2">
+                        <span class="font-extrabold w-5 text-center text-slate-500">${i + 1}</span>
+                        <span class="text-lg">${bandeira}</span>
+                        <p class="text-sm font-semibold text-white flex-grow truncate">${nomePt}</p>
+                        <span class="text-[11px] text-slate-400 mr-2">${sub}</span>
+                        <span class="text-sm font-bold ${cor} whitespace-nowrap">${valor}<span class="text-[10px] text-slate-500 ml-0.5">gols</span></span>
+                    </div>`;
+            }).join('');
+            el.innerHTML = linhas;
+        }
+
+        // Extrai a lista de seleções com gols marcados/sofridos a partir da classificação.
+        function selecoesDaClassificacao(standings) {
+            const times = [];
+            (standings || []).forEach(grupo => {
+                (grupo || []).forEach(row => {
+                    const all = row.all || {};
+                    const goals = all.goals || {};
+                    if (row.team && all.played) {
+                        times.push({
+                            nome: row.team.name,
+                            played: all.played || 0,
+                            gf: goals.for || 0,
+                            ga: goals.against || 0
+                        });
+                    }
+                });
+            });
+            return times;
+        }
+
+        // Carrega total de gols e número de jogos finalizados de uma edição.
+        async function agregadoEdicao(season, forcar) {
+            const fixtures = await afFetchCached(
+                `path=/fixtures&league=${AF_LEAGUE_ID}&season=${season}`,
+                `wc_fixtures_${season}`,
+                season === AF_SEASON ? STATS_TTL : STATS_HIST_TTL,
+                forcar
+            );
+            let gols = 0, jogos = 0;
+            (fixtures || []).forEach(fx => {
+                const short = fx.fixture && fx.fixture.status && fx.fixture.status.short;
+                if (['FT', 'AET', 'PEN'].includes(short)) {
+                    const g = fx.goals || {};
+                    gols += (g.home || 0) + (g.away || 0);
+                    jogos += 1;
+                }
+            });
+            return { season, gols, jogos, mediaGols: jogos ? +(gols / jogos).toFixed(2) : 0 };
+        }
+
+        async function carregarComparacaoHistorica(forcar) {
+            const el = document.getElementById('stats-historico');
+            const SEASONS = [AF_SEASON, 2022, 2018];
+            const resultados = [];
+            for (const s of SEASONS) {
+                try {
+                    const agg = await agregadoEdicao(s, forcar);
+                    let artilheiro = null;
+                    try {
+                        const top = await afFetchCached(
+                            `path=/players/topscorers&league=${AF_LEAGUE_ID}&season=${s}`,
+                            `wc_topscorers_${s}`,
+                            s === AF_SEASON ? STATS_TTL : STATS_HIST_TTL,
+                            forcar
+                        );
+                        if (top && top[0]) {
+                            const st = (top[0].statistics && top[0].statistics[0]) || {};
+                            artilheiro = { nome: top[0].player && top[0].player.name, gols: (st.goals && st.goals.total) || 0 };
+                        }
+                    } catch (e) { /* artilheiro opcional */ }
+                    resultados.push({ ...agg, artilheiro });
+                } catch (e) { /* edição indisponível */ }
+            }
+
+            const comJogos = resultados.filter(r => r.jogos > 0);
+            if (el) {
+                if (!comJogos.length) {
+                    el.innerHTML = statsVazio('Comparação ficará disponível assim que houver jogos disputados.');
+                } else {
+                    el.innerHTML = resultados.map(r => {
+                        if (!r.jogos) {
+                            return `<div class="bg-slate-800/40 rounded-lg px-4 py-3"><p class="font-bold text-white">Copa ${r.season}</p><p class="text-xs text-slate-500">Ainda sem jogos disputados.</p></div>`;
+                        }
+                        const art = r.artilheiro ? `${r.artilheiro.nome} (${r.artilheiro.gols})` : '—';
+                        return `
+                            <div class="bg-slate-800/40 rounded-lg px-4 py-3">
+                                <p class="font-bold text-white mb-1">Copa ${r.season}</p>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div><p class="text-lg font-extrabold text-yellow-400">${r.gols}</p><p class="text-[10px] text-slate-400 uppercase">Gols</p></div>
+                                    <div><p class="text-lg font-extrabold text-emerald-400">${r.mediaGols}</p><p class="text-[10px] text-slate-400 uppercase">Gols/Jogo</p></div>
+                                    <div><p class="text-lg font-extrabold text-blue-400">${r.jogos}</p><p class="text-[10px] text-slate-400 uppercase">Jogos</p></div>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-2"><i class="fa-solid fa-futbol mr-1 text-yellow-400"></i>Artilheiro: <span class="text-white font-semibold">${art}</span></p>
+                            </div>`;
+                    }).join('');
+                }
+            }
+            renderChartComparacao(comJogos);
+        }
+
+        function renderChartComparacao(dados) {
+            const canvas = document.getElementById('chartComparacaoCopas');
+            if (!canvas || typeof Chart === 'undefined') return;
+            if (chartComparacao) { chartComparacao.destroy(); chartComparacao = null; }
+            if (!dados || !dados.length) return;
+            const ordenado = [...dados].sort((a, b) => a.season - b.season);
+            chartComparacao = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ordenado.map(d => `Copa ${d.season}`),
+                    datasets: [{
+                        label: 'Gols por jogo',
+                        data: ordenado.map(d => d.mediaGols),
+                        backgroundColor: ['rgba(59,130,246,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)'],
+                        borderColor: ['rgba(59,130,246,1)', 'rgba(16,185,129,1)', 'rgba(245,158,11,1)'],
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        x: { ticks: { color: '#cbd5e1' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Orquestra o carregamento de toda a aba "Números da Copa".
+        async function carregarNumerosCopa(forcar = false) {
+            if (numerosCopaCarregado && !forcar) return;
+            numerosCopaCarregado = true;
+
+            ['stats-scorers', 'stats-assists', 'stats-cards', 'stats-attacks', 'stats-defenses', 'stats-historico'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.children.length) el.innerHTML = statsCarregando();
+            });
+
+            // Rankings de jogadores da edição atual.
+            afFetchCached(`path=/players/topscorers&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, `wc_topscorers_${AF_SEASON}`, STATS_TTL, forcar)
+                .then(l => renderRankingJogadores('stats-scorers', l, 'goals'))
+                .catch(() => renderRankingJogadores('stats-scorers', [], 'goals'));
+            afFetchCached(`path=/players/topassists&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, `wc_topassists_${AF_SEASON}`, STATS_TTL, forcar)
+                .then(l => renderRankingJogadores('stats-assists', l, 'assists'))
+                .catch(() => renderRankingJogadores('stats-assists', [], 'assists'));
+            afFetchCached(`path=/players/topyellowcards&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, `wc_topcards_${AF_SEASON}`, STATS_TTL, forcar)
+                .then(l => renderRankingJogadores('stats-cards', l, 'cards'))
+                .catch(() => renderRankingJogadores('stats-cards', [], 'cards'));
+
+            // Ataques e defesas a partir da classificação.
+            (async () => {
+                try {
+                    const standings = forcar ? (afStandingsRaw = null, await obterStandingsApiFootball()) : await obterStandingsApiFootball();
+                    const times = selecoesDaClassificacao(standings);
+                    renderRankingSelecoes('stats-attacks', [...times].sort((a, b) => b.gf - a.gf), 'gf');
+                    renderRankingSelecoes('stats-defenses', [...times].sort((a, b) => a.ga - b.ga), 'ga');
+                } catch (e) {
+                    renderRankingSelecoes('stats-attacks', [], 'gf');
+                    renderRankingSelecoes('stats-defenses', [], 'ga');
+                }
+            })();
+
+            // Comparação entre edições.
+            carregarComparacaoHistorica(forcar).catch(() => { /* silencioso */ });
         }
 
         // Converte a resposta de /fixtures da API-Football para o objeto interno de jogo.
