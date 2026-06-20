@@ -1694,6 +1694,7 @@
                 clearInterval(apiPollInterval);
                 apiPollInterval = null;
             }
+            if (typeof pararRelogioAoVivo === 'function') pararRelogioAoVivo();
         }
 
         // Converte o JSON do openfootball/worldcup.json para o formato interno usado pela UI.
@@ -2321,13 +2322,23 @@
             
             let badgeStatusHtml = '';
             let minutoText = '';
-            
+
+            // Minuto real da partida (vindo da API-Football) para o relógio ao vivo.
+            const stLive = normalizeStatus(jogo.time_elapsed);
+            const minutoLiveNum = /^\d+$/.test(stLive) ? parseInt(stLive, 10) : null;
+
             if (isFinished) {
                 badgeStatusHtml = `<span class="text-[10px] bg-slate-800 border border-slate-700 text-slate-400 px-3 py-1 rounded-full font-bold uppercase"><i class="fa-solid fa-flag-checkered mr-1"></i> Finalizado</span>`;
                 minutoText = 'Fim de Jogo';
             } else if (isLive && !simState.active) {
                 badgeStatusHtml = `<span class="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase animate-pulse flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Ao Vivo</span>`;
-                minutoText = 'Ao Vivo';
+                if (stLive === 'ht') {
+                    minutoText = '<i class="fa-solid fa-mug-hot mr-1 text-yellow-400"></i> Intervalo';
+                } else if (minutoLiveNum != null) {
+                    minutoText = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 align-middle animate-pulse"></span><i class="fa-regular fa-clock mr-1 text-emerald-400"></i><span id="api-live-min-num">${minutoLiveNum}</span>'`;
+                } else {
+                    minutoText = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 align-middle animate-pulse"></span> Ao Vivo';
+                }
             } else if (simState.active) {
                 badgeStatusHtml = `<span class="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase animate-pulse flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Em Andamento</span>`;
                 minutoText = `${simState.minute}' tempo`;
@@ -2496,7 +2507,7 @@
                                     <span class="text-slate-500 font-extrabold text-xl font-mono">:</span>
                                     <span class="text-4xl md:text-5xl font-black text-white font-mono transition-all duration-300 transform scale-110">${simState.awayScore}</span>
                                 </div>
-                                <div class="mt-3 text-xs bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1 rounded-full font-bold font-mono">
+                                <div id="api-live-minuto" class="mt-3 text-xs bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1 rounded-full font-bold font-mono">
                                     ${minutoText}
                                 </div>
                             </div>
@@ -2645,6 +2656,30 @@
                     </div>
                 </div>
             `;
+
+            // Relógio ao vivo: faz o minuto avançar em tempo real entre as atualizações da API.
+            pararRelogioAoVivo();
+            if (isLive && !simState.active && minutoLiveNum != null) {
+                iniciarRelogioAoVivo(minutoLiveNum);
+            }
+        }
+
+        // Mantém o minuto da partida "andando" localmente (a cada 60s) a partir do
+        // valor real recebido da API, reforçando a sensação de tempo real.
+        let liveClockInterval = null;
+        function pararRelogioAoVivo() {
+            if (liveClockInterval) { clearInterval(liveClockInterval); liveClockInterval = null; }
+        }
+        function iniciarRelogioAoVivo(minutoBase) {
+            pararRelogioAoVivo();
+            let minuto = minutoBase;
+            liveClockInterval = setInterval(() => {
+                const el = document.getElementById('api-live-min-num');
+                if (!el) { pararRelogioAoVivo(); return; }
+                minuto += 1;
+                if (minuto > 120) { pararRelogioAoVivo(); return; }
+                el.textContent = minuto;
+            }, 60000);
         }
 
         function iniciarSimulacaoJogo() {
