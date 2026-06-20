@@ -151,8 +151,8 @@
             <p id="splash-status" class="text-slate-300 text-xs mt-3 font-mono">Iniciando...</p>
 
             <div class="flex items-center gap-3 mt-6">
-                <button id="splash-sound-btn" class="text-xs font-semibold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-2 transition flex items-center gap-2">
-                    <i class="fa-solid fa-volume-high text-yellow-400"></i> Ativar som
+                <button id="splash-sound-btn" aria-label="Mudo" title="Mudo" class="inline-flex items-center justify-center w-10 h-10 text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">
+                    <i class="fa-solid fa-volume-high text-yellow-400"></i>
                 </button>
                 <button id="splash-skip-btn" class="text-xs font-semibold text-slate-400 hover:text-white border border-transparent hover:border-white/10 rounded-full px-4 py-2 transition flex items-center gap-2">
                     Pular <i class="fa-solid fa-forward"></i>
@@ -2614,70 +2614,58 @@
 
             if (skipBtn) skipBtn.addEventListener('click', finishSplash);
 
-            // --- Música de abertura (arquivo MP3: samba/carnaval) — inicia automaticamente com som ---
-            let somAtivo = false;
+            // --- Música de abertura (arquivo MP3: samba/carnaval) — toca de imediato ---
             const musica = new Audio('viacheslavstarostin-brazil-football-carnival-samba-music-412756.mp3');
             musica.loop = true;
             musica.preload = 'auto';
             musica.volume = 0.55;
 
-            function rotuloMutar() {
-                if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-yellow-400"></i> Mutar';
-            }
-            function rotuloAtivar() {
-                if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-high text-yellow-400"></i> Ativar som';
+            function atualizarIconeSom() {
+                if (!soundBtn) return;
+                soundBtn.innerHTML = musica.muted
+                    ? '<i class="fa-solid fa-volume-xmark text-yellow-400"></i>'
+                    : '<i class="fa-solid fa-volume-high text-yellow-400"></i>';
+                soundBtn.setAttribute('aria-label', musica.muted ? 'Ativar som' : 'Mudo');
+                soundBtn.setAttribute('title', musica.muted ? 'Ativar som' : 'Mudo');
             }
 
-            // Toca a música; resolve true se conseguiu reproduzir (com ou sem mudo).
             function tentarTocar() {
-                try {
-                    const p = musica.play();
-                    if (p && typeof p.then === 'function') return p.then(function () { return true; });
-                    return Promise.resolve(true);
-                } catch (e) { return Promise.resolve(false); }
-            }
-
-            function ativarSom() {
-                if (somAtivo) return;
-                musica.muted = false;
-                tentarTocar().then(function (ok) {
-                    if (ok) { somAtivo = true; rotuloMutar(); }
-                }).catch(function () {});
+                try { const p = musica.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
             }
 
             function pararHino() {
-                somAtivo = false;
                 try { musica.pause(); } catch (e) {}
             }
 
+            // Botão de alto-falante: apenas alterna mudo (e garante que está tocando).
             if (soundBtn) {
                 soundBtn.addEventListener('click', function () {
-                    if (!somAtivo) { ativarSom(); }
-                    else { pararHino(); rotuloAtivar(); }
+                    musica.muted = !musica.muted;
+                    if (musica.paused) tentarTocar();
+                    atualizarIconeSom();
                 });
             }
 
-            // Inicia a música assim que o splash abre. Se o navegador bloquear o som,
-            // toca em modo mudo (autoplay permitido) e ativa o som no primeiro gesto.
+            // Inicia a música imediatamente. Tenta com som; se o navegador bloquear,
+            // toca em mudo (autoplay permitido) e ativa o som no primeiro gesto do usuário.
             (function autoIniciarMusica() {
                 musica.muted = false;
-                tentarTocar().then(function (ok) {
-                    if (ok && !musica.muted) { somAtivo = true; rotuloMutar(); return; }
-                    // Som bloqueado: garante reprodução em mudo e prepara ativação no 1º gesto.
-                    musica.muted = true;
-                    tentarTocar();
-                    rotuloAtivar();
-                    function ativarNoGesto() {
-                        musica.muted = false;
-                        if (!somAtivo) ativarSom();
-                        ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
-                            window.removeEventListener(ev, ativarNoGesto, true);
-                        });
-                    }
+                tentarTocar();
+                atualizarIconeSom();
+                function ativarNoGesto() {
+                    if (musica.paused) tentarTocar();
+                    if (musica.muted) { musica.muted = false; atualizarIconeSom(); }
                     ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
-                        window.addEventListener(ev, ativarNoGesto, { capture: true });
+                        window.removeEventListener(ev, ativarNoGesto, true);
                     });
+                }
+                ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+                    window.addEventListener(ev, ativarNoGesto, { capture: true });
                 });
+                // Se em ~400ms o áudio não estiver tocando (bloqueio de autoplay), cai para mudo.
+                setTimeout(function () {
+                    if (musica.paused) { musica.muted = true; tentarTocar(); atualizarIconeSom(); }
+                }, 400);
             })();
         })();
     </script>
