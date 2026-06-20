@@ -1671,7 +1671,7 @@
         // --- AUTO-REFRESH DA API DE JOGOS (polling somente enquanto a aba de estatísticas está ativa) ---
         let apiPollInterval = null;
         let apiCarregando = false;
-        const API_POLL_MS = 60000;
+        const API_POLL_MS = 20000;
 
         async function autoAtualizarJogosAPI() {
             // Não interrompe uma simulação tática em andamento.
@@ -1844,33 +1844,124 @@
             });
         }
 
-        // Busca os artilheiros (eventos de gol) de UMA partida sob demanda, ao selecioná-la.
-        async function enriquecerScorersAf(jogo) {
-            if (!jogo || jogo._src !== 'af' || jogo._scorersLoaded || !jogo.fixture_id) return;
-            jogo._scorersLoaded = true; // marca cedo para não repetir a chamada.
+        // Lê um valor de estatística pelo "type" no array da API-Football.
+        function _afStatVal(arr, type) {
+            const f = (arr || []).find(s => (s.type || '') === type);
+            return f ? f.value : null;
+        }
+        function _afNum(v) {
+            if (v == null) return 0;
+            const n = parseInt(String(v).replace('%', '').trim(), 10);
+            return isNaN(n) ? 0 : n;
+        }
+
+        // Aplica num jogo os dados ricos embutidos de uma fixture da API-Football
+        // (eventos -> artilheiros, statistics -> estatísticas reais, lineups -> escalações, venue).
+        function aplicarDetalheAf(jogo, item) {
+            if (!jogo || !item) return;
+            const homeId = item.teams && item.teams.home && item.teams.home.id;
+
+            // Estádio/cidade reais.
+            const v = item.fixture && item.fixture.venue;
+            if (v && (v.name || v.city)) jogo._venue = [v.name, v.city].filter(Boolean).join(', ');
+
+            // Artilheiros a partir dos eventos de gol.
+            const eventos = item.events || [];
+            const golsHome = [], golsAway = [];
+            eventos.forEach(e => {
+                if (((e.type || '').toLowerCase()) !== 'goal') return;
+                const detalhe = (e.detail || '').toLowerCase();
+                if (detalhe.includes('missed')) return; // pênalti perdido não é gol
+                const min = (e.time && e.time.elapsed != null) ? `${e.time.elapsed}'` : '';
+                const nome = (e.player && e.player.name) ? e.player.name : 'Gol';
+                const pen = detalhe.includes('penalty') ? ' (P)' : '';
+                const og = detalhe.includes('own') ? ' (contra)' : '';
+                const entry = `"${nome}${min ? ' ' + min : ''}${pen}${og}"`;
+                const ehHome = e.team && e.team.id === homeId;
+                (ehHome ? golsHome : golsAway).push(entry);
+            });
+            if (golsHome.length) jogo.home_scorers = `{${golsHome.join(',')}}`;
+            if (golsAway.length) jogo.away_scorers = `{${golsAway.join(',')}}`;
+
+            // Estatísticas reais (posse, chutes, escanteios, faltas, cartões).
+            const stats = item.statistics || [];
+            if (stats.length >= 2) {
+                const primeiroEhHome = stats[0].team && stats[0].team.id === homeId;
+                const hs = (primeiroEhHome ? stats[0] : stats[1]).statistics;
+                const as = (primeiroEhHome ? stats[1] : stats[0]).statistics;
+                jogo._afStats = {
+                    possessionHome: _afNum(_afStatVal(hs, 'Ball Possession')),
+                    possessionAway: _afNum(_afStatVal(as, 'Ball Possession')),
+                    shotsHome: _afNum(_afStatVal(hs, 'Total Shots')),
+                    shotsAway: _afNum(_afStatVal(as, 'Total Shots')),
+                    shotsOnTargetHome: _afNum(_afStatVal(hs, 'Shots on Goal')),
+                    shotsOnTargetAway: _afNum(_afStatVal(as, 'Shots on Goal')),
+                    cornersHome: _afNum(_afStatVal(hs, 'Corner Kicks')),
+                    cornersAway: _afNum(_afStatVal(as, 'Corner Kicks')),
+                    foulsHome: _afNum(_afStatVal(hs, 'Fouls')),
+                    foulsAway: _afNum(_afStatVal(as, 'Fouls')),
+                    yellowCardsHome: _afNum(_afStatVal(hs, 'Yellow Cards')),
+                    yellowCardsAway: _afNum(_afStatVal(as, 'Yellow Cards')),
+                    redCardsHome: _afNum(_afStatVal(hs, 'Red Cards')),
+                    redCardsAway: _afNum(_afStatVal(as, 'Red Cards'))
+                };
+            }
+
+            // Escalações (formação + titulares + técnico).
+            const lus = item.lineups || [];
+            if (lus.length) {
+                jogo._afLineups = lus.map(l => ({
+                    teamName: l.team && l.team.name,
+                    isHome: l.team && l.team.id === homeId,
+                    formation: l.formation || '',
+                    coach: (l.coach && l.coach.name) || '',
+                    startXI: (l.startXI || []).map(x => ({
+                        name: x.player && x.player.name,
+                        number: x.player && x.player.number,
+                        pos: x.player && x.player.pos
+                    }))
+                }));
+            }
+
+            jogo._afDetailLoaded = true;
+        }
+
+        // Carrega o detalhe completo de UMA partida (sob demanda, ao selecioná-la).
+        async function carregarDetalheAf(jogo) {
+            if (!jogo || jogo._src !== 'af' || !jogo.fixture_id) return false;
             try {
-                const resp = await fetchWithBackoff(`/api/af?path=/fixtures/events&fixture=${jogo.fixture_id}`, {}, 2, 15000);
+                const resp = await fetchWithBackoff(`/api/af?path=/fixtures&id=${jogo.fixture_id}`, {}, 2, 15000);
                 const data = await resp.json();
-                const eventos = (data && data.response) || [];
-                const golsHome = [];
-                const golsAway = [];
-                eventos.forEach(e => {
-                    if (((e.type || '').toLowerCase()) !== 'goal') return;
-                    const detalhe = (e.detail || '').toLowerCase();
-                    if (detalhe.includes('missed')) return; // pênalti perdido não é gol
-                    const min = (e.time && e.time.elapsed != null) ? `${e.time.elapsed}'` : '';
-                    const nome = (e.player && e.player.name) ? e.player.name : 'Gol';
-                    const pen = detalhe.includes('penalty') ? ' (P)' : '';
-                    const og = detalhe.includes('own') ? ' (contra)' : '';
-                    const entry = `"${nome}${min ? ' ' + min : ''}${pen}${og}"`;
-                    const ehHome = e.team && e.team.name && e.team.name === jogo.home_team_name_en;
-                    (ehHome ? golsHome : golsAway).push(entry);
-                });
-                if (golsHome.length) jogo.home_scorers = `{${golsHome.join(',')}}`;
-                if (golsAway.length) jogo.away_scorers = `{${golsAway.join(',')}}`;
+                const item = data && data.response && data.response[0];
+                if (item) { aplicarDetalheAf(jogo, item); salvarCacheJogos(apiGames); return true; }
+            } catch (e) { /* mantém o jogo com os dados básicos */ }
+            return false;
+        }
+
+        // Atualiza em segundo plano TODOS os jogos ao vivo (placar, artilheiros, estatísticas)
+        // em uma única chamada (até 20 fixtures por vez), aproveitando o plano Pro.
+        async function enriquecerJogosAoVivo() {
+            const vivos = apiGames.filter(j => {
+                if (j._src !== 'af' || !j.fixture_id || j.finished === 'TRUE') return false;
+                const st = normalizeStatus(j.time_elapsed);
+                return st !== 'notstarted' && st !== 'null' && st !== '';
+            });
+            if (!vivos.length) return;
+            const ids = vivos.slice(0, 20).map(j => j.fixture_id).join('-');
+            try {
+                const resp = await fetchWithBackoff(`/api/af?path=/fixtures&ids=${ids}`, {}, 2, 18000);
+                const data = await resp.json();
+                const items = (data && data.response) || [];
+                const porId = {};
+                items.forEach(it => { if (it.fixture) porId[it.fixture.id] = it; });
+                vivos.forEach(j => { if (porId[j.fixture_id]) aplicarDetalheAf(j, porId[j.fixture_id]); });
                 salvarCacheJogos(apiGames);
-                if (selectedGame && selectedGame.id === jogo.id) selecionarJogoAPI(jogo.id);
-            } catch (e) { /* mantém o jogo sem a lista de artilheiros */ }
+                renderizarListaJogosAPI();
+                if (selectedGame) {
+                    const atual = apiGames.find(j => j.id === selectedGame.id);
+                    if (atual && normalizeStatus(atual.time_elapsed) !== 'notstarted') selecionarJogoAPI(atual.id);
+                }
+            } catch (e) { /* mantém os dados atuais em caso de falha */ }
         }
 
         async function carregarJogosAPI(forcar = false, silencioso = false) {
@@ -1888,6 +1979,7 @@
                 `;
             }
 
+            let usouAf = false;
             try {
                 // FONTE PRIMÁRIA: API-Football (confiável, livescore a cada ~15s).
                 const tentativas = silencioso ? 2 : 3;
@@ -1898,6 +1990,7 @@
                     const grupos = await obterGruposApiFootball();
                     apiGames = mapearApiFootball(data.response, grupos);
                     salvarCacheJogos(apiGames);
+                    usouAf = true;
                 } else {
                     throw new Error("API-Football retornou resposta vazia ou em formato inesperado.");
                 }
@@ -1940,6 +2033,9 @@
 
             apiCarregando = false;
             renderizarListaJogosAPI();
+
+            // Enriquece jogos ao vivo (placar/artilheiros/estatísticas) em segundo plano.
+            if (usouAf) enriquecerJogosAoVivo();
         }
 
         function filtrarJogosAPI(filtro) {
@@ -2145,6 +2241,15 @@
                 };
                 simState.stats.possessionAway = 100 - simState.stats.possessionHome;
 
+                // Sobrescreve com estatísticas REAIS da API-Football, quando disponíveis.
+                if (jogo._afStats) {
+                    simState.stats = Object.assign({}, simState.stats, jogo._afStats);
+                    if (((jogo._afStats.possessionHome || 0) + (jogo._afStats.possessionAway || 0)) === 0) {
+                        simState.stats.possessionHome = 50;
+                        simState.stats.possessionAway = 50;
+                    }
+                }
+
                 simState.homeScorers.forEach(s => {
                     const minMatch = s.match(/\d+/);
                     const min = minMatch ? parseInt(minMatch[0]) : Math.round(10 + Math.random() * 70);
@@ -2190,10 +2295,12 @@
                 };
             }
 
-            // Busca os artilheiros reais (eventos) sob demanda para jogos da API-Football com gols.
-            if (jogo._src === 'af' && !jogo._scorersLoaded && (isFinished || isLive)
-                && ((parseInt(jogo.home_score) || 0) + (parseInt(jogo.away_score) || 0) > 0)) {
-                enriquecerScorersAf(jogo);
+            // Carrega detalhe rico (eventos, estatísticas e escalações) da API-Football sob demanda.
+            if (jogo._src === 'af' && (isFinished || isLive) && !jogo._afDetailLoaded) {
+                jogo._afDetailLoaded = true; // evita chamadas duplicadas no mesmo jogo.
+                carregarDetalheAf(jogo).then(ok => {
+                    if (ok && selectedGame && selectedGame.id === jogo.id) selecionarJogoAPI(jogo.id);
+                });
             }
 
             renderizarDetalhesJogoAPI();
@@ -2312,6 +2419,44 @@
                 });
             }
 
+            // Bloco de escalações reais (API-Football), quando disponível.
+            let lineupsHtml = '';
+            if (jogo._afLineups && jogo._afLineups.length) {
+                const cardEscalacao = (l, info) => {
+                    if (!l) return '';
+                    const jogadores = (l.startXI || []).map(p => `
+                        <li class="flex items-center gap-2">
+                            <span class="w-5 text-right font-mono text-slate-500">${p.number != null ? p.number : ''}</span>
+                            <span class="truncate">${p.name || ''}</span>
+                            <span class="ml-auto text-[10px] text-slate-500 font-mono">${p.pos || ''}</span>
+                        </li>`).join('');
+                    return `
+                        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md">
+                            <div class="flex items-center justify-between mb-3 gap-2">
+                                <h4 class="font-bold text-white text-sm flex items-center gap-2 min-w-0">
+                                    <span class="text-lg shrink-0">${info.bandeira}</span>
+                                    <span class="truncate">${info.nome}</span>
+                                </h4>
+                                <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-0.5 shrink-0">${l.formation || '-'}</span>
+                            </div>
+                            <ul class="space-y-1 text-xs text-slate-300">${jogadores || '<li class="text-slate-500">Escalação indisponível.</li>'}</ul>
+                            ${l.coach ? `<div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400"><i class="fa-solid fa-clipboard-user mr-1 text-yellow-400"></i> Téc.: ${l.coach}</div>` : ''}
+                        </div>`;
+                };
+                const escHome = jogo._afLineups.find(l => l.isHome) || jogo._afLineups[0];
+                const escAway = jogo._afLineups.find(l => !l.isHome) || jogo._afLineups[1];
+                lineupsHtml = `
+                    <div>
+                        <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-people-group text-yellow-400"></i> Escalações
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            ${cardEscalacao(escHome, infoA)}
+                            ${cardEscalacao(escAway, infoB)}
+                        </div>
+                    </div>`;
+            }
+
             const cacheKey = `resenha-${jogo.id}-${simState.homeScore}-${simState.awayScore}-${simState.minute}`;
             const cachedResenha = localStorage.getItem(cacheKey);
             const aiCommentaryText = cachedResenha || `
@@ -2369,7 +2514,7 @@
 
                         <!-- Detalhes do Local -->
                         <div class="text-[11px] text-slate-400 flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2 text-center border-t border-slate-800/60 pt-3 w-full max-w-lg">
-                            <span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> Lincoln Financial Field, Filadélfia</span>
+                            <span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> ${jogo._venue || 'Estádio a confirmar'}</span>
                             <span><i class="fa-solid fa-calendar text-yellow-400 mr-1"></i> ${formatarData(jogo.local_date)}</span>
                         </div>
 
@@ -2469,6 +2614,8 @@
                             </div>
                         </div>
                     </div>
+
+                    ${lineupsHtml}
 
                     <!-- Bloco Resenha da IA (Insights) -->
                     <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/20 border border-emerald-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
