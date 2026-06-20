@@ -1750,8 +1750,131 @@
             });
         }
 
+        // ID da Copa do Mundo na API-Football e temporada do torneio.
+        const AF_LEAGUE_ID = 1;
+        const AF_SEASON = 2026;
+        let afGrupoMap = null; // cache (1x por sessão) do mapa seleção -> letra do grupo.
+
+        // Busca a tabela de grupos uma única vez para nomear os grupos das partidas.
+        async function obterGruposApiFootball() {
+            if (afGrupoMap) return afGrupoMap;
+            const map = {};
+            try {
+                const resp = await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000);
+                const data = await resp.json();
+                const standings = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
+                if (Array.isArray(standings)) {
+                    standings.forEach(grupo => {
+                        (grupo || []).forEach(row => {
+                            const letra = (row.group || '').replace(/group\s*/i, '').trim();
+                            if (row.team && row.team.name) map[row.team.name] = letra;
+                        });
+                    });
+                }
+            } catch (e) { /* sem tabela: grupos ficam como "Fase de Grupos" */ }
+            afGrupoMap = map;
+            return afGrupoMap;
+        }
+
+        // Converte a resposta de /fixtures da API-Football para o objeto interno de jogo.
+        function mapearApiFootball(items, grupos = {}) {
+            const FINISHED = ['FT', 'AET', 'PEN'];
+            const LIVE = ['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP'];
+
+            const tipoPorRound = (round) => {
+                const r = (round || '').toLowerCase();
+                if (r.includes('3rd place') || r.includes('third place')) return 'third';
+                if (r.includes('semi')) return 'sf';
+                if (r.includes('quarter')) return 'qf';
+                if (r.includes('round of 16')) return 'r16';
+                if (r.includes('round of 32')) return 'r32';
+                if (r === 'final' || r.endsWith(' final')) return 'final';
+                return 'group';
+            };
+            const matchdayDe = (round) => {
+                const m = (round || '').match(/(\d+)\s*$/);
+                return m ? m[1] : '1';
+            };
+            const dataDe = (fx) => {
+                const ms = fx.timestamp ? fx.timestamp * 1000 : Date.parse(fx.date);
+                if (!ms || isNaN(ms)) return '';
+                const d = new Date(ms);
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mi = String(d.getMinutes()).padStart(2, '0');
+                return `${mm}/${dd}/${d.getFullYear()} ${hh}:${mi}`;
+            };
+
+            return (items || []).map((it) => {
+                const fx = it.fixture || {};
+                const sShort = ((fx.status && fx.status.short) || '').toUpperCase();
+                const elapsed = fx.status && fx.status.elapsed;
+                const round = (it.league && it.league.round) || '';
+                const homeName = (it.teams && it.teams.home && it.teams.home.name) || '';
+                const awayName = (it.teams && it.teams.away && it.teams.away.name) || '';
+
+                let finished = 'FALSE';
+                let time_elapsed = 'notstarted';
+                if (FINISHED.includes(sShort)) { finished = 'TRUE'; time_elapsed = 'finished'; }
+                else if (LIVE.includes(sShort)) { time_elapsed = (elapsed != null ? String(elapsed) : 'live'); }
+
+                const jogou = finished === 'TRUE' || (time_elapsed !== 'notstarted');
+                const gh = it.goals && it.goals.home;
+                const ga = it.goals && it.goals.away;
+                const tipo = tipoPorRound(round);
+
+                return {
+                    id: `af-${fx.id}`,
+                    fixture_id: fx.id,
+                    _src: 'af',
+                    home_team_name_en: homeName,
+                    away_team_name_en: awayName,
+                    home_score: (jogou && gh != null) ? String(gh) : 'null',
+                    away_score: (jogou && ga != null) ? String(ga) : 'null',
+                    home_scorers: 'null',
+                    away_scorers: 'null',
+                    group: tipo === 'group' ? (grupos[homeName] || grupos[awayName] || 'N/A') : 'N/A',
+                    matchday: matchdayDe(round),
+                    local_date: dataDe(fx),
+                    finished,
+                    time_elapsed,
+                    type: tipo
+                };
+            });
+        }
+
+        // Busca os artilheiros (eventos de gol) de UMA partida sob demanda, ao selecioná-la.
+        async function enriquecerScorersAf(jogo) {
+            if (!jogo || jogo._src !== 'af' || jogo._scorersLoaded || !jogo.fixture_id) return;
+            jogo._scorersLoaded = true; // marca cedo para não repetir a chamada.
+            try {
+                const resp = await fetchWithBackoff(`/api/af?path=/fixtures/events&fixture=${jogo.fixture_id}`, {}, 2, 15000);
+                const data = await resp.json();
+                const eventos = (data && data.response) || [];
+                const golsHome = [];
+                const golsAway = [];
+                eventos.forEach(e => {
+                    if (((e.type || '').toLowerCase()) !== 'goal') return;
+                    const detalhe = (e.detail || '').toLowerCase();
+                    if (detalhe.includes('missed')) return; // pênalti perdido não é gol
+                    const min = (e.time && e.time.elapsed != null) ? `${e.time.elapsed}'` : '';
+                    const nome = (e.player && e.player.name) ? e.player.name : 'Gol';
+                    const pen = detalhe.includes('penalty') ? ' (P)' : '';
+                    const og = detalhe.includes('own') ? ' (contra)' : '';
+                    const entry = `"${nome}${min ? ' ' + min : ''}${pen}${og}"`;
+                    const ehHome = e.team && e.team.name && e.team.name === jogo.home_team_name_en;
+                    (ehHome ? golsHome : golsAway).push(entry);
+                });
+                if (golsHome.length) jogo.home_scorers = `{${golsHome.join(',')}}`;
+                if (golsAway.length) jogo.away_scorers = `{${golsAway.join(',')}}`;
+                salvarCacheJogos(apiGames);
+                if (selectedGame && selectedGame.id === jogo.id) selecionarJogoAPI(jogo.id);
+            } catch (e) { /* mantém o jogo sem a lista de artilheiros */ }
+        }
+
         async function carregarJogosAPI(forcar = false, silencioso = false) {
-            // Evita requisições sobrepostas (a origem é lenta: 10-17s por chamada).
+            // Evita requisições sobrepostas.
             if (apiCarregando) return;
             apiCarregando = true;
 
@@ -1766,19 +1889,20 @@
             }
 
             try {
-                // No refresh silencioso usamos menos tentativas para não empilhar requisições.
-                const tentativas = silencioso ? 2 : 4;
-                const response = await fetchWithBackoff('/api/games', {}, tentativas, 25000);
+                // FONTE PRIMÁRIA: API-Football (confiável, livescore a cada ~15s).
+                const tentativas = silencioso ? 2 : 3;
+                const response = await fetchWithBackoff(`/api/af?path=/fixtures&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, tentativas, 20000);
                 const data = await response.json();
-                
-                if (data && data.games) {
-                    apiGames = data.games;
+
+                if (data && Array.isArray(data.response) && data.response.length) {
+                    const grupos = await obterGruposApiFootball();
+                    apiGames = mapearApiFootball(data.response, grupos);
                     salvarCacheJogos(apiGames);
                 } else {
-                    throw new Error("Resposta da API em formato incorreto.");
+                    throw new Error("API-Football retornou resposta vazia ou em formato inesperado.");
                 }
             } catch (err) {
-                console.warn("API de jogos (worldcup26.ir) falhou/lenta.", err);
+                console.warn("API-Football falhou. Tentando fallback (openfootball).", err);
 
                 // Numa falha transitória durante o auto-refresh, preservamos a lista atual.
                 if (apiGames.length > 0) {
@@ -1954,15 +2078,16 @@
         // Nome legível da fase do torneio (grupos x mata-mata) a partir do campo "type".
         function obterFaseNome(jogo) {
             const tipo = (jogo.type || '').toLowerCase();
+            const grupoLabel = (jogo.group && jogo.group !== 'N/A') ? `Grupo ${jogo.group}` : 'Fase de Grupos';
             switch (tipo) {
-                case 'group': return `Grupo ${jogo.group || 'N/A'} • Rodada ${jogo.matchday || '1'}`;
+                case 'group': return `${grupoLabel} • Rodada ${jogo.matchday || '1'}`;
                 case 'r32': return '16-avos de Final';
                 case 'r16': return 'Oitavas de Final';
                 case 'qf': return 'Quartas de Final';
                 case 'sf': return 'Semifinal';
                 case 'third': return 'Disputa de 3º Lugar';
                 case 'final': return 'Final';
-                default: return jogo.group ? `Grupo ${jogo.group} • Rodada ${jogo.matchday || '1'}` : 'Fase Eliminatória';
+                default: return (jogo.group && jogo.group !== 'N/A') ? `Grupo ${jogo.group} • Rodada ${jogo.matchday || '1'}` : 'Fase Eliminatória';
             }
         }
 
@@ -2063,6 +2188,12 @@
                     redCardsHome: 0,
                     redCardsAway: 0
                 };
+            }
+
+            // Busca os artilheiros reais (eventos) sob demanda para jogos da API-Football com gols.
+            if (jogo._src === 'af' && !jogo._scorersLoaded && (isFinished || isLive)
+                && ((parseInt(jogo.home_score) || 0) + (parseInt(jogo.away_score) || 0) > 0)) {
+                enriquecerScorersAf(jogo);
             }
 
             renderizarDetalhesJogoAPI();

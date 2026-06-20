@@ -16,6 +16,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/af"
+  to = "/.netlify/functions/apifootball"
+  status = 200
+
+[[redirects]]
   from = "/api/wc"
   to = "/.netlify/functions/zafronix"
   status = 200
