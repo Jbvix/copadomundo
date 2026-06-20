@@ -2339,9 +2339,9 @@
             let controlesSimulacaoHtml = '';
             if (isLive && !simState.active) {
                 controlesSimulacaoHtml = `
-                    <button onclick="atualizarJogoAoVivo()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition duration-155 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15">
-                        <i class="fa-solid fa-rotate"></i> Atualizar Placar ao Vivo
-                    </button>
+                    <span class="text-[11px] text-emerald-400/90 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate animate-spin" style="animation-duration:3s"></i> Placar atualizado automaticamente
+                    </span>
                     <button onclick="reiniciarSimulacaoJogo()" class="bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs px-4 py-2 rounded-xl transition duration-150 flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-clapperboard"></i> Rever Lances
                     </button>
