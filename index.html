@@ -2683,6 +2683,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
         const canvas = document.getElementById('splash-canvas');
         if (canvas) {
@@ -2690,8 +2691,13 @@
                 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.setSize(window.innerWidth, window.innerHeight, false);
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.15;
 
                 const scene = new THREE.Scene();
+                // Environment map: essencial para materiais metálicos (a taça é dourada) refletirem luz.
+                const pmrem = new THREE.PMREMGenerator(renderer);
+                scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
                 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
                 camera.position.set(0, 0.4, 6.2);
                 camera.lookAt(0, 0, 0);
