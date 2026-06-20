@@ -1413,13 +1413,13 @@
                 console.warn("API Offline ou Falhou. Carregando dados locais/mock de fallback.", err);
                 
                 apiGames = [
-                    { id: "api-1", home_team_name_en: "Mexico", away_team_name_en: "South Africa", home_score: "2", away_score: "0", home_scorers: "{\"J. Quiñones 9'\",\"R. Jiménez 67'\"}", away_scorers: "null", group: "A", matchday: "1", local_date: "11/06/2026 13:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
-                    { id: "api-2", home_team_name_en: "South Korea", away_team_name_en: "Czech Republic", home_score: "2", away_score: "1", home_scorers: "{\"I.B. Hwang 67'\",\"H.G. Oh 80'\"}", away_scorers: "{\"L. Krejčí 59'\"}", group: "A", matchday: "1", local_date: "11/06/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
-                    { id: "api-3", home_team_name_en: "United States", away_team_name_en: "Morocco", home_score: "1", away_score: "1", home_scorers: "{\"C. Pulisic 44'\"}", away_scorers: "{\"Y. En-Nesyri 82'\"}", group: "B", matchday: "1", local_date: "12/06/2026 16:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
-                    { id: "api-4", home_team_name_en: "Canada", away_team_name_en: "Haiti", home_score: "3", away_score: "1", home_scorers: "{\"J. David 12'\",\"A. Davies 35'\",\"C. Larin 78'\"}", away_scorers: "{\"F. Pierrot 52'\"}", group: "B", matchday: "1", local_date: "12/06/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
-                    { id: "api-5", home_team_name_en: "Brazil", away_team_name_en: "Morocco", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "C", matchday: "1", local_date: "13/06/2026 19:00", finished: "FALSE", time_elapsed: "not started", type: "group" },
-                    { id: "api-6", home_team_name_en: "Brazil", away_team_name_en: "Haiti", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "C", matchday: "2", local_date: "19/06/2026 21:30", finished: "FALSE", time_elapsed: "not started", type: "group" },
-                    { id: "api-7", home_team_name_en: "Argentina", away_team_name_en: "France", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "F", matchday: "3", local_date: "25/06/2026 16:00", finished: "FALSE", time_elapsed: "not started", type: "group" }
+                    { id: "api-1", home_team_name_en: "Mexico", away_team_name_en: "South Africa", home_score: "2", away_score: "0", home_scorers: "{\"J. Quiñones 9'\",\"R. Jiménez 67'\"}", away_scorers: "null", group: "A", matchday: "1", local_date: "06/11/2026 13:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-2", home_team_name_en: "South Korea", away_team_name_en: "Czech Republic", home_score: "2", away_score: "1", home_scorers: "{\"I.B. Hwang 67'\",\"H.G. Oh 80'\"}", away_scorers: "{\"L. Krejčí 59'\"}", group: "A", matchday: "1", local_date: "06/11/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-3", home_team_name_en: "United States", away_team_name_en: "Morocco", home_score: "1", away_score: "1", home_scorers: "{\"C. Pulisic 44'\"}", away_scorers: "{\"Y. En-Nesyri 82'\"}", group: "B", matchday: "1", local_date: "06/12/2026 16:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-4", home_team_name_en: "Canada", away_team_name_en: "Haiti", home_score: "3", away_score: "1", home_scorers: "{\"J. David 12'\",\"A. Davies 35'\",\"C. Larin 78'\"}", away_scorers: "{\"F. Pierrot 52'\"}", group: "B", matchday: "1", local_date: "06/12/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-5", home_team_name_en: "Brazil", away_team_name_en: "Morocco", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "C", matchday: "1", local_date: "06/13/2026 19:00", finished: "FALSE", time_elapsed: "notstarted", type: "group" },
+                    { id: "api-6", home_team_name_en: "Brazil", away_team_name_en: "Haiti", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "C", matchday: "2", local_date: "06/19/2026 21:30", finished: "FALSE", time_elapsed: "notstarted", type: "group" },
+                    { id: "api-7", home_team_name_en: "Argentina", away_team_name_en: "France", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "F", matchday: "3", local_date: "06/25/2026 16:00", finished: "FALSE", time_elapsed: "notstarted", type: "group" }
                 ];
             }
 
@@ -1447,9 +1447,13 @@
             
             let filtered = apiGames;
             if (apiFilter === 'live') {
-                filtered = apiGames.filter(j => j.finished === 'FALSE' && j.time_elapsed !== 'not started');
+                filtered = apiGames.filter(j => {
+                    const st = normalizeStatus(j.time_elapsed);
+                    const isFin = j.finished === 'TRUE' || st === 'finished';
+                    return !isFin && st !== 'notstarted' && st !== 'null' && st !== '';
+                });
             } else if (apiFilter === 'finished') {
-                filtered = apiGames.filter(j => j.finished === 'TRUE' || j.time_elapsed === 'finished');
+                filtered = apiGames.filter(j => j.finished === 'TRUE' || normalizeStatus(j.time_elapsed) === 'finished');
             }
 
             if (searchVal) {
@@ -1479,10 +1483,11 @@
                 let statusBadge = '';
                 let scoreText = 'vs';
 
-                if (jogo.finished === 'TRUE' || jogo.time_elapsed === 'finished') {
+                const statusNorm = normalizeStatus(jogo.time_elapsed);
+                if (jogo.finished === 'TRUE' || statusNorm === 'finished') {
                     statusBadge = `<span class="text-[9px] bg-slate-800 border border-slate-700 text-slate-400 px-2 py-0.5 rounded font-bold uppercase">Encerrado</span>`;
                     scoreText = `${jogo.home_score} - ${jogo.away_score}`;
-                } else if (jogo.time_elapsed !== 'not started' && jogo.time_elapsed !== 'null' && jogo.time_elapsed) {
+                } else if (statusNorm !== 'notstarted' && statusNorm !== 'null' && statusNorm !== '') {
                     statusBadge = `<span class="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded font-bold uppercase animate-pulse flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Ao Vivo</span>`;
                     scoreText = `${jogo.home_score !== 'null' ? jogo.home_score : 0} - ${jogo.away_score !== 'null' ? jogo.away_score : 0}`;
                 } else {
@@ -1513,6 +1518,45 @@
                 `;
                 listContainer.insertAdjacentHTML('beforeend', itemHtml);
             });
+        }
+
+        // Converte o status bruto da API (ex.: "notstarted", "not started", "Not_Started")
+        // para uma forma canônica sem espaços/underscores e em minúsculas.
+        function normalizeStatus(elapsed) {
+            return (elapsed === undefined || elapsed === null ? '' : String(elapsed))
+                .toLowerCase()
+                .replace(/[\s_]/g, '');
+        }
+
+        // Faz o parse dos artilheiros no formato de array do Postgres: {"J. Quiñones 9'","R. Jiménez 67'"}.
+        // Aceita também "null", null, vazio ou "{}" retornando uma lista vazia.
+        function parseScorers(raw) {
+            if (!raw || raw === 'null' || raw === 'NULL' || raw === '{}') return [];
+            const str = String(raw);
+            // Remove aspas retas e tipográficas (a API mistura " com “ ”) das bordas de cada nome.
+            const limpar = s => s.replace(/^[\s"“”]+|[\s"“”]+$/g, '');
+            const matches = str.match(/"([^"]*)"/g);
+            if (matches) {
+                return matches.map(s => limpar(s)).filter(Boolean);
+            }
+            return str
+                .replace(/^\{|\}$/g, '')
+                .split(',')
+                .map(s => limpar(s))
+                .filter(s => s && s.toLowerCase() !== 'null');
+        }
+
+        // A API entrega a data em MM/DD/YYYY HH:mm. Converte para o padrão brasileiro DD/MM/YYYY HH:mm.
+        function formatarData(raw) {
+            if (!raw) return '';
+            const str = String(raw).trim();
+            const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(.*)$/);
+            if (!m) return str;
+            const mes = m[1].padStart(2, '0');
+            const dia = m[2].padStart(2, '0');
+            const ano = m[3];
+            const resto = m[4] || '';
+            return `${dia}/${mes}/${ano}${resto}`;
         }
 
         function selecionarJogoAPI(jogoId) {
@@ -1764,7 +1808,7 @@
                         <!-- Detalhes do Local -->
                         <div class="text-[11px] text-slate-400 flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2 text-center border-t border-slate-800/60 pt-3 w-full max-w-lg">
                             <span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> Lincoln Financial Field, Filadélfia</span>
-                            <span><i class="fa-solid fa-calendar text-yellow-400 mr-1"></i> ${jogo.local_date}</span>
+                            <span><i class="fa-solid fa-calendar text-yellow-400 mr-1"></i> ${formatarData(jogo.local_date)}</span>
                         </div>
 
                         <!-- Controles de Simulação Interativa -->
