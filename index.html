@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js para visualizações estatísticas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Import map do three.js para a splashscreen de abertura (taça 3D + bandeiras) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
     <!-- Polyfill para exibir bandeiras (flags) coloridas no Windows (Google Chrome/Firefox) -->
     <script type="module">
         import { polyfillCountryFlagEmojis } from "https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/+esm";
@@ -52,9 +61,98 @@
                 order: 1 !important;
             }
         }
+        /* --- SPLASHSCREEN DE ABERTURA --- */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 35%, #0b2a3f 0%, #061425 55%, #020912 100%);
+            overflow: hidden;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        #splash-screen.splash-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #splash-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .splash-ui {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            pointer-events: none;
+            width: min(92vw, 540px);
+            margin-top: auto;
+            padding-bottom: 6vh;
+        }
+        .splash-ui a, .splash-ui button { pointer-events: auto; }
+        @keyframes splashGlow {
+            0%, 100% { text-shadow: 0 0 18px rgba(250, 204, 21, 0.45); }
+            50% { text-shadow: 0 0 34px rgba(250, 204, 21, 0.85); }
+        }
+        .splash-title { animation: splashGlow 2.8s ease-in-out infinite; }
+        .splash-bar-track {
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .splash-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #facc15, #10b981);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+            transition: width 0.2s linear;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-slate-950 via-emerald-950/15 to-blue-950/20 text-slate-100">
+
+    <!-- SPLASHSCREEN DE ABERTURA (taça 3D + bandeiras + barra de 30s) -->
+    <div id="splash-screen">
+        <canvas id="splash-canvas"></canvas>
+        <div class="splash-ui">
+            <h1 class="splash-title text-3xl sm:text-5xl font-black tracking-tight text-white mb-1">
+                COPA DO MUNDO <span class="text-yellow-400">2026</span>
+            </h1>
+            <p class="text-emerald-300/80 text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] mb-6">IA Predictor Dashboard</p>
+
+            <div class="splash-bar-track">
+                <div id="splash-bar-fill" class="splash-bar-fill"></div>
+            </div>
+            <p id="splash-status" class="text-slate-300 text-xs mt-3 font-mono">Iniciando...</p>
+
+            <div class="flex items-center gap-3 mt-6">
+                <button id="splash-sound-btn" class="text-xs font-semibold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-2 transition flex items-center gap-2">
+                    <i class="fa-solid fa-volume-high text-yellow-400"></i> Ativar som
+                </button>
+                <button id="splash-skip-btn" class="text-xs font-semibold text-slate-400 hover:text-white border border-transparent hover:border-white/10 rounded-full px-4 py-2 transition flex items-center gap-2">
+                    Pular <i class="fa-solid fa-forward"></i>
+                </button>
+            </div>
+
+            <a href="https://wa.me/5588992475979" target="_blank" rel="noopener"
+               class="mt-7 inline-flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 px-5 py-2.5 rounded-full shadow-lg shadow-emerald-500/20 transition hover:scale-105 active:scale-95">
+                <i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp: (88) 99247-5979
+            </a>
+        </div>
+    </div>
 
     <!-- CABEÇALHO -->
     <header class="border-b border-emerald-900/30 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
@@ -2465,6 +2563,223 @@
             } catch (err) {
                 console.error("Erro na resenha da IA:", err);
                 commentaryBox.innerHTML = `<span class="text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> O parceiro de resenha desceu para comprar mais gelada. Tente novamente!</span>`;
+            }
+        }
+    </script>
+
+    <!-- SPLASHSCREEN: controle (barra 30s, música, skip) — resiliente a falha do 3D -->
+    <script>
+        (function () {
+            const splash = document.getElementById('splash-screen');
+            if (!splash) return;
+            const barFill = document.getElementById('splash-bar-fill');
+            const statusEl = document.getElementById('splash-status');
+            const skipBtn = document.getElementById('splash-skip-btn');
+            const soundBtn = document.getElementById('splash-sound-btn');
+            const DURACAO = 30000;
+            let finished = false;
+
+            document.body.style.overflow = 'hidden';
+
+            window.splashSetStatus = function (txt) {
+                if (statusEl && !finished) statusEl.textContent = txt;
+            };
+
+            function finishSplash() {
+                if (finished) return;
+                finished = true;
+                if (window.splashStop3D) { try { window.splashStop3D(); } catch (e) {} }
+                pararHino();
+                splash.classList.add('splash-hidden');
+                document.body.style.overflow = '';
+                setTimeout(function () { splash.style.display = 'none'; }, 850);
+            }
+            window.splashFinish = finishSplash;
+
+            const t0 = performance.now();
+            (function tick() {
+                if (finished) return;
+                const pct = Math.min((performance.now() - t0) / DURACAO, 1);
+                if (barFill) barFill.style.width = (pct * 100) + '%';
+                if (statusEl && pct > 0.92) statusEl.textContent = 'Bem-vindo à Copa! 🏆';
+                if (pct >= 1) { finishSplash(); return; }
+                requestAnimationFrame(tick);
+            })();
+
+            if (skipBtn) skipBtn.addEventListener('click', finishSplash);
+
+            // --- Música de abertura (hino sintetizado via Web Audio API, sem arquivos externos) ---
+            let audioCtx = null, master = null, somAtivo = false, hinoTimer = null, idx = 0;
+            const melodia = [
+                { f: 523.25, d: 0.30 }, { f: 659.25, d: 0.30 }, { f: 783.99, d: 0.30 }, { f: 1046.50, d: 0.55 },
+                { f: 783.99, d: 0.30 }, { f: 880.00, d: 0.55 }, { f: 0, d: 0.20 },
+                { f: 698.46, d: 0.30 }, { f: 880.00, d: 0.30 }, { f: 1046.50, d: 0.55 },
+                { f: 987.77, d: 0.30 }, { f: 783.99, d: 0.55 }, { f: 0, d: 0.25 },
+                { f: 587.33, d: 0.30 }, { f: 698.46, d: 0.30 }, { f: 880.00, d: 0.55 },
+                { f: 783.99, d: 0.30 }, { f: 659.25, d: 0.30 }, { f: 523.25, d: 0.70 }, { f: 0, d: 0.45 }
+            ];
+
+            function playTone(freq, dur, type, peak) {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                const t = audioCtx.currentTime;
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(peak, t + 0.03);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.95);
+                osc.connect(g); g.connect(master);
+                osc.start(t); osc.stop(t + dur + 0.05);
+            }
+
+            function tocarNota() {
+                if (!somAtivo || finished) return;
+                const n = melodia[idx % melodia.length];
+                if (n.f) {
+                    playTone(n.f, n.d, 'triangle', 0.9);
+                    playTone(n.f / 2, n.d, 'sine', 0.4);
+                }
+                idx++;
+                hinoTimer = setTimeout(tocarNota, Math.max(60, n.d * 1000));
+            }
+
+            function ativarSom() {
+                if (somAtivo) return;
+                try {
+                    if (!audioCtx) {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        master = audioCtx.createGain();
+                        master.gain.value = 0.16;
+                        master.connect(audioCtx.destination);
+                    }
+                    audioCtx.resume();
+                    somAtivo = true;
+                    tocarNota();
+                    if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-yellow-400"></i> Mutar';
+                } catch (e) { /* áudio indisponível */ }
+            }
+
+            function pararHino() {
+                somAtivo = false;
+                if (hinoTimer) { clearTimeout(hinoTimer); hinoTimer = null; }
+                if (audioCtx) { try { audioCtx.suspend(); } catch (e) {} }
+            }
+
+            if (soundBtn) {
+                soundBtn.addEventListener('click', function () {
+                    if (!somAtivo) { ativarSom(); }
+                    else { pararHino(); if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-high text-yellow-400"></i> Ativar som'; }
+                });
+            }
+            // Navegadores bloqueiam áudio sem interação: inicia na primeira ação do usuário.
+            window.addEventListener('pointerdown', function once() {
+                if (!somAtivo) ativarSom();
+                window.removeEventListener('pointerdown', once, true);
+            }, { once: true, capture: true });
+        })();
+    </script>
+
+    <!-- SPLASHSCREEN: cena 3D (taça world_cup_trophy.glb + bandeiras orbitando) -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const canvas = document.getElementById('splash-canvas');
+        if (canvas) {
+            try {
+                const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setSize(window.innerWidth, window.innerHeight, false);
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+                camera.position.set(0, 0.4, 6.2);
+                camera.lookAt(0, 0, 0);
+
+                scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+                const dir = new THREE.DirectionalLight(0xffffff, 1.7);
+                dir.position.set(3, 6, 5);
+                scene.add(dir);
+                const gold = new THREE.PointLight(0xfacc15, 1.5, 60);
+                gold.position.set(-3, 2, 3);
+                scene.add(gold);
+                const green = new THREE.PointLight(0x10b981, 1.1, 60);
+                green.position.set(3, -1.5, 2);
+                scene.add(green);
+
+                let trophyGroup = null;
+                const loader = new GLTFLoader();
+                loader.load('world_cup_trophy.glb', function (gltf) {
+                    const trophy = gltf.scene;
+                    const box = new THREE.Box3().setFromObject(trophy);
+                    const size = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
+                    trophy.position.sub(center);
+                    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+                    trophy.scale.setScalar(3.4 / maxDim);
+                    trophyGroup = new THREE.Group();
+                    trophyGroup.add(trophy);
+                    scene.add(trophyGroup);
+                    if (window.splashSetStatus) window.splashSetStatus('Taça carregada! Preparando a arena...');
+                }, function (xhr) {
+                    if (xhr.lengthComputable && window.splashSetStatus) {
+                        window.splashSetStatus('Carregando taça... ' + Math.round((xhr.loaded / xhr.total) * 100) + '%');
+                    }
+                }, function (err) {
+                    console.warn('Falha ao carregar a taça 3D.', err);
+                    if (window.splashSetStatus) window.splashSetStatus('Carregando bandeiras...');
+                });
+
+                // Bandeiras (imagens Twemoji = funcionam no Windows, diferente do emoji em canvas).
+                const flagCodes = [
+                    '1f1e7-1f1f7', '1f1e6-1f1f7', '1f1eb-1f1f7', '1f1e9-1f1ea', '1f1ea-1f1f8',
+                    '1f1f5-1f1f9', '1f1ee-1f1f9', '1f1f3-1f1f1', '1f1f2-1f1fd', '1f1fa-1f1f8',
+                    '1f1e8-1f1e6', '1f1ef-1f1f5', '1f1f0-1f1f7', '1f1ed-1f1f7', '1f1e7-1f1ea', '1f1fa-1f1fe'
+                ];
+                const flagGroup = new THREE.Group();
+                scene.add(flagGroup);
+                const texLoader = new THREE.TextureLoader();
+                texLoader.setCrossOrigin('anonymous');
+                const RAIO = 2.9;
+                flagCodes.forEach(function (code, i) {
+                    const url = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/' + code + '.png';
+                    const tex = texLoader.load(url);
+                    tex.colorSpace = THREE.SRGBColorSpace;
+                    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+                    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.39), mat);
+                    mesh.userData.angle = (i / flagCodes.length) * Math.PI * 2;
+                    flagGroup.add(mesh);
+                });
+
+                let running = true;
+                window.splashStop3D = function () {
+                    running = false;
+                    try { renderer.dispose(); } catch (e) {}
+                };
+
+                window.addEventListener('resize', function () {
+                    renderer.setSize(window.innerWidth, window.innerHeight, false);
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                });
+
+                const clock = new THREE.Clock();
+                (function animate() {
+                    if (!running) return;
+                    requestAnimationFrame(animate);
+                    const dt = clock.getDelta();
+                    const el = clock.elapsedTime;
+                    if (trophyGroup) trophyGroup.rotation.y += dt * 0.55;
+                    flagGroup.children.forEach(function (m) {
+                        m.userData.angle += dt * 0.32;
+                        const a = m.userData.angle;
+                        m.position.set(Math.cos(a) * RAIO, Math.sin(a * 1.4 + el * 0.5) * 0.7, Math.sin(a) * RAIO);
+                        m.lookAt(camera.position);
+                    });
+                    renderer.render(scene, camera);
+                })();
+            } catch (e) {
+                console.warn('WebGL indisponível para a splashscreen 3D.', e);
             }
         }
     </script>
