@@ -1829,10 +1829,15 @@
             simState.homeScorers = parseScorers(jogo.home_scorers);
             simState.awayScorers = parseScorers(jogo.away_scorers);
 
-            const isFinished = jogo.finished === 'TRUE' || jogo.time_elapsed === 'finished';
-            
-            if (isFinished) {
-                simState.minute = 90;
+            const statusNorm = normalizeStatus(jogo.time_elapsed);
+            const isFinished = jogo.finished === 'TRUE' || statusNorm === 'finished';
+            const isLive = !isFinished && statusNorm !== 'notstarted' && statusNorm !== 'null' && statusNorm !== '';
+            simState.isLive = isLive;
+
+            // Jogos finalizados E ao vivo usam o placar/artilheiros REAIS da API.
+            // Só jogos não iniciados começam zerados (modo simulação).
+            if (isFinished || isLive) {
+                simState.minute = isFinished ? 90 : 0;
                 simState.homeScore = parseInt(jogo.home_score) || 0;
                 simState.awayScore = parseInt(jogo.away_score) || 0;
                 
@@ -1914,7 +1919,9 @@
             const infoA = obterInfoTime(jogo.home_team_name_en);
             const infoB = obterInfoTime(jogo.away_team_name_en);
 
-            const isFinished = jogo.finished === 'TRUE' || jogo.time_elapsed === 'finished';
+            const statusNorm = normalizeStatus(jogo.time_elapsed);
+            const isFinished = jogo.finished === 'TRUE' || statusNorm === 'finished';
+            const isLive = !isFinished && statusNorm !== 'notstarted' && statusNorm !== 'null' && statusNorm !== '';
             
             let badgeStatusHtml = '';
             let minutoText = '';
@@ -1922,6 +1929,9 @@
             if (isFinished) {
                 badgeStatusHtml = `<span class="text-[10px] bg-slate-800 border border-slate-700 text-slate-400 px-3 py-1 rounded-full font-bold uppercase"><i class="fa-solid fa-flag-checkered mr-1"></i> Finalizado</span>`;
                 minutoText = 'Fim de Jogo';
+            } else if (isLive && !simState.active) {
+                badgeStatusHtml = `<span class="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase animate-pulse flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Ao Vivo</span>`;
+                minutoText = 'Ao Vivo';
             } else if (simState.active) {
                 badgeStatusHtml = `<span class="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase animate-pulse flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Em Andamento</span>`;
                 minutoText = `${simState.minute}' tempo`;
@@ -1931,7 +1941,7 @@
             }
 
             let controlesSimulacaoHtml = '';
-            if (!isFinished) {
+            if (!isFinished && !isLive) {
                 if (!simState.active) {
                     controlesSimulacaoHtml = `
                         <button onclick="iniciarSimulacaoJogo()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition duration-155 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15">
