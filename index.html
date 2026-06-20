@@ -80,6 +80,9 @@
                 <button onclick="switchTab('players')" id="btn-tab-players" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-users mr-1"></i> Jogadores
                 </button>
+                <button onclick="switchTab('live')" id="btn-tab-live" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
+                    <i class="fa-solid fa-tower-broadcast mr-1"></i> Estatísticas
+                </button>
                 <button onclick="switchTab('ia-chat')" id="btn-tab-ia-chat" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white flex items-center gap-1 whitespace-nowrap">
                     <span class="relative flex h-1.5 w-1.5 shrink-0">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
@@ -321,6 +324,82 @@
                         <button onclick="sendChatMessage()" class="absolute right-2 top-2 p-1.5 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 transition-colors">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: ESTATÍSTICAS EM TEMPO REAL -->
+        <section id="tab-live" class="hidden space-y-6">
+            <!-- Banner de Estatísticas -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950/20 to-blue-950/20 border border-emerald-500/20 p-6 shadow-xl">
+                <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="space-y-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/15 text-emerald-300 border border-emerald-500/20">
+                            <i class="fa-solid fa-satellite-dish mr-1 animate-pulse text-yellow-400"></i> Dados de API & Simulação IA
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Estatísticas ao Vivo & Resenha da Copa 2026</h2>
+                        <p class="text-slate-300 max-w-xl text-sm leading-relaxed">
+                            Acompanhe os resultados da API oficial da Copa do Mundo 2026. Escolha uma partida para rodar a simulação estatística tática e debater com a inteligência artificial!
+                        </p>
+                    </div>
+                    <button onclick="carregarJogosAPI(true)" class="bg-gradient-to-r from-yellow-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-lg transition duration-200 text-sm flex items-center justify-center gap-2 self-start md:self-center">
+                        <i class="fa-solid fa-rotate mr-1"></i> Atualizar Jogos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid do Layout de Estatísticas -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Coluna Esquerda: Lista de Partidas -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col h-[650px]">
+                    <div class="mb-4 space-y-3">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <i class="fa-solid fa-list-ul text-yellow-400"></i> Partidas da API
+                        </h3>
+                        
+                        <!-- Filtros Rápidos de Jogos da API -->
+                        <div class="flex gap-1 bg-slate-800/80 border border-slate-700/60 p-0.5 rounded-lg text-xs">
+                            <button onclick="filtrarJogosAPI('all')" id="btn-api-all" class="flex-1 py-1.5 rounded-md font-bold bg-gradient-to-r from-yellow-400 to-emerald-500 text-slate-950 shadow">Todos</button>
+                            <button onclick="filtrarJogosAPI('live')" id="btn-api-live" class="flex-1 py-1.5 rounded-md font-semibold text-slate-400 hover:text-white">Ao Vivo</button>
+                            <button onclick="filtrarJogosAPI('finished')" id="btn-api-finished" class="flex-1 py-1.5 rounded-md font-semibold text-slate-400 hover:text-white">Encerrados</button>
+                        </div>
+
+                        <!-- Input de Busca por Seleção -->
+                        <div class="relative">
+                            <input type="text" id="search-api-games" oninput="renderizarListaJogosAPI()" placeholder="Buscar país..." class="w-full bg-slate-800/80 border border-slate-700 text-xs rounded-lg pl-3 pr-8 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            <i class="fa-solid fa-search absolute right-2.5 top-2.5 text-[10px] text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- Container da Lista com Scroll -->
+                    <div id="api-games-list" class="flex-grow overflow-y-auto space-y-2 pr-1 scrollbar-none">
+                        <!-- Carregando/Lista de partidas -->
+                        <div class="text-center py-10 text-slate-400 text-sm">
+                            <i class="fa-solid fa-spinner animate-spin text-emerald-400 text-2xl mb-2 block"></i>
+                            Buscando partidas da API...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colunas Direita (2/3): Detalhes da Partida e Painel Tático -->
+                <div class="lg:col-span-2 flex flex-col gap-6" id="api-game-details-container">
+                    <!-- Empty State inicial -->
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 shadow-md flex flex-col items-center justify-center text-center h-[650px] min-h-[400px] relative overflow-hidden">
+                        <div class="absolute -right-24 -bottom-24 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl"></div>
+                        <div class="bg-emerald-500/10 p-6 rounded-full border border-emerald-500/20 text-emerald-400 mb-4 animate-bounce">
+                            <i class="fa-solid fa-tv text-4xl"></i>
+                        </div>
+                        <h3 class="font-extrabold text-xl text-white">Nenhuma Partida Selecionada</h3>
+                        <p class="text-slate-400 text-sm max-w-sm mt-2 leading-relaxed">
+                            Selecione um jogo na lista à esquerda para acompanhar as estatísticas simuladas em tempo real e receber os insights exclusivos da nossa IA!
+                        </p>
+                        <div class="mt-6 flex flex-wrap gap-2 justify-center">
+                            <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300 font-semibold border border-slate-700">⚽ Posse de Bola</span>
+                            <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300 font-semibold border border-slate-700">🎯 Finalizações</span>
+                            <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300 font-semibold border border-slate-700">🍻 Resenha de Bar IA</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -980,7 +1059,7 @@
         function switchTab(tabId) {
             activeTab = tabId;
 
-            ['dashboard', 'history', 'players', 'ia-chat'].forEach(section => {
+            ['dashboard', 'history', 'players', 'live', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
                 if (section === tabId) {
                     el.classList.remove('hidden');
@@ -989,18 +1068,30 @@
                 }
             });
 
-            ['dashboard', 'history', 'players', 'ia-chat'].forEach(section => {
+            ['dashboard', 'history', 'players', 'live', 'ia-chat'].forEach(section => {
                 const btn = document.getElementById(`btn-tab-${section}`);
-                if (section === tabId) {
-                    btn.className = "px-2.5 py-1.5 rounded-lg font-bold transition-all duration-200 bg-gradient-to-r from-yellow-400 to-emerald-500 text-slate-950 shadow whitespace-nowrap";
-                } else {
-                    btn.className = "px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap";
+                if (btn) {
+                    if (section === tabId) {
+                        btn.className = "px-2.5 py-1.5 rounded-lg font-bold transition-all duration-200 bg-gradient-to-r from-yellow-400 to-emerald-500 text-slate-950 shadow whitespace-nowrap";
+                    } else {
+                        btn.className = "px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap";
+                    }
                 }
             });
 
             if (tabId === 'dashboard') {
                 setTimeout(() => {
                     atualizarGraficosDashboard();
+                }, 100);
+            }
+
+            if (tabId === 'live') {
+                setTimeout(() => {
+                    if (apiGames.length === 0) {
+                        carregarJogosAPI();
+                    } else {
+                        renderizarListaJogosAPI();
+                    }
                 }, 100);
             }
         }
@@ -1205,6 +1296,839 @@
                     </div>
                 </div>
             `;
+        }
+
+        // --- 12. ESTATÍSTICAS EM TEMPO REAL & SIMULADOR DA API ---
+        let apiGames = [];
+        let filteredApiGames = [];
+        let selectedGame = null;
+        let simInterval = null;
+        let apiFilter = 'all';
+
+        let simState = {
+            active: false,
+            minute: 0,
+            homeScore: 0,
+            awayScore: 0,
+            homeScorers: [],
+            awayScorers: [],
+            stats: {
+                possessionHome: 50,
+                possessionAway: 50,
+                shotsHome: 0,
+                shotsAway: 0,
+                shotsOnTargetHome: 0,
+                shotsOnTargetAway: 0,
+                cornersHome: 0,
+                cornersAway: 0,
+                foulsHome: 0,
+                foulsAway: 0,
+                yellowCardsHome: 0,
+                yellowCardsAway: 0,
+                redCardsHome: 0,
+                redCardsAway: 0
+            },
+            timeline: [],
+            speed: 1000
+        };
+
+        const MAP_TIMES_API = {
+            "mexico": { nome: "México", bandeira: "🇲🇽", rating: 78, cor: "rgba(16, 185, 129, 1)" },
+            "south africa": { nome: "África do Sul", bandeira: "🇿🇦", rating: 70, cor: "rgba(245, 158, 11, 1)" },
+            "south korea": { nome: "Coreia do Sul", bandeira: "🇰🇷", rating: 76, cor: "rgba(239, 68, 68, 1)" },
+            "czech republic": { nome: "República Tcheca", bandeira: "🇨🇿", rating: 74, cor: "rgba(59, 130, 246, 1)" },
+            "uruguay": { nome: "Uruguai", bandeira: "🇺🇾", rating: 83, cor: "rgba(6, 182, 212, 1)" },
+            "canada": { nome: "Canadá", bandeira: "🇨🇦", rating: 75, cor: "rgba(239, 68, 68, 1)" },
+            "united states": { nome: "Estados Unidos", bandeira: "🇺🇸", rating: 79, cor: "rgba(59, 130, 246, 1)" },
+            "brazil": { nome: "Brasil", bandeira: "🇧🇷", rating: 88, cor: "rgba(16, 185, 129, 1)" },
+            "france": { nome: "França", bandeira: "🇫🇷", rating: 89, cor: "rgba(59, 130, 246, 1)" },
+            "argentina": { nome: "Argentina", bandeira: "🇦🇷", rating: 87, cor: "rgba(6, 182, 212, 1)" },
+            "spain": { nome: "Espanha", bandeira: "🇪🇸", rating: 86, cor: "rgba(239, 68, 68, 1)" },
+            "england": { nome: "Inglaterra", bandeira: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", rating: 87, cor: "rgba(255, 255, 255, 1)" },
+            "germany": { nome: "Alemanha", bandeira: "🇩🇪", rating: 85, cor: "rgba(245, 158, 11, 1)" },
+            "portugal": { nome: "Portugal", bandeira: "🇵🇹", rating: 86, cor: "rgba(168, 85, 247, 1)" },
+            "italy": { nome: "Itália", bandeira: "🇮🇹", rating: 83, cor: "rgba(20, 184, 166, 1)" }
+        };
+
+        function obterInfoTime(nomeEn) {
+            if (!nomeEn) return { nome: "Desconhecido", bandeira: "⚽", rating: 70, cor: "rgba(100, 116, 139, 1)" };
+            const nomeLower = nomeEn.toLowerCase().trim();
+            if (MAP_TIMES_API[nomeLower]) {
+                return MAP_TIMES_API[nomeLower];
+            }
+            
+            const flags = {
+                "belgium": "🇧🇪", "netherlands": "🇳🇱", "colombia": "🇨🇴", "switzerland": "🇨🇭",
+                "denmark": "🇩🇰", "senegal": "🇸🇳", "iran": "🇮🇷", "sweden": "🇸🇪",
+                "ukraine": "🇺🇦", "australia": "🇦🇺", "wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "poland": "🇵🇱",
+                "tunisia": "🇹🇳", "cameroon": "🇨🇲", "ecuador": "🇪🇨", "peru": "🇵🇪",
+                "saudi arabia": "🇸🇦", "costa rica": "🇨🇷", "ghana": "🇬🇭", "algeria": "🇩🇿",
+                "egypt": "🇪🇬", "nigeria": "🇳🇬", "chile": "🇨🇱", "austria": "🇦🇹",
+                "hungary": "🇭🇺", "romania": "🇷🇴", "serbia": "🇷🇸",
+                "slovakia": "🇸🇰", "slovenia": "🇸🇮", "albania": "🇦🇱", "georgia": "🇬🇪",
+                "new zealand": "🇳🇿", "scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "morocco": "🇲🇦", "haiti": "🇭🇹"
+            };
+
+            const ptNames = {
+                "belgium": "Bélgica", "netherlands": "Holanda", "colombia": "Colômbia", "switzerland": "Suíça",
+                "denmark": "Dinamarca", "senegal": "Senegal", "iran": "Irã", "sweden": "Suécia",
+                "ukraine": "Ucrânia", "australia": "Austrália", "wales": "País de Gales", "poland": "Polônia",
+                "tunisia": "Tunísia", "cameroon": "Camarões", "ecuador": "Equador", "peru": "Peru",
+                "saudi arabia": "Arábia Saudita", "costa rica": "Costa Rica", "ghana": "Gana", "algeria": "Argélia",
+                "egypt": "Egito", "nigeria": "Nigéria", "chile": "Chile", "austria": "Áustria",
+                "hungary": "Hungria", "romania": "Romênia", "serbia": "Sérvia",
+                "slovakia": "Eslováquia", "slovenia": "Eslovênia", "albania": "Albânia", "georgia": "Geórgia",
+                "new zealand": "Nova Zelândia", "scotland": "Escócia", "morocco": "Marrocos", "haiti": "Haiti"
+            };
+
+            return {
+                nome: ptNames[nomeLower] || nomeEn.charAt(0).toUpperCase() + nomeEn.slice(1),
+                bandeira: flags[nomeLower] || "⚽",
+                rating: 72,
+                cor: "rgba(100, 116, 139, 1)"
+            };
+        }
+
+        async function carregarJogosAPI(forcar = false) {
+            const listContainer = document.getElementById('api-games-list');
+            if (forcar || apiGames.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 text-sm">
+                        <i class="fa-solid fa-spinner animate-spin text-emerald-400 text-2xl mb-2 block"></i>
+                        Buscando partidas da API...
+                    </div>
+                `;
+            }
+
+            try {
+                const response = await fetchWithBackoff('/api/games');
+                const data = await response.json();
+                
+                if (data && data.games) {
+                    apiGames = data.games;
+                } else {
+                    throw new Error("Resposta da API em formato incorreto.");
+                }
+            } catch (err) {
+                console.warn("API Offline ou Falhou. Carregando dados locais/mock de fallback.", err);
+                
+                apiGames = [
+                    { id: "api-1", home_team_name_en: "Mexico", away_team_name_en: "South Africa", home_score: "2", away_score: "0", home_scorers: "{\"J. Quiñones 9'\",\"R. Jiménez 67'\"}", away_scorers: "null", group: "A", matchday: "1", local_date: "11/06/2026 13:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-2", home_team_name_en: "South Korea", away_team_name_en: "Czech Republic", home_score: "2", away_score: "1", home_scorers: "{\"I.B. Hwang 67'\",\"H.G. Oh 80'\"}", away_scorers: "{\"L. Krejčí 59'\"}", group: "A", matchday: "1", local_date: "11/06/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-3", home_team_name_en: "United States", away_team_name_en: "Morocco", home_score: "1", away_score: "1", home_scorers: "{\"C. Pulisic 44'\"}", away_scorers: "{\"Y. En-Nesyri 82'\"}", group: "B", matchday: "1", local_date: "12/06/2026 16:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-4", home_team_name_en: "Canada", away_team_name_en: "Haiti", home_score: "3", away_score: "1", home_scorers: "{\"J. David 12'\",\"A. Davies 35'\",\"C. Larin 78'\"}", away_scorers: "{\"F. Pierrot 52'\"}", group: "B", matchday: "1", local_date: "12/06/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
+                    { id: "api-5", home_team_name_en: "Brazil", away_team_name_en: "Morocco", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "C", matchday: "1", local_date: "13/06/2026 19:00", finished: "FALSE", time_elapsed: "not started", type: "group" },
+                    { id: "api-6", home_team_name_en: "Brazil", away_team_name_en: "Haiti", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "C", matchday: "2", local_date: "19/06/2026 21:30", finished: "FALSE", time_elapsed: "not started", type: "group" },
+                    { id: "api-7", home_team_name_en: "Argentina", away_team_name_en: "France", home_score: "null", away_score: "null", home_scorers: "null", away_scorers: "null", group: "F", matchday: "3", local_date: "25/06/2026 16:00", finished: "FALSE", time_elapsed: "not started", type: "group" }
+                ];
+            }
+
+            renderizarListaJogosAPI();
+        }
+
+        function filtrarJogosAPI(filtro) {
+            apiFilter = filtro;
+            ['all', 'live', 'finished'].forEach(f => {
+                const btn = document.getElementById(`btn-api-${f}`);
+                if (btn) {
+                    if (f === filtro) {
+                        btn.className = "flex-1 py-1.5 rounded-md font-bold bg-gradient-to-r from-yellow-400 to-emerald-500 text-slate-950 shadow";
+                    } else {
+                        btn.className = "flex-1 py-1.5 rounded-md font-semibold text-slate-400 hover:text-white";
+                    }
+                }
+            });
+            renderizarListaJogosAPI();
+        }
+
+        function renderizarListaJogosAPI() {
+            const listContainer = document.getElementById('api-games-list');
+            const searchVal = document.getElementById('search-api-games').value.toLowerCase();
+            
+            let filtered = apiGames;
+            if (apiFilter === 'live') {
+                filtered = apiGames.filter(j => j.finished === 'FALSE' && j.time_elapsed !== 'not started');
+            } else if (apiFilter === 'finished') {
+                filtered = apiGames.filter(j => j.finished === 'TRUE' || j.time_elapsed === 'finished');
+            }
+
+            if (searchVal) {
+                filtered = filtered.filter(j => 
+                    (j.home_team_name_en && j.home_team_name_en.toLowerCase().includes(searchVal)) || 
+                    (j.away_team_name_en && j.away_team_name_en.toLowerCase().includes(searchVal))
+                );
+            }
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-10 text-slate-500 text-xs">
+                        Nenhuma partida encontrada.
+                    </div>
+                `;
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            filtered.forEach(jogo => {
+                const infoA = obterInfoTime(jogo.home_team_name_en);
+                const infoB = obterInfoTime(jogo.away_team_name_en);
+                
+                const isSelected = selectedGame && selectedGame.id === jogo.id;
+                const borderClass = isSelected ? 'border-emerald-500 bg-slate-800/80 shadow-md shadow-emerald-500/10' : 'border-slate-800 hover:border-slate-700 bg-slate-900/40';
+
+                let statusBadge = '';
+                let scoreText = 'vs';
+
+                if (jogo.finished === 'TRUE' || jogo.time_elapsed === 'finished') {
+                    statusBadge = `<span class="text-[9px] bg-slate-800 border border-slate-700 text-slate-400 px-2 py-0.5 rounded font-bold uppercase">Encerrado</span>`;
+                    scoreText = `${jogo.home_score} - ${jogo.away_score}`;
+                } else if (jogo.time_elapsed !== 'not started' && jogo.time_elapsed !== 'null' && jogo.time_elapsed) {
+                    statusBadge = `<span class="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded font-bold uppercase animate-pulse flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Ao Vivo</span>`;
+                    scoreText = `${jogo.home_score !== 'null' ? jogo.home_score : 0} - ${jogo.away_score !== 'null' ? jogo.away_score : 0}`;
+                } else {
+                    statusBadge = `<span class="text-[9px] bg-blue-500/15 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded font-bold uppercase">Agendado</span>`;
+                    scoreText = 'vs';
+                }
+
+                const itemHtml = `
+                    <div onclick="selecionarJogoAPI('${jogo.id}')" class="p-3.5 rounded-xl border ${borderClass} transition-all duration-150 cursor-pointer flex flex-col gap-2">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                            <span>Grupo ${jogo.group || 'N/A'} • Rodada ${jogo.matchday || '1'}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="flex items-center justify-between gap-1">
+                            <div class="flex items-center space-x-2 min-w-0 flex-1">
+                                <span class="text-xl shrink-0 select-none">${infoA.bandeira}</span>
+                                <span class="font-bold text-white text-xs truncate">${infoA.nome}</span>
+                            </div>
+                            <div class="px-2 font-mono font-black text-slate-200 text-xs shrink-0 bg-slate-900/60 rounded py-0.5 border border-slate-800">
+                                ${scoreText}
+                            </div>
+                            <div class="flex items-center space-x-2 min-w-0 flex-1 justify-end">
+                                <span class="font-bold text-white text-xs truncate text-right">${infoB.nome}</span>
+                                <span class="text-xl shrink-0 select-none">${infoB.bandeira}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+
+        function selecionarJogoAPI(jogoId) {
+            const jogo = apiGames.find(j => j.id === jogoId);
+            if (!jogo) return;
+
+            selectedGame = jogo;
+            
+            if (simInterval) {
+                clearInterval(simInterval);
+                simInterval = null;
+            }
+
+            simState.active = false;
+            simState.timeline = [];
+            simState.homeScorers = parseScorers(jogo.home_scorers);
+            simState.awayScorers = parseScorers(jogo.away_scorers);
+
+            const isFinished = jogo.finished === 'TRUE' || jogo.time_elapsed === 'finished';
+            
+            if (isFinished) {
+                simState.minute = 90;
+                simState.homeScore = parseInt(jogo.home_score) || 0;
+                simState.awayScore = parseInt(jogo.away_score) || 0;
+                
+                const totalGoals = simState.homeScore + simState.awayScore;
+                const ratio = totalGoals === 0 ? 0.5 : simState.homeScore / totalGoals;
+                
+                simState.stats = {
+                    possessionHome: totalGoals === 0 ? 50 : Math.min(Math.max(Math.round(45 + (ratio * 10) + (Math.random() * 6 - 3)), 35), 65),
+                    possessionAway: 0,
+                    shotsHome: Math.max(Math.round(simState.homeScore * 3.5 + 4 + Math.random() * 3), 3),
+                    shotsAway: Math.max(Math.round(simState.awayScore * 3.5 + 4 + Math.random() * 3), 3),
+                    shotsOnTargetHome: Math.max(Math.round(simState.homeScore * 2 + 1 + Math.random() * 1), 1),
+                    shotsOnTargetAway: Math.max(Math.round(simState.awayScore * 2 + 1 + Math.random() * 1), 1),
+                    cornersHome: Math.max(Math.round(simState.homeScore * 1.5 + 2 + Math.random() * 2), 1),
+                    cornersAway: Math.max(Math.round(simState.awayScore * 1.5 + 2 + Math.random() * 2), 1),
+                    foulsHome: Math.round(11 + Math.random() * 6),
+                    foulsAway: Math.round(11 + Math.random() * 6),
+                    yellowCardsHome: Math.round(Math.random() * 2),
+                    yellowCardsAway: Math.round(Math.random() * 2),
+                    redCardsHome: Math.random() < 0.05 ? 1 : 0,
+                    redCardsAway: Math.random() < 0.05 ? 1 : 0
+                };
+                simState.stats.possessionAway = 100 - simState.stats.possessionHome;
+
+                simState.homeScorers.forEach(s => {
+                    const minMatch = s.match(/\d+/);
+                    const min = minMatch ? parseInt(minMatch[0]) : Math.round(10 + Math.random() * 70);
+                    simState.timeline.push({ minute: min, type: 'goal', team: 'home', player: s });
+                });
+                simState.awayScorers.forEach(s => {
+                    const minMatch = s.match(/\d+/);
+                    const min = minMatch ? parseInt(minMatch[0]) : Math.round(10 + Math.random() * 70);
+                    simState.timeline.push({ minute: min, type: 'goal', team: 'away', player: s });
+                });
+
+                simState.timeline.sort((a, b) => a.minute - b.minute);
+
+                if (simState.stats.yellowCardsHome > 0) {
+                    simState.timeline.push({ minute: Math.round(20 + Math.random() * 50), type: 'card_yellow', team: 'home', player: 'Falta dura de zaga' });
+                }
+                if (simState.stats.yellowCardsAway > 0) {
+                    simState.timeline.push({ minute: Math.round(20 + Math.random() * 50), type: 'card_yellow', team: 'away', player: 'Falta tática' });
+                }
+
+                simState.timeline.sort((a, b) => a.minute - b.minute);
+            } else {
+                simState.minute = 0;
+                simState.homeScore = 0;
+                simState.awayScore = 0;
+                simState.homeScorers = [];
+                simState.awayScorers = [];
+                simState.stats = {
+                    possessionHome: 50,
+                    possessionAway: 50,
+                    shotsHome: 0,
+                    shotsAway: 0,
+                    shotsOnTargetHome: 0,
+                    shotsOnTargetAway: 0,
+                    cornersHome: 0,
+                    cornersAway: 0,
+                    foulsHome: 0,
+                    foulsAway: 0,
+                    yellowCardsHome: 0,
+                    yellowCardsAway: 0,
+                    redCardsHome: 0,
+                    redCardsAway: 0
+                };
+            }
+
+            renderizarDetalhesJogoAPI();
+            renderizarListaJogosAPI();
+        }
+
+        function renderizarDetalhesJogoAPI() {
+            const container = document.getElementById('api-game-details-container');
+            if (!selectedGame) return;
+
+            const jogo = selectedGame;
+            const infoA = obterInfoTime(jogo.home_team_name_en);
+            const infoB = obterInfoTime(jogo.away_team_name_en);
+
+            const isFinished = jogo.finished === 'TRUE' || jogo.time_elapsed === 'finished';
+            
+            let badgeStatusHtml = '';
+            let minutoText = '';
+            
+            if (isFinished) {
+                badgeStatusHtml = `<span class="text-[10px] bg-slate-800 border border-slate-700 text-slate-400 px-3 py-1 rounded-full font-bold uppercase"><i class="fa-solid fa-flag-checkered mr-1"></i> Finalizado</span>`;
+                minutoText = 'Fim de Jogo';
+            } else if (simState.active) {
+                badgeStatusHtml = `<span class="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase animate-pulse flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Em Andamento</span>`;
+                minutoText = `${simState.minute}' tempo`;
+            } else {
+                badgeStatusHtml = `<span class="text-[10px] bg-blue-500/15 border border-blue-500/30 text-blue-400 px-3 py-1 rounded-full font-bold uppercase"><i class="fa-solid fa-calendar mr-1"></i> Agendado</span>`;
+                minutoText = 'Não Iniciado';
+            }
+
+            let controlesSimulacaoHtml = '';
+            if (!isFinished) {
+                if (!simState.active) {
+                    controlesSimulacaoHtml = `
+                        <button onclick="iniciarSimulacaoJogo()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition duration-155 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15">
+                            <i class="fa-solid fa-play"></i> Iniciar Simulação Tática ⚽
+                        </button>
+                    `;
+                } else {
+                    controlesSimulacaoHtml = `
+                        <button onclick="pausarSimulacaoJogo()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition duration-150 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-pause"></i> Pausar
+                        </button>
+                        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-xl px-2 text-xs">
+                            <span class="text-slate-400 mr-2 font-semibold">Vel:</span>
+                            <button onclick="alterarVelocidadeSimulacao(1000)" class="px-2 py-1 font-bold ${simState.speed === 1000 ? 'text-emerald-400' : 'text-slate-400'}">1x</button>
+                            <button onclick="alterarVelocidadeSimulacao(400)" class="px-2 py-1 font-bold ${simState.speed === 400 ? 'text-emerald-400' : 'text-slate-400'}">2x</button>
+                            <button onclick="alterarVelocidadeSimulacao(100)" class="px-2 py-1 font-bold ${simState.speed === 100 ? 'text-emerald-400' : 'text-slate-400'}">5x</button>
+                        </div>
+                    `;
+                }
+            } else {
+                controlesSimulacaoHtml = `
+                    <button onclick="reiniciarSimulacaoJogo()" class="bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs px-4 py-2 rounded-xl transition duration-150 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> Rever Lances (Simulação Rápida)
+                    </button>
+                `;
+            }
+
+            let timelineEventsHtml = '';
+            if (simState.timeline.length === 0) {
+                timelineEventsHtml = `
+                    <div class="text-center py-10 text-slate-500 text-xs">
+                        Nenhum lance de perigo registrado ainda nesta partida.
+                    </div>
+                `;
+            } else {
+                const sortedTimeline = [...simState.timeline].sort((a, b) => b.minute - a.minute);
+                sortedTimeline.forEach(ev => {
+                    let icon = '⚽';
+                    let title = '';
+                    let textClass = 'text-slate-200';
+                    let teamFlag = ev.team === 'home' ? infoA.bandeira : infoB.bandeira;
+                    let teamName = ev.team === 'home' ? infoA.nome : infoB.nome;
+
+                    if (ev.type === 'goal') {
+                        icon = '⚽';
+                        title = 'GOL!';
+                        textClass = 'text-yellow-400 font-extrabold';
+                    } else if (ev.type === 'card_yellow') {
+                        icon = '🟨';
+                        title = 'Cartão Amarelo';
+                    } else if (ev.type === 'card_red') {
+                        icon = '🟥';
+                        title = 'Cartão Vermelho';
+                        textClass = 'text-rose-400 font-bold';
+                    } else if (ev.type === 'chance') {
+                        icon = '🔥';
+                        title = 'Lance de Perigo';
+                    }
+
+                    timelineEventsHtml += `
+                        <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-800/40 border border-slate-800/50 hover:bg-slate-800 transition duration-100">
+                            <span class="font-mono font-black text-emerald-400 shrink-0 w-8 text-right">${ev.minute}'</span>
+                            <span class="text-base shrink-0 select-none">${icon}</span>
+                            <div class="min-w-0 flex-grow">
+                                <span class="${textClass} block truncate">${title ? `<strong>${title}</strong> ` : ''}${ev.player}</span>
+                                <span class="block text-[10px] text-slate-400">${teamFlag} ${teamName}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const cacheKey = `resenha-${jogo.id}-${simState.homeScore}-${simState.awayScore}-${simState.minute}`;
+            const cachedResenha = localStorage.getItem(cacheKey);
+            const aiCommentaryText = cachedResenha || `
+                <div class="text-center py-4 text-slate-400 text-xs">
+                    Nenhuma análise tática solicitada ainda para o placar de <strong>${simState.homeScore} a ${simState.awayScore}</strong>.
+                </div>
+            `;
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Placar Principal -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col items-center relative overflow-hidden">
+                        <div class="absolute top-3 left-3 flex items-center space-x-2">
+                            ${badgeStatusHtml}
+                        </div>
+                        
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 mt-4 sm:mt-0 font-mono">
+                            ${jogo.type === 'group' ? `Grupo ${jogo.group}` : 'Fase Eliminatória'} • Rodada ${jogo.matchday}
+                        </div>
+
+                        <!-- Times e Placar -->
+                        <div class="w-full flex items-center justify-between gap-2 max-w-xl my-4">
+                            <!-- Time Casa -->
+                            <div class="flex-1 flex flex-col items-center text-center min-w-0">
+                                <span class="text-5xl md:text-6xl mb-2 filter drop-shadow-md select-none shrink-0">${infoA.bandeira}</span>
+                                <span class="font-black text-white text-sm md:text-lg truncate w-full" title="${infoA.nome}">${infoA.nome}</span>
+                                <span class="text-[10px] text-slate-400 mt-0.5">Rating: ${infoA.rating}</span>
+                                <div class="text-[10px] text-slate-400 mt-1.5 space-y-0.5 max-h-[80px] overflow-y-auto w-full scrollbar-none">
+                                    ${simState.homeScorers.map(s => `<div class="truncate">⚽ ${s}</div>`).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Gols e Placar -->
+                            <div class="flex flex-col items-center px-4">
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-4xl md:text-5xl font-black text-white font-mono transition-all duration-300 transform scale-110">${simState.homeScore}</span>
+                                    <span class="text-slate-500 font-extrabold text-xl font-mono">:</span>
+                                    <span class="text-4xl md:text-5xl font-black text-white font-mono transition-all duration-300 transform scale-110">${simState.awayScore}</span>
+                                </div>
+                                <div class="mt-3 text-xs bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1 rounded-full font-bold font-mono">
+                                    ${minutoText}
+                                </div>
+                            </div>
+
+                            <!-- Time Fora -->
+                            <div class="flex-1 flex flex-col items-center text-center min-w-0">
+                                <span class="text-5xl md:text-6xl mb-2 filter drop-shadow-md select-none shrink-0">${infoB.bandeira}</span>
+                                <span class="font-black text-white text-sm md:text-lg truncate w-full" title="${infoB.nome}">${infoB.nome}</span>
+                                <span class="text-[10px] text-slate-400 mt-0.5">Rating: ${infoB.rating}</span>
+                                <div class="text-[10px] text-slate-400 mt-1.5 space-y-0.5 max-h-[80px] overflow-y-auto w-full scrollbar-none">
+                                    ${simState.awayScorers.map(s => `<div class="truncate">⚽ ${s}</div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detalhes do Local -->
+                        <div class="text-[11px] text-slate-400 flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2 text-center border-t border-slate-800/60 pt-3 w-full max-w-lg">
+                            <span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> Lincoln Financial Field, Filadélfia</span>
+                            <span><i class="fa-solid fa-calendar text-yellow-400 mr-1"></i> ${jogo.local_date}</span>
+                        </div>
+
+                        <!-- Controles de Simulação Interativa -->
+                        <div class="mt-4 flex flex-wrap gap-2 w-full justify-center pt-3 border-t border-slate-800/60">
+                            ${controlesSimulacaoHtml}
+                        </div>
+                    </div>
+
+                    <!-- Grid de Estatísticas e Timeline -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Estatísticas Detalhadas -->
+                        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col justify-between">
+                            <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-4">
+                                <i class="fa-solid fa-chart-bar text-yellow-400"></i> Estatísticas Comparativas
+                            </h4>
+                            
+                            <div class="space-y-4">
+                                <!-- Posse de Bola -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs font-bold text-slate-350">
+                                        <span>Posse de Bola</span>
+                                        <span>${simState.stats.possessionHome}% - ${simState.stats.possessionAway}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2 flex overflow-hidden border border-slate-700/50">
+                                        <div class="bg-emerald-505 h-full bg-gradient-to-r from-emerald-500 to-emerald-450 transition-all duration-300" style="width: ${simState.stats.possessionHome}%"></div>
+                                        <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${simState.stats.possessionAway}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Chutes Totais -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs font-bold text-slate-350">
+                                        <span>Chutes (No Gol)</span>
+                                        <span>${simState.stats.shotsHome} (${simState.stats.shotsOnTargetHome}) - ${simState.stats.shotsAway} (${simState.stats.shotsOnTargetAway})</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2 flex overflow-hidden border border-slate-700/50">
+                                        <div class="bg-emerald-550 h-full bg-emerald-500 transition-all duration-300" style="width: ${simState.stats.shotsHome + simState.stats.shotsAway > 0 ? (simState.stats.shotsHome / (simState.stats.shotsHome + simState.stats.shotsAway)) * 100 : 50}%"></div>
+                                        <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${simState.stats.shotsHome + simState.stats.shotsAway > 0 ? (simState.stats.shotsAway / (simState.stats.shotsHome + simState.stats.shotsAway)) * 100 : 50}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Escanteios -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs font-bold text-slate-355 font-mono">
+                                        <span>Escanteios</span>
+                                        <span>${simState.stats.cornersHome} - ${simState.stats.cornersAway}</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2 flex overflow-hidden border border-slate-700/50">
+                                        <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${simState.stats.cornersHome + simState.stats.cornersAway > 0 ? (simState.stats.cornersHome / (simState.stats.cornersHome + simState.stats.cornersAway)) * 100 : 50}%"></div>
+                                        <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${simState.stats.cornersHome + simState.stats.cornersAway > 0 ? (simState.stats.cornersAway / (simState.stats.cornersHome + simState.stats.cornersAway)) * 100 : 50}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Faltas -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs font-bold text-slate-350">
+                                        <span>Faltas Cometidas</span>
+                                        <span>${simState.stats.foulsHome} - ${simState.stats.foulsAway}</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2 flex overflow-hidden border border-slate-700/50">
+                                        <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${simState.stats.foulsHome + simState.stats.foulsAway > 0 ? (simState.stats.foulsHome / (simState.stats.foulsHome + simState.stats.foulsAway)) * 100 : 50}%"></div>
+                                        <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${simState.stats.foulsHome + simState.stats.foulsAway > 0 ? (simState.stats.foulsAway / (simState.stats.foulsHome + simState.stats.foulsAway)) * 100 : 50}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Cartões -->
+                                <div class="grid grid-cols-2 gap-4 border-t border-slate-800 pt-3 text-center">
+                                    <div>
+                                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Cartões Amarelos</span>
+                                        <div class="flex justify-center items-center space-x-2 text-xs font-mono font-bold">
+                                            <span class="text-emerald-450">${simState.stats.yellowCardsHome}</span>
+                                            <span class="px-1.5 py-0.5 bg-yellow-400 rounded text-slate-950 font-bold text-[9px]"><i class="fa-solid fa-square"></i></span>
+                                            <span class="text-blue-400">${simState.stats.yellowCardsAway}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Cartões Vermelhos</span>
+                                        <div class="flex justify-center items-center space-x-2 text-xs font-mono font-bold">
+                                            <span class="text-emerald-400">${simState.stats.redCardsHome}</span>
+                                            <span class="px-1.5 py-0.5 bg-rose-600 rounded text-white font-bold text-[9px]"><i class="fa-solid fa-square"></i></span>
+                                            <span class="text-blue-400">${simState.stats.redCardsAway}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Linha do Tempo de Eventos (Timeline) -->
+                        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col h-[280px]">
+                            <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-3 font-mono">
+                                <i class="fa-solid fa-history text-emerald-400"></i> Eventos Importantes
+                            </h4>
+                            
+                            <div id="game-timeline-events" class="flex-grow overflow-y-auto space-y-2 pr-1 scrollbar-none text-xs">
+                                ${timelineEventsHtml}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bloco Resenha da IA (Insights) -->
+                    <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/20 border border-emerald-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-yellow-500/10 rounded-full blur-xl"></div>
+                        <div class="flex items-start gap-4">
+                            <div class="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-400 shrink-0">
+                                <i class="fa-solid fa-comments text-2xl"></i>
+                            </div>
+                            <div class="space-y-2 flex-grow min-w-0">
+                                <h4 class="font-extrabold text-white text-base">Resenha Tática da IA</h4>
+                                <p class="text-[11px] text-slate-400 leading-normal">
+                                    Nosso parceiro de resenha analisa a tática, o placar e as finalizações em tempo real para dar aquele parecer maroto de mesa de bar!
+                                </p>
+                                
+                                <div id="api-game-ai-commentary" class="bg-slate-950/50 rounded-xl p-4 border border-slate-800/80 text-sm text-slate-200 min-h-[60px] relative mt-2 leading-relaxed">
+                                    ${aiCommentaryText}
+                                </div>
+
+                                <div class="pt-2 flex justify-between items-center gap-3 flex-wrap">
+                                    <span class="text-[10px] text-slate-500 font-mono">Requer Gemini API</span>
+                                    <button onclick="solicitarResenhaIAJogo()" id="btn-pedir-resenha" class="bg-gradient-to-r from-yellow-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition duration-150 flex items-center justify-center gap-1.5 shadow shadow-emerald-500/10 select-none">
+                                        <i class="fa-solid fa-beer-mug-empty"></i> Pedir Resenha 🍺
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function iniciarSimulacaoJogo() {
+            if (!selectedGame) return;
+            
+            if (simInterval) clearInterval(simInterval);
+            
+            simState.active = true;
+            
+            if (simState.minute >= 90) {
+                simState.minute = 0;
+                simState.homeScore = 0;
+                simState.awayScore = 0;
+                simState.timeline = [];
+                simState.homeScorers = [];
+                simState.awayScorers = [];
+                simState.stats = {
+                    possessionHome: 50,
+                    possessionAway: 50,
+                    shotsHome: 0,
+                    shotsAway: 0,
+                    shotsOnTargetHome: 0,
+                    shotsOnTargetAway: 0,
+                    cornersHome: 0,
+                    cornersAway: 0,
+                    foulsHome: 0,
+                    foulsAway: 0,
+                    yellowCardsHome: 0,
+                    yellowCardsAway: 0,
+                    redCardsHome: 0,
+                    redCardsAway: 0
+                };
+            }
+
+            renderizarDetalhesJogoAPI();
+            simInterval = setInterval(tickSimulacao, simState.speed);
+        }
+
+        function pausarSimulacaoJogo() {
+            simState.active = false;
+            if (simInterval) {
+                clearInterval(simInterval);
+                simInterval = null;
+            }
+            renderizarDetalhesJogoAPI();
+        }
+
+        function reiniciarSimulacaoJogo() {
+            simState.minute = 0;
+            simState.homeScore = 0;
+            simState.awayScore = 0;
+            simState.timeline = [];
+            simState.homeScorers = [];
+            simState.awayScorers = [];
+            simState.stats = {
+                possessionHome: 50,
+                possessionAway: 50,
+                shotsHome: 0,
+                shotsAway: 0,
+                shotsOnTargetHome: 0,
+                shotsOnTargetAway: 0,
+                cornersHome: 0,
+                cornersAway: 0,
+                foulsHome: 0,
+                foulsAway: 0,
+                yellowCardsHome: 0,
+                yellowCardsAway: 0,
+                redCardsHome: 0,
+                redCardsAway: 0
+            };
+            iniciarSimulacaoJogo();
+        }
+
+        function alterarVelocidadeSimulacao(novaSpeed) {
+            simState.speed = novaSpeed;
+            if (simState.active) {
+                iniciarSimulacaoJogo();
+            } else {
+                renderizarDetalhesJogoAPI();
+            }
+        }
+
+        function tickSimulacao() {
+            if (!selectedGame || !simState.active) return;
+
+            simState.minute++;
+            
+            if (simState.minute >= 90) {
+                simState.minute = 90;
+                pausarSimulacaoJogo();
+                simState.timeline.push({ minute: 90, type: 'chance', team: 'system', player: 'Fim de Jogo! Partida encerrada.' });
+                renderizarDetalhesJogoAPI();
+                return;
+            }
+
+            const infoA = obterInfoTime(selectedGame.home_team_name_en);
+            const infoB = obterInfoTime(selectedGame.away_team_name_en);
+
+            const ratingA = infoA.rating || 75;
+            const ratingB = infoB.rating || 75;
+            const basePoss = Math.round(50 + (ratingA - ratingB) * 1.2);
+            simState.stats.possessionHome = Math.min(Math.max(Math.round(basePoss + (Math.random() * 8 - 4)), 25), 75);
+            simState.stats.possessionAway = 100 - simState.stats.possessionHome;
+
+            const tickRoll = Math.random();
+
+            if (tickRoll < 0.15) {
+                const isHome = Math.random() * (ratingA + ratingB) < ratingA;
+                const team = isHome ? 'home' : 'away';
+                const teamInfo = isHome ? infoA : infoB;
+                
+                if (isHome) simState.stats.shotsHome++; else simState.stats.shotsAway++;
+
+                const onTarget = Math.random() < 0.38;
+                if (onTarget) {
+                    if (isHome) simState.stats.shotsOnTargetHome++; else simState.stats.shotsOnTargetAway++;
+
+                    const isGoal = Math.random() < 0.25;
+                    if (isGoal) {
+                        if (isHome) {
+                            simState.homeScore++;
+                            const player = escolherArtilheiroSimulado(selectedGame.home_team_name_en);
+                            simState.homeScorers.push(`${player} ${simState.minute}'`);
+                            simState.timeline.push({ minute: simState.minute, type: 'goal', team: 'home', player: player });
+                        } else {
+                            simState.awayScore++;
+                            const player = escolherArtilheiroSimulado(selectedGame.away_team_name_en);
+                            simState.awayScorers.push(`${player} ${simState.minute}'`);
+                            simState.timeline.push({ minute: simState.minute, type: 'goal', team: 'away', player: player });
+                        }
+                    } else {
+                        simState.timeline.push({ minute: simState.minute, type: 'chance', team: team, player: `Chute perigoso de ${escolherArtilheiroSimulado(teamInfo.nome)} defendido pelo goleiro!` });
+                    }
+                }
+            } else if (tickRoll < 0.23) {
+                const isHome = Math.random() < 0.5;
+                if (isHome) simState.stats.cornersHome++; else simState.stats.cornersAway++;
+            } else if (tickRoll < 0.35) {
+                const isHome = Math.random() < 0.5;
+                if (isHome) simState.stats.foulsHome++; else simState.stats.foulsAway++;
+
+                if (Math.random() < 0.10) {
+                    if (isHome) {
+                        simState.stats.yellowCardsHome++;
+                        simState.timeline.push({ minute: simState.minute, type: 'card_yellow', team: 'home', player: 'Falta tática forte' });
+                    } else {
+                        simState.stats.yellowCardsAway++;
+                        simState.timeline.push({ minute: simState.minute, type: 'card_yellow', team: 'away', player: 'Falta tática forte' });
+                    }
+                }
+            }
+
+            renderizarDetalhesJogoAPI();
+        }
+
+        function escolherArtilheiroSimulado(nomeSelecao) {
+            const list = JOGADORES.filter(p => p.selecao.toLowerCase() === nomeSelecao.toLowerCase());
+            if (list.length > 0) {
+                const randomP = list[Math.floor(Math.random() * list.length)];
+                return randomP.nome;
+            }
+
+            const craques = {
+                "Mexico": ["Quiñones", "R. Jiménez", "Chavez", "Lozano", "Martin"],
+                "South Africa": ["Zwane", "Mokoena", "Tau", "Morena", "Foster"],
+                "South Korea": ["Son Heung-min", "Hwang Hee-chan", "Lee Kang-in", "Cho Gue-sung"],
+                "Czech Republic": ["Schick", "Souček", "Hložek", "Chytil", "Provod"],
+                "Morocco": ["Ziyech", "En-Nesyri", "Hakimi", "Ounahi", "Boufal"],
+                "Haiti": ["Pierrot", "Nazon", "Guerrier", "Picault", "Alceus"],
+                "United States": ["Pulisic", "Weah", "Balogun", "McKennie", "Reyna"],
+                "Canada": ["David", "Davies", "Larin", "Buchanan", "Eustaquio"],
+                "Brazil": ["Vini Jr", "Rodrygo", "Raphinha", "Neymar Jr", "Endrick"],
+                "France": ["Mbappé", "Griezmann", "Dembele", "Giroud", "Thuram"],
+                "Argentina": ["Messi", "Lautaro", "Julian Alvarez", "De Paul", "Di Maria"]
+            };
+
+            const ptNameLower = nomeSelecao.toLowerCase();
+            for (const [key, val] of Object.entries(craques)) {
+                if (key.toLowerCase() === ptNameLower) {
+                    return val[Math.floor(Math.random() * val.length)];
+                }
+            }
+
+            return "Atacante";
+        }
+
+        async function solicitarResenhaIAJogo() {
+            if (!selectedGame) return;
+
+            const commentaryBox = document.getElementById('api-game-ai-commentary');
+            commentaryBox.innerHTML = `<span class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin text-yellow-400"></i> O parceiro de resenha tá analisando o campinho... 🍺</span>`;
+
+            try {
+                const infoA = obterInfoTime(selectedGame.home_team_name_en);
+                const infoB = obterInfoTime(selectedGame.away_team_name_en);
+
+                const prompt = `Faça uma análise tática rápida e bem-humorada sobre a partida atual.
+                Placar Atual: ${infoA.bandeira} ${infoA.nome} ${simState.homeScore} x ${simState.awayScore} ${infoB.bandeira} ${infoB.nome}.
+                Minuto do Jogo: ${simState.minute}'.
+                Estatísticas:
+                - Posse de Bola: ${infoA.nome} ${simState.stats.possessionHome}% vs ${infoB.nome} ${simState.stats.possessionAway}%
+                - Finalizações: ${infoA.nome} ${simState.stats.shotsHome} (No gol: ${simState.stats.shotsOnTargetHome}) vs ${infoB.nome} ${simState.stats.shotsAway} (No gol: ${simState.stats.shotsOnTargetAway})
+                - Escanteios: ${infoA.nome} ${simState.stats.cornersHome} vs ${infoB.nome} ${simState.stats.cornersAway}
+                - Faltas: ${infoA.nome} ${simState.stats.foulsHome} vs ${infoB.nome} ${simState.stats.foulsAway}
+                - Cartões Amarelos: ${infoA.nome} ${simState.stats.yellowCardsHome} vs ${infoB.nome} ${simState.stats.yellowCardsAway}
+                - Cartões Vermelhos: ${infoA.nome} ${simState.stats.redCardsHome} vs ${infoB.nome} ${simState.stats.redCardsAway}
+                
+                Lances/Gols Relevantes até agora:
+                ${simState.timeline.map(e => `- Minuto ${e.minute}': [${e.type.toUpperCase()}] ${e.player}`).join('\n')}
+
+                Táticas Definidas:
+                - ${infoA.nome}: ${SELECOES[infoA.nome]?.tática || 'Equilibrado'}
+                - ${infoB.nome}: ${SELECOES[infoB.nome]?.tática || 'Equilibrado'}`;
+
+                const systemInstruction = `Você é um torcedor brasileiro fanático, super amigável, acolhedor e comediante na resenha de bar de futebol.
+                Comente os dados da partida que o usuário enviar com muita simpatia, piadas de futebol, usando gírias brasileiras clássicas (como "mano", "parça", "pipocar", "amassar", "retranca", "só por Deus", "que jogaço", "mesa de bar").
+                Fale sobre a eficiência nas finalizações, a tática adotada e faça cornetas engraçadas ou elogios calorosos. Seja curto, direto e mantenha o tom de uma conversa calorosa com cerveja gelada na mão.
+                Dê conselhos táticos brincalhões (tipo "o técnico precisa tirar o zagueiro que tá comendo mosca" ou "o Brasil tem que soltar o Vini Jr").`;
+
+                const response = await fetchWithBackoff('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, systemInstruction })
+                });
+
+                const result = await response.json();
+                const text = result.text || "Nosso parceiro de resenha engasgou na cerveja. Tenta de novo, parça!";
+
+                const cacheKey = `resenha-${selectedGame.id}-${simState.homeScore}-${simState.awayScore}-${simState.minute}`;
+                localStorage.setItem(cacheKey, text);
+
+                commentaryBox.innerHTML = text.replace(/\n/g, '<br>');
+
+            } catch (err) {
+                console.error("Erro na resenha da IA:", err);
+                commentaryBox.innerHTML = `<span class="text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> O parceiro de resenha desceu para comprar mais gelada. Tente novamente!</span>`;
+            }
         }
     </script>
 </body>
