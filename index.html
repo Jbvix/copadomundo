@@ -86,6 +86,18 @@
             height: 100%;
             display: block;
         }
+        /* Degradê no rodapé para legibilidade dos textos/controles sobre a cena 3D */
+        #splash-screen::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 44%;
+            background: linear-gradient(to top, #020912 14%, rgba(2, 9, 18, 0.72) 48%, transparent 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
         .splash-ui {
             position: relative;
             z-index: 2;
@@ -2726,7 +2738,8 @@
                     trophy.position.sub(center);
                     trophyGroup = new THREE.Group();
                     trophyGroup.add(trophy);
-                    trophyGroup.scale.setScalar(3.4 / maxDim);
+                    trophyGroup.scale.setScalar(2.8 / maxDim);
+                    trophyGroup.position.y = 0.85;
                     scene.add(trophyGroup);
                     if (window.splashSetStatus) window.splashSetStatus('Taça carregada! Preparando a arena...');
                 }, function (xhr) {
@@ -2748,7 +2761,8 @@
                 scene.add(flagGroup);
                 const texLoader = new THREE.TextureLoader();
                 texLoader.setCrossOrigin('anonymous');
-                const RAIO = 2.9;
+                const RAIO = 2.6;
+                const ALTURA_BANDEIRAS = 0.85;
                 flagCodes.forEach(function (code, i) {
                     const url = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/' + code + '.png';
                     const tex = texLoader.load(url);
@@ -2781,7 +2795,7 @@
                     flagGroup.children.forEach(function (m) {
                         m.userData.angle += dt * 0.32;
                         const a = m.userData.angle;
-                        m.position.set(Math.cos(a) * RAIO, Math.sin(a * 1.4 + el * 0.5) * 0.7, Math.sin(a) * RAIO);
+                        m.position.set(Math.cos(a) * RAIO, ALTURA_BANDEIRAS + Math.sin(a * 1.4 + el * 0.5) * 0.7, Math.sin(a) * RAIO);
                         m.lookAt(camera.position);
                     });
                     renderer.render(scene, camera);
