@@ -1059,6 +1059,9 @@
         function switchTab(tabId) {
             activeTab = tabId;
 
+            // Encerra o auto-refresh ao trocar de aba; ele só roda na aba de estatísticas.
+            pararAutoRefreshAPI();
+
             ['dashboard', 'history', 'players', 'live', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
                 if (section === tabId) {
@@ -1093,6 +1096,7 @@
                         renderizarListaJogosAPI();
                     }
                 }, 100);
+                iniciarAutoRefreshAPI();
             }
         }
 
@@ -1389,9 +1393,36 @@
             };
         }
 
-        async function carregarJogosAPI(forcar = false) {
+        // --- AUTO-REFRESH DA API DE JOGOS (polling somente enquanto a aba de estatísticas está ativa) ---
+        let apiPollInterval = null;
+        const API_POLL_MS = 30000;
+
+        async function autoAtualizarJogosAPI() {
+            // Não interrompe uma simulação tática em andamento.
+            if (simState.active) return;
+            await carregarJogosAPI(true, true);
+            // Re-sincroniza o jogo selecionado com os dados novos (placar/status ao vivo).
+            if (selectedGame && !simState.active) {
+                const atualizado = apiGames.find(j => j.id === selectedGame.id);
+                if (atualizado) selecionarJogoAPI(atualizado.id);
+            }
+        }
+
+        function iniciarAutoRefreshAPI() {
+            pararAutoRefreshAPI();
+            apiPollInterval = setInterval(autoAtualizarJogosAPI, API_POLL_MS);
+        }
+
+        function pararAutoRefreshAPI() {
+            if (apiPollInterval) {
+                clearInterval(apiPollInterval);
+                apiPollInterval = null;
+            }
+        }
+
+        async function carregarJogosAPI(forcar = false, silencioso = false) {
             const listContainer = document.getElementById('api-games-list');
-            if (forcar || apiGames.length === 0) {
+            if (!silencioso && (forcar || apiGames.length === 0)) {
                 listContainer.innerHTML = `
                     <div class="text-center py-10 text-slate-400 text-sm">
                         <i class="fa-solid fa-spinner animate-spin text-emerald-400 text-2xl mb-2 block"></i>
