@@ -395,12 +395,12 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-lg text-white">Parceiro de Resenha IA</h3>
-                                <p class="text-xs text-yellow-400">Gemini API Seguro (Copa 2026)</p>
+                                <p class="text-xs text-yellow-400">IA Tática Segura (Copa 2026)</p>
                             </div>
                         </div>
                         
                         <p class="text-sm text-slate-300 leading-relaxed">
-                            Converse com nossa IA tática integrada. Toda requisição passa por um servidor proxy seguro no Netlify, protegendo as credenciais contra fraudes.
+                            Converse com nossa IA tática integrada. Toda requisição passa por um servidor proxy seguro, protegendo as credenciais contra fraudes.
                         </p>
                     </div>
 
@@ -538,7 +538,7 @@
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p>&copy; 2026 World Cup Predictor Dashboard. Todos os direitos reservados. Autor: Jossian Brito.</p>
             <div class="flex items-center space-x-4">
-                <span>Modelado por Gemini API</span>
+                <span>Modelado por IA</span>
                 <span>•</span>
                 <span>Simulações Estocásticas Realizadas</span>
             </div>
@@ -1104,7 +1104,7 @@
                     <div class="text-center py-8 text-slate-400 text-sm space-y-2">
                         <i class="fa-solid fa-triangle-exclamation text-yellow-400 text-2xl block"></i>
                         <p class="font-semibold text-white">Não foi possível carregar os detalhes.</p>
-                        <p class="text-xs">Verifique se a variável <code class="text-emerald-400">ZAFRONIX_API_KEY</code> está configurada no Netlify. Dados ao vivo (2026) não estão disponíveis no plano gratuito da Zafronix.</p>
+                        <p class="text-xs">O serviço de dados históricos está temporariamente indisponível. Tente novamente em alguns instantes.</p>
                     </div>
                 `;
             }
@@ -1473,20 +1473,14 @@
                 
                 if (error.message.includes("404")) {
                     errorMsg += `<br><span class='text-[11px] font-normal text-slate-400 block mt-2 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-rose-500/20 text-left'>
-                        <strong>Dica de Deploy (Erro 404):</strong> O Netlify não encontrou a sua Serverless Function no caminho mapeado.<br>
-                        Isso ocorre se você arrastou apenas os arquivos soltos individuais no <em>Netlify Drop</em>, o que desfaz a estrutura das pastas.<br><br>
-                        <strong>Como Corrigir Rapidamente:</strong><br>
-                        1. Crie uma pasta vazia no seu computador.<br>
-                        2. Coloque os arquivos <code>index.html</code>, <code>netlify.toml</code> e a pasta <code>netlify/</code> (contendo <code>functions/gemini.js</code>) dentro dela.<br>
-                        3. Arraste essa <strong>pasta inteira</strong> de uma vez para a área do Netlify Drop!
+                        O serviço de análise tática não foi encontrado no momento. Tente novamente em alguns instantes.
                     </span>`;
                 } else if (error.message.includes("500")) {
                     errorMsg += `<br><span class='text-[11px] font-normal text-slate-400 block mt-2 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-amber-500/20 text-left'>
-                        <strong>Dica de Configuração (Erro 500):</strong> A Serverless Function foi encontrada pelo Netlify, mas falhou ao rodar.<br><br>
-                        <strong>O que verificar:</strong> Certifique-se de que a variável de ambiente <code>GEMINI_API_KEY</code> está cadastrada com o nome correto e com uma chave válida do Google AI Studio nas configurações do site no Netlify.
+                        O serviço de análise tática está temporariamente indisponível. Tente novamente em alguns instantes.
                     </span>`;
                 } else {
-                    errorMsg += `<br><span class='text-[11px] font-normal text-slate-400 block mt-1'>Certifique-se de configurar a sua variável de ambiente GEMINI_API_KEY no painel administrativo do Netlify.</span>`;
+                    errorMsg += `<br><span class='text-[11px] font-normal text-slate-400 block mt-1'>Não foi possível concluir a análise tática agora. Tente novamente em alguns instantes.</span>`;
                 }
 
                 document.getElementById(loadingId).innerHTML = errorMsg;
@@ -2329,7 +2323,7 @@
                                 </div>
 
                                 <div class="pt-2 flex justify-between items-center gap-3 flex-wrap">
-                                    <span class="text-[10px] text-slate-500 font-mono">Requer Gemini API</span>
+                                    <span class="text-[10px] text-slate-500 font-mono">Análise por IA</span>
                                     <button onclick="solicitarResenhaIAJogo()" id="btn-pedir-resenha" class="bg-gradient-to-r from-yellow-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition duration-150 flex items-center justify-center gap-1.5 shadow shadow-emerald-500/10 select-none">
                                         <i class="fa-solid fa-beer-mug-empty"></i> Pedir Resenha 🍺
                                     </button>
