@@ -2614,27 +2614,35 @@
 
             if (skipBtn) skipBtn.addEventListener('click', finishSplash);
 
-            // --- Música de abertura (arquivo MP3: samba/carnaval) ---
+            // --- Música de abertura (arquivo MP3: samba/carnaval) — inicia automaticamente com som ---
             let somAtivo = false;
             const musica = new Audio('viacheslavstarostin-brazil-football-carnival-samba-music-412756.mp3');
             musica.loop = true;
             musica.preload = 'auto';
             musica.volume = 0.55;
 
-            function ativarSom() {
-                if (somAtivo) return;
+            function rotuloMutar() {
+                if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-yellow-400"></i> Mutar';
+            }
+            function rotuloAtivar() {
+                if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-high text-yellow-400"></i> Ativar som';
+            }
+
+            // Toca a música; resolve true se conseguiu reproduzir (com ou sem mudo).
+            function tentarTocar() {
                 try {
                     const p = musica.play();
-                    if (p && typeof p.then === 'function') {
-                        p.then(function () {
-                            somAtivo = true;
-                            if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-yellow-400"></i> Mutar';
-                        }).catch(function () { /* bloqueado até interação do usuário */ });
-                    } else {
-                        somAtivo = true;
-                        if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-yellow-400"></i> Mutar';
-                    }
-                } catch (e) { /* áudio indisponível */ }
+                    if (p && typeof p.then === 'function') return p.then(function () { return true; });
+                    return Promise.resolve(true);
+                } catch (e) { return Promise.resolve(false); }
+            }
+
+            function ativarSom() {
+                if (somAtivo) return;
+                musica.muted = false;
+                tentarTocar().then(function (ok) {
+                    if (ok) { somAtivo = true; rotuloMutar(); }
+                }).catch(function () {});
             }
 
             function pararHino() {
@@ -2645,14 +2653,32 @@
             if (soundBtn) {
                 soundBtn.addEventListener('click', function () {
                     if (!somAtivo) { ativarSom(); }
-                    else { pararHino(); if (soundBtn) soundBtn.innerHTML = '<i class="fa-solid fa-volume-high text-yellow-400"></i> Ativar som'; }
+                    else { pararHino(); rotuloAtivar(); }
                 });
             }
-            // Navegadores bloqueiam áudio sem interação: inicia na primeira ação do usuário.
-            window.addEventListener('pointerdown', function once() {
-                if (!somAtivo) ativarSom();
-                window.removeEventListener('pointerdown', once, true);
-            }, { once: true, capture: true });
+
+            // Inicia a música assim que o splash abre. Se o navegador bloquear o som,
+            // toca em modo mudo (autoplay permitido) e ativa o som no primeiro gesto.
+            (function autoIniciarMusica() {
+                musica.muted = false;
+                tentarTocar().then(function (ok) {
+                    if (ok && !musica.muted) { somAtivo = true; rotuloMutar(); return; }
+                    // Som bloqueado: garante reprodução em mudo e prepara ativação no 1º gesto.
+                    musica.muted = true;
+                    tentarTocar();
+                    rotuloAtivar();
+                    function ativarNoGesto() {
+                        musica.muted = false;
+                        if (!somAtivo) ativarSom();
+                        ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+                            window.removeEventListener(ev, ativarNoGesto, true);
+                        });
+                    }
+                    ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+                        window.addEventListener(ev, ativarNoGesto, { capture: true });
+                    });
+                });
+            })();
         })();
     </script>
 
