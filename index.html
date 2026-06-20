@@ -463,11 +463,11 @@
                 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div class="space-y-2">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/15 text-emerald-300 border border-emerald-500/20">
-                            <i class="fa-solid fa-satellite-dish mr-1 animate-pulse text-yellow-400"></i> Dados de API & Simulação do Téo
+                            <i class="fa-solid fa-satellite-dish mr-1 animate-pulse text-yellow-400"></i> Dados Oficiais & Simulação do Téo
                         </span>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Estatísticas ao Vivo & Resenha da Copa 2026</h2>
                         <p class="text-slate-300 max-w-xl text-sm leading-relaxed">
-                            Acompanhe os resultados da API oficial da Copa do Mundo 2026. Escolha uma partida para rodar a simulação estatística tática e debater com o Téo!
+                            Acompanhe os resultados oficiais da Copa do Mundo 2026. Escolha uma partida para rodar a simulação estatística tática e debater com o Téo!
                         </p>
                     </div>
                     <button onclick="carregarJogosAPI(true)" class="bg-gradient-to-r from-yellow-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-lg transition duration-200 text-sm flex items-center justify-center gap-2 self-start md:self-center">
@@ -482,7 +482,7 @@
                 <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col h-[650px]">
                     <div class="mb-4 space-y-3">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
-                            <i class="fa-solid fa-list-ul text-yellow-400"></i> Partidas da API
+                            <i class="fa-solid fa-list-ul text-yellow-400"></i> Jogos da Copa
                         </h3>
                         
                         <!-- Filtros Rápidos de Jogos da API -->
@@ -504,7 +504,7 @@
                         <!-- Carregando/Lista de partidas -->
                         <div class="text-center py-10 text-slate-400 text-sm">
                             <i class="fa-solid fa-spinner animate-spin text-emerald-400 text-2xl mb-2 block"></i>
-                            Buscando partidas da API...
+                            Buscando os jogos...
                         </div>
                     </div>
                 </div>
@@ -1175,7 +1175,7 @@
                         </div>
                     ` : ''}
 
-                    <p class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800">Fonte: Zafronix World Cup API</p>
+                    <p class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800">Fonte: dados históricos (Zafronix)</p>
                 </div>
             `;
         }
@@ -1982,7 +1982,7 @@
                 listContainer.innerHTML = `
                     <div class="text-center py-10 text-slate-400 text-sm">
                         <i class="fa-solid fa-spinner animate-spin text-emerald-400 text-2xl mb-2 block"></i>
-                        Buscando partidas da API...
+                        Buscando os jogos...
                     </div>
                 `;
             }
