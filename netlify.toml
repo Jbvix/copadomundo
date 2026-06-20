@@ -3,6 +3,8 @@
 # Versão: 1.1.0
 
 [build]
+  base = ""
+  publish = ""
   functions = "netlify/functions"
 
 [functions]
