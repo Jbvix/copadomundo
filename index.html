@@ -1560,6 +1560,60 @@
             }
         }
 
+        // Converte o JSON do openfootball/worldcup.json para o formato interno usado pela UI.
+        function mapearOpenfootball(matches) {
+            const tipoPorRound = (round) => {
+                const r = (round || '').toLowerCase();
+                if (r.includes('third')) return 'third';
+                if (r.includes('semi')) return 'sf';
+                if (r.includes('quarter')) return 'qf';
+                if (r.includes('round of 16')) return 'r16';
+                if (r.includes('round of 32')) return 'r32';
+                if (r.includes('final')) return 'final';
+                return 'group';
+            };
+            const matchdayDe = (round) => {
+                const m = (round || '').match(/Matchday\s+(\d+)/i);
+                return m ? m[1] : (round || '1');
+            };
+            const grupoDe = (group) => (group || '').replace(/^Group\s+/i, '').trim() || 'N/A';
+            const scorersStr = (goals) => {
+                if (!Array.isArray(goals) || goals.length === 0) return 'null';
+                const partes = goals.map(g => {
+                    const min = g.minute ? ` ${g.minute}'` : '';
+                    const pen = g.penalty ? ' (P)' : '';
+                    return `"${(g.name || '').trim()}${min}${pen}"`;
+                });
+                return `{${partes.join(',')}}`;
+            };
+            const dataDe = (date, time) => {
+                if (!date) return '';
+                const m = String(date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                const hora = (time || '').match(/(\d{1,2}:\d{2})/);
+                const horaStr = hora ? ` ${hora[1]}` : '';
+                return m ? `${m[2]}/${m[3]}/${m[1]}${horaStr}` : date;
+            };
+
+            return matches.map((m, i) => {
+                const jogado = m.score && Array.isArray(m.score.ft) && m.score.ft.length === 2;
+                return {
+                    id: `of-${i + 1}`,
+                    home_team_name_en: m.team1,
+                    away_team_name_en: m.team2,
+                    home_score: jogado ? String(m.score.ft[0]) : 'null',
+                    away_score: jogado ? String(m.score.ft[1]) : 'null',
+                    home_scorers: scorersStr(m.goals1),
+                    away_scorers: scorersStr(m.goals2),
+                    group: grupoDe(m.group),
+                    matchday: matchdayDe(m.round),
+                    local_date: dataDe(m.date, m.time),
+                    finished: jogado ? 'TRUE' : 'FALSE',
+                    time_elapsed: jogado ? 'finished' : 'notstarted',
+                    type: tipoPorRound(m.round)
+                };
+            });
+        }
+
         async function carregarJogosAPI(forcar = false, silencioso = false) {
             // Evita requisições sobrepostas (a origem é lenta: 10-17s por chamada).
             if (apiCarregando) return;
@@ -1587,15 +1641,30 @@
                     throw new Error("Resposta da API em formato incorreto.");
                 }
             } catch (err) {
-                console.warn("API de jogos falhou/lenta.", err);
+                console.warn("API de jogos (worldcup26.ir) falhou/lenta.", err);
 
-                // Só cai para o mock se ainda não houver nenhum dado real carregado.
                 // Numa falha transitória durante o auto-refresh, preservamos a lista atual.
                 if (apiGames.length > 0) {
                     apiCarregando = false;
                     return;
                 }
 
+                // Fallback 1: dados REAIS e confiáveis do openfootball (104 jogos, sem chave).
+                try {
+                    const respBackup = await fetchWithBackoff('/api/games-backup', {}, 2, 15000);
+                    const backup = await respBackup.json();
+                    if (backup && Array.isArray(backup.matches) && backup.matches.length) {
+                        apiGames = mapearOpenfootball(backup.matches);
+                        apiCarregando = false;
+                        renderizarListaJogosAPI();
+                        return;
+                    }
+                    throw new Error('Backup em formato inesperado.');
+                } catch (errBackup) {
+                    console.warn("Fallback openfootball também falhou. Usando dados locais mínimos.", errBackup);
+                }
+
+                // Fallback 2 (último recurso): mock local mínimo.
                 apiGames = [
                     { id: "api-1", home_team_name_en: "Mexico", away_team_name_en: "South Africa", home_score: "2", away_score: "0", home_scorers: "{\"J. Quiñones 9'\",\"R. Jiménez 67'\"}", away_scorers: "null", group: "A", matchday: "1", local_date: "06/11/2026 13:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
                     { id: "api-2", home_team_name_en: "South Korea", away_team_name_en: "Czech Republic", home_score: "2", away_score: "1", home_scorers: "{\"I.B. Hwang 67'\",\"H.G. Oh 80'\"}", away_scorers: "{\"L. Krejčí 59'\"}", group: "A", matchday: "1", local_date: "06/11/2026 20:00", finished: "TRUE", time_elapsed: "finished", type: "group" },
