@@ -236,7 +236,7 @@
             </div>
 
             <!-- Grid de Ajustes Táticos e Probabilidades de Sucesso -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <!-- Coluna 1 & 2: Probabilidades e Gráficos -->
                 <div class="lg:col-span-2 space-y-6">
                     
@@ -302,9 +302,9 @@
                 </div>
 
                 <!-- Coluna 3: Painel Lateral de Controle de Táticas -->
-                <div class="flex flex-col h-full min-h-0">
+                <div class="space-y-6">
                     <!-- Configurações de Força e Táticas de Países -->
-                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md flex-1 min-h-0 flex flex-col">
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
                         <div class="mb-4">
                             <h3 class="font-bold text-lg text-white flex items-center gap-2">
                                 <i class="fa-solid fa-sliders text-yellow-400"></i> Painel de Táticas Globais
@@ -318,8 +318,8 @@
                             <i class="fa-solid fa-search absolute right-2.5 top-2.5 text-[10px] text-slate-400"></i>
                         </div>
 
-                        <!-- Menu de Seleções para Configurações Táticas -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 flex-1 min-h-0 overflow-y-auto pr-2" id="tactics-control-container">
+                        <!-- Menu de Seleções para Configurações Táticas (scroll contido) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 max-h-[520px] overflow-y-auto pr-2" id="tactics-control-container">
                             <!-- Injetado por JS de forma iterativa -->
                         </div>
                     </div>
@@ -1063,6 +1063,9 @@
             { en: "Israel", pt: "Israel", flag: "🇮🇱" },
             { en: "Greece", pt: "Grécia", flag: "🇬🇷" },
             { en: "Hungary", pt: "Hungria", flag: "🇭🇺" },
+            { en: "Türkiye", pt: "Turquia", flag: "🇹🇷" },
+            { en: "Turkiye", pt: "Turquia", flag: "🇹🇷" },
+            { en: "Turkey", pt: "Turquia", flag: "🇹🇷" },
             { en: "New Caledonia", pt: "Nova Caledônia", flag: "🇳🇨" },
             { en: "Tahiti", pt: "Taiti", flag: "🇵🇫" }
         ];
