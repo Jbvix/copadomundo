@@ -280,6 +280,20 @@
                             </div>
                         </div>
 
+                        <!-- Filtros: time, grupo e data -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                            <div class="relative">
+                                <input type="text" id="match-search-team" oninput="renderizarJogos()" placeholder="Buscar país..." class="w-full bg-slate-800/80 border border-slate-700 text-xs rounded-lg pl-3 pr-8 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <i class="fa-solid fa-search absolute right-2.5 top-2.5 text-[10px] text-slate-400"></i>
+                            </div>
+                            <select id="match-filter-group" onchange="renderizarJogos()" class="w-full bg-slate-800/80 border border-slate-700 text-xs rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="">Todos os grupos</option>
+                            </select>
+                            <select id="match-filter-date" onchange="renderizarJogos()" class="w-full bg-slate-800/80 border border-slate-700 text-xs rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="">Todas as datas</option>
+                            </select>
+                        </div>
+
                         <!-- Lista de Jogos Container -->
                         <div id="matches-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[450px] overflow-y-auto pr-1">
                             <!-- Injetado dinamicamente por JS -->
@@ -290,7 +304,7 @@
                 <!-- Coluna 3: Painel Lateral de Controle de Táticas -->
                 <div class="space-y-6">
                     <!-- Configurações de Força e Táticas de Países -->
-                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md h-full">
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md h-full flex flex-col">
                         <div class="mb-4">
                             <h3 class="font-bold text-lg text-white flex items-center gap-2">
                                 <i class="fa-solid fa-sliders text-yellow-400"></i> Painel de Táticas Globais
@@ -305,7 +319,7 @@
                         </div>
 
                         <!-- Menu de Seleções para Configurações Táticas -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 max-h-[560px] overflow-y-auto pr-1 scrollbar-none" id="tactics-control-container">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 flex-1 min-h-0 overflow-y-auto pr-2" id="tactics-control-container">
                             <!-- Injetado por JS de forma iterativa -->
                         </div>
                     </div>
@@ -817,6 +831,7 @@
             runMonteCarlo();
             renderizarHistóricoCopas();
             construirJogosDashboard();
+            popularFiltrosJogos();
             renderizarJogos();
             renderizarJogadores();
             aplicarDadosReaisNasProbabilidades();
@@ -1249,6 +1264,14 @@
         let jogosDashboard = JOGOS_MOCK.slice();
         const simuladosManuais = {}; // id -> {golsA, golsB} simulados pelo usuário (preservados no refresh)
 
+        // Converte "MM/DD/YYYY HH:MM" em timestamp; retorna 0 quando não há data.
+        function parseDataLocal(s) {
+            if (!s) return 0;
+            const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+            if (!m) return 0;
+            return new Date(+m[3], +m[1] - 1, +m[2], +(m[4] || 0), +(m[5] || 0)).getTime();
+        }
+
         function construirJogosDashboard() {
             if (Array.isArray(apiGames) && apiGames.length) {
                 jogosDashboard = apiGames.map(g => {
@@ -1257,6 +1280,10 @@
                     const live = !finished && min && min !== 'notstarted' && min !== 'null' && min !== '';
                     const gA = (g.home_score != null && g.home_score !== 'null') ? parseInt(g.home_score, 10) : null;
                     const gB = (g.away_score != null && g.away_score !== 'null') ? parseInt(g.away_score, 10) : null;
+                    const dataMs = parseDataLocal(g.local_date);
+                    const d = dataMs ? new Date(dataMs) : null;
+                    const diaKey = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
+                    const diaLabel = d ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}` : '';
                     return {
                         id: g.id,
                         timeA: nomePtDe(g.home_team_name_en),
@@ -1264,6 +1291,8 @@
                         golsA: gA, golsB: gB,
                         fase: obterFaseNome(g),
                         status: finished ? 'finished' : (live ? 'live' : 'upcoming'),
+                        grupo: (g.group && g.group !== 'N/A') ? g.group : null,
+                        dataMs, diaKey, diaLabel,
                         _real: true,
                         _min: live ? (min === 'live' ? '' : min) : null
                     };
@@ -1286,7 +1315,26 @@
         // Reconstrói e re-renderiza o card do Dashboard (chamado ao atualizar os jogos da API).
         function sincronizarJogosDashboard() {
             construirJogosDashboard();
+            popularFiltrosJogos();
             if (document.getElementById('matches-grid')) renderizarJogos();
+        }
+
+        // Popula os selects de grupo e data com os valores presentes nos jogos (preserva a seleção atual).
+        function popularFiltrosJogos() {
+            const grupoSel = document.getElementById('match-filter-group');
+            const dataSel = document.getElementById('match-filter-date');
+            if (!grupoSel || !dataSel) return;
+
+            const grupos = [...new Set(jogosDashboard.map(j => j.grupo).filter(Boolean))].sort();
+            const diasMap = new Map();
+            jogosDashboard.filter(j => j.diaKey).forEach(j => diasMap.set(j.diaKey, j.diaLabel));
+            const dias = [...diasMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+            const gVal = grupoSel.value, dVal = dataSel.value;
+            grupoSel.innerHTML = '<option value="">Todos os grupos</option>' + grupos.map(g => `<option value="${g}">Grupo ${g}</option>`).join('');
+            dataSel.innerHTML = '<option value="">Todas as datas</option>' + dias.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+            if ([...grupoSel.options].some(o => o.value === gVal)) grupoSel.value = gVal;
+            if ([...dataSel.options].some(o => o.value === dVal)) dataSel.value = dVal;
         }
 
         function bandeiraDeTime(nomePt) {
@@ -1298,15 +1346,25 @@
             if (!container) return;
             container.innerHTML = '';
 
-            let filtered = jogosDashboard;
+            const termo = (document.getElementById('match-search-team') && document.getElementById('match-search-team').value || '').toLowerCase().trim();
+            const grupoF = (document.getElementById('match-filter-group') && document.getElementById('match-filter-group').value) || '';
+            const diaF = (document.getElementById('match-filter-date') && document.getElementById('match-filter-date').value) || '';
+
+            let filtered = jogosDashboard.slice();
             if (matchFilter === 'finished') {
-                filtered = jogosDashboard.filter(j => j.status === 'finished');
+                filtered = filtered.filter(j => j.status === 'finished');
             } else if (matchFilter === 'upcoming') {
-                filtered = jogosDashboard.filter(j => j.status === 'upcoming' || j.status === 'live');
+                filtered = filtered.filter(j => j.status === 'upcoming' || j.status === 'live');
             }
+            if (termo) filtered = filtered.filter(j => (j.timeA || '').toLowerCase().includes(termo) || (j.timeB || '').toLowerCase().includes(termo));
+            if (grupoF) filtered = filtered.filter(j => j.grupo === grupoF);
+            if (diaF) filtered = filtered.filter(j => j.diaKey === diaF);
+
+            // Ordena cronologicamente (jogos sem data vão para o fim).
+            filtered.sort((a, b) => (a.dataMs || Infinity) - (b.dataMs || Infinity));
 
             if (!filtered.length) {
-                container.innerHTML = '<p class="col-span-full text-center text-slate-500 text-sm py-8">Nenhum jogo para este filtro ainda.</p>';
+                container.innerHTML = '<p class="col-span-full text-center text-slate-500 text-sm py-8">Nenhum jogo encontrado para esses filtros.</p>';
                 return;
             }
 
