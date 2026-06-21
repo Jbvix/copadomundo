@@ -608,6 +608,23 @@
                     <div id="stats-historico" class="space-y-3"></div>
                 </div>
             </div>
+
+            <!-- Projeção de título: campo completo (48 seleções) -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-yellow-400"></i> Projeção de Título — Campo Completo
+                    </h3>
+                    <span id="campo-fonte-nota" class="text-xs text-slate-400">Modelo de força</span>
+                </div>
+                <p class="text-xs text-slate-400 mb-4">Probabilidade de cada uma das 48 seleções ser campeã — Monte Carlo (8.000 simulações) com força base e ajuste pela forma real.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div class="h-[420px] relative">
+                        <canvas id="chartCampoCompleto"></canvas>
+                    </div>
+                    <div id="campo-ranking" class="space-y-1.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-none"></div>
+                </div>
+            </div>
         </section>
 
     </main>
@@ -832,6 +849,175 @@
             // Centraliza em ~1.5 ppg; cada métrica desloca alguns pontos de rating.
             const ajuste = (ppg - 1.5) * 2.2 + sgpg * 1.6;
             return Math.max(-6, Math.min(6, ajuste));
+        }
+
+        // Ajuste por forma real a partir do nome em inglês (usado no campo completo).
+        function ajusteFormaRealEn(en) {
+            const r = en && formaRealMap[en];
+            if (!r || !r.played) return 0;
+            const ppg = r.pts / r.played;
+            const sgpg = (r.gf - r.ga) / r.played;
+            return Math.max(-6, Math.min(6, (ppg - 1.5) * 2.2 + sgpg * 1.6));
+        }
+
+        // =====================================================================
+        // PROJEÇÃO DE TÍTULO — CAMPO COMPLETO (48 seleções)
+        // Força base aproximada (escala ~60-92) inspirada no ranking FIFA.
+        // nome em inglês (compatível com a API-Football) | PT | bandeira | rating
+        // =====================================================================
+        const CAMPO_2026 = [
+            { en: "Argentina", pt: "Argentina", flag: "🇦🇷", r: 91 },
+            { en: "France", pt: "França", flag: "🇫🇷", r: 90 },
+            { en: "Spain", pt: "Espanha", flag: "🇪🇸", r: 90 },
+            { en: "England", pt: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", r: 89 },
+            { en: "Brazil", pt: "Brasil", flag: "🇧🇷", r: 89 },
+            { en: "Portugal", pt: "Portugal", flag: "🇵🇹", r: 88 },
+            { en: "Netherlands", pt: "Holanda", flag: "🇳🇱", r: 87 },
+            { en: "Belgium", pt: "Bélgica", flag: "🇧🇪", r: 85 },
+            { en: "Italy", pt: "Itália", flag: "🇮🇹", r: 85 },
+            { en: "Germany", pt: "Alemanha", flag: "🇩🇪", r: 85 },
+            { en: "Croatia", pt: "Croácia", flag: "🇭🇷", r: 84 },
+            { en: "Morocco", pt: "Marrocos", flag: "🇲🇦", r: 83 },
+            { en: "Uruguay", pt: "Uruguai", flag: "🇺🇾", r: 83 },
+            { en: "Colombia", pt: "Colômbia", flag: "🇨🇴", r: 83 },
+            { en: "Norway", pt: "Noruega", flag: "🇳🇴", r: 82 },
+            { en: "Switzerland", pt: "Suíça", flag: "🇨🇭", r: 81 },
+            { en: "Japan", pt: "Japão", flag: "🇯🇵", r: 81 },
+            { en: "Senegal", pt: "Senegal", flag: "🇸🇳", r: 81 },
+            { en: "USA", pt: "EUA", flag: "🇺🇸", r: 80 },
+            { en: "Mexico", pt: "México", flag: "🇲🇽", r: 80 },
+            { en: "Denmark", pt: "Dinamarca", flag: "🇩🇰", r: 80 },
+            { en: "Austria", pt: "Áustria", flag: "🇦🇹", r: 80 },
+            { en: "Turkey", pt: "Turquia", flag: "🇹🇷", r: 80 },
+            { en: "Ecuador", pt: "Equador", flag: "🇪🇨", r: 79 },
+            { en: "Serbia", pt: "Sérvia", flag: "🇷🇸", r: 79 },
+            { en: "Ukraine", pt: "Ucrânia", flag: "🇺🇦", r: 78 },
+            { en: "Korea Republic", pt: "Coreia do Sul", flag: "🇰🇷", r: 78 },
+            { en: "Canada", pt: "Canadá", flag: "🇨🇦", r: 78 },
+            { en: "Nigeria", pt: "Nigéria", flag: "🇳🇬", r: 78 },
+            { en: "Egypt", pt: "Egito", flag: "🇪🇬", r: 78 },
+            { en: "Australia", pt: "Austrália", flag: "🇦🇺", r: 77 },
+            { en: "Iran", pt: "Irã", flag: "🇮🇷", r: 77 },
+            { en: "Algeria", pt: "Argélia", flag: "🇩🇿", r: 77 },
+            { en: "Ivory Coast", pt: "Costa do Marfim", flag: "🇨🇮", r: 77 },
+            { en: "Paraguay", pt: "Paraguai", flag: "🇵🇾", r: 77 },
+            { en: "Chile", pt: "Chile", flag: "🇨🇱", r: 76 },
+            { en: "Venezuela", pt: "Venezuela", flag: "🇻🇪", r: 76 },
+            { en: "Cameroon", pt: "Camarões", flag: "🇨🇲", r: 76 },
+            { en: "Peru", pt: "Peru", flag: "🇵🇪", r: 75 },
+            { en: "Tunisia", pt: "Tunísia", flag: "🇹🇳", r: 75 },
+            { en: "Ghana", pt: "Gana", flag: "🇬🇭", r: 75 },
+            { en: "Saudi Arabia", pt: "Arábia Saudita", flag: "🇸🇦", r: 74 },
+            { en: "Costa Rica", pt: "Costa Rica", flag: "🇨🇷", r: 74 },
+            { en: "South Africa", pt: "África do Sul", flag: "🇿🇦", r: 74 },
+            { en: "Qatar", pt: "Catar", flag: "🇶🇦", r: 73 },
+            { en: "Uzbekistan", pt: "Uzbequistão", flag: "🇺🇿", r: 73 },
+            { en: "Panama", pt: "Panamá", flag: "🇵🇦", r: 73 },
+            { en: "New Zealand", pt: "Nova Zelândia", flag: "🇳🇿", r: 70 }
+        ];
+        let chartCampo = null;
+
+        // Embaralha uma cópia do array (Fisher-Yates) para sortear o chaveamento.
+        function embaralhar(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // Monte Carlo de mata-mata para o campo completo (chaveamento sorteado a cada simulação).
+        function projetarTituloCampo(numSimulacoes = 8000) {
+            const poderes = CAMPO_2026.map(t => ({
+                en: t.en, pt: t.pt, flag: t.flag,
+                poder: Math.max(1, t.r + ajusteFormaRealEn(t.en))
+            }));
+            const vitorias = {};
+            poderes.forEach(t => { vitorias[t.en] = 0; });
+
+            for (let s = 0; s < numSimulacoes; s++) {
+                let ativos = embaralhar(poderes);
+                while (ativos.length > 1) {
+                    const proximos = [];
+                    for (let i = 0; i < ativos.length; i += 2) {
+                        const a = ativos[i], b = ativos[i + 1];
+                        if (!b) { proximos.push(a); continue; }
+                        // Expoente acentua a diferença de força nos confrontos.
+                        const pa = Math.pow(a.poder, 2.2);
+                        const pb = Math.pow(b.poder, 2.2);
+                        proximos.push(Math.random() < pa / (pa + pb) ? a : b);
+                    }
+                    ativos = proximos;
+                }
+                vitorias[ativos[0].en]++;
+            }
+
+            return poderes
+                .map(t => ({ ...t, pct: +((vitorias[t.en] / numSimulacoes) * 100).toFixed(1) }))
+                .sort((x, y) => y.pct - x.pct);
+        }
+
+        async function carregarProjecaoCampo(forcar) {
+            const lista = document.getElementById('campo-ranking');
+            if (lista && !lista.children.length) lista.innerHTML = statsCarregando();
+            try { if (!Object.keys(formaRealMap).length || forcar) await carregarFormaReal(); } catch (e) { /* sem forma real */ }
+
+            const ranking = projetarTituloCampo();
+            const temForma = Object.values(formaRealMap).some(r => r && r.played > 0);
+            const nota = document.getElementById('campo-fonte-nota');
+            if (nota) {
+                nota.textContent = temForma ? 'Ajustado com dados reais' : 'Modelo de força (sem jogos ainda)';
+                nota.className = temForma ? 'text-xs text-emerald-400 font-semibold' : 'text-xs text-slate-400';
+            }
+
+            if (lista) {
+                lista.innerHTML = ranking.map((t, i) => {
+                    const cor = i === 0 ? 'text-yellow-400' : (i === 1 ? 'text-slate-300' : (i === 2 ? 'text-amber-600' : 'text-slate-500'));
+                    return `
+                        <div class="flex items-center gap-2 bg-slate-800/40 rounded-lg px-3 py-1.5">
+                            <span class="font-extrabold w-6 text-center text-xs ${cor}">${i + 1}</span>
+                            <span class="text-base">${t.flag}</span>
+                            <span class="text-sm font-semibold text-white flex-grow truncate">${t.pt}</span>
+                            <div class="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-yellow-400 to-emerald-500" style="width:${Math.min(100, t.pct * 3)}%"></div>
+                            </div>
+                            <span class="text-sm font-bold text-emerald-400 w-12 text-right">${t.pct}%</span>
+                        </div>`;
+                }).join('');
+            }
+
+            renderChartCampo(ranking.slice(0, 16));
+        }
+
+        function renderChartCampo(top) {
+            const canvas = document.getElementById('chartCampoCompleto');
+            if (!canvas || typeof Chart === 'undefined') return;
+            if (chartCampo) { chartCampo.destroy(); chartCampo = null; }
+            chartCampo = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: top.map(t => `${t.flag} ${t.pt}`),
+                    datasets: [{
+                        label: 'Chance de título (%)',
+                        data: top.map(t => t.pct),
+                        backgroundColor: top.map((t, i) => `hsla(${48 + i * 8}, 80%, 55%, 0.75)`),
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        y: { ticks: { color: '#cbd5e1', font: { size: 11 } }, grid: { display: false } }
+                    }
+                }
+            });
         }
 
         // --- 6. MOTOR DE SIMULAÇÃO DE MONTE CARLO ---
@@ -2203,6 +2389,9 @@
 
             // Comparação entre edições.
             carregarComparacaoHistorica(forcar).catch(() => { /* silencioso */ });
+
+            // Projeção de título do campo completo (48 seleções).
+            carregarProjecaoCampo(forcar).catch(() => { /* silencioso */ });
         }
 
         // Converte a resposta de /fixtures da API-Football para o objeto interno de jogo.
