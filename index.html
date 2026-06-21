@@ -721,6 +721,7 @@
         const SELECOES = {};
         const MAPA_EN_PT = {}; // nome em inglês (API) -> nome em PT exibido na UI.
         const FLAG_EN = {};    // nome em inglês (API) -> bandeira.
+        const BANDEIRA_PT = {}; // nome em PT -> bandeira (48 seleções + extras).
 
         // Tática padrão das principais seleções; as demais começam em "Posse de Bola".
         const TATICA_PADRAO = {
@@ -745,6 +746,13 @@
                 };
                 MAPA_EN_PT[t.en] = t.pt;
                 FLAG_EN[t.en] = t.flag;
+                BANDEIRA_PT[t.pt] = t.flag;
+            });
+            // Seleções extras (apenas exibição): nome em PT + bandeira.
+            (typeof EXTRAS_SELECOES !== 'undefined' ? EXTRAS_SELECOES : []).forEach(t => {
+                if (!MAPA_EN_PT[t.en]) MAPA_EN_PT[t.en] = t.pt;
+                if (!FLAG_EN[t.en]) FLAG_EN[t.en] = t.flag;
+                if (!BANDEIRA_PT[t.pt]) BANDEIRA_PT[t.pt] = t.flag;
             });
         }
 
@@ -972,6 +980,92 @@
             { en: "New Zealand", pt: "Nova Zelândia", flag: "🇳🇿", r: 70 }
         ];
         let chartCampo = null;
+
+        // Seleções fora das 48 (não entram em probabilidades/táticas), apenas para
+        // exibir nome em PT e bandeira corretos nos jogos. Inclui variações de nome da API.
+        const EXTRAS_SELECOES = [
+            { en: "South Korea", pt: "Coreia do Sul", flag: "🇰🇷" },
+            { en: "Korea Republic", pt: "Coreia do Sul", flag: "🇰🇷" },
+            { en: "North Korea", pt: "Coreia do Norte", flag: "🇰🇵" },
+            { en: "United States", pt: "EUA", flag: "🇺🇸" },
+            { en: "Czechia", pt: "Tchéquia", flag: "🇨🇿" },
+            { en: "Czech Republic", pt: "Tchéquia", flag: "🇨🇿" },
+            { en: "Curaçao", pt: "Curaçao", flag: "🇨🇼" },
+            { en: "Curacao", pt: "Curaçao", flag: "🇨🇼" },
+            { en: "Bosnia and Herzegovina", pt: "Bósnia e Herzeg.", flag: "🇧🇦" },
+            { en: "Bosnia & Herzegovina", pt: "Bósnia e Herzeg.", flag: "🇧🇦" },
+            { en: "Haiti", pt: "Haiti", flag: "🇭🇹" },
+            { en: "Wales", pt: "País de Gales", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+            { en: "Scotland", pt: "Escócia", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+            { en: "Republic of Ireland", pt: "Irlanda", flag: "🇮🇪" },
+            { en: "Ireland", pt: "Irlanda", flag: "🇮🇪" },
+            { en: "Northern Ireland", pt: "Irlanda do Norte", flag: "🇬🇧" },
+            { en: "Iceland", pt: "Islândia", flag: "🇮🇸" },
+            { en: "Finland", pt: "Finlândia", flag: "🇫🇮" },
+            { en: "Bolivia", pt: "Bolívia", flag: "🇧🇴" },
+            { en: "Honduras", pt: "Honduras", flag: "🇭🇳" },
+            { en: "El Salvador", pt: "El Salvador", flag: "🇸🇻" },
+            { en: "Guatemala", pt: "Guatemala", flag: "🇬🇹" },
+            { en: "Trinidad and Tobago", pt: "Trinidad e Tobago", flag: "🇹🇹" },
+            { en: "Jamaica", pt: "Jamaica", flag: "🇯🇲" },
+            { en: "Suriname", pt: "Suriname", flag: "🇸🇷" },
+            { en: "DR Congo", pt: "RD Congo", flag: "🇨🇩" },
+            { en: "Congo DR", pt: "RD Congo", flag: "🇨🇩" },
+            { en: "Mali", pt: "Mali", flag: "🇲🇱" },
+            { en: "Burkina Faso", pt: "Burkina Faso", flag: "🇧🇫" },
+            { en: "Guinea", pt: "Guiné", flag: "🇬🇳" },
+            { en: "Gabon", pt: "Gabão", flag: "🇬🇦" },
+            { en: "Zambia", pt: "Zâmbia", flag: "🇿🇲" },
+            { en: "Angola", pt: "Angola", flag: "🇦🇴" },
+            { en: "Cape Verde", pt: "Cabo Verde", flag: "🇨🇻" },
+            { en: "Cape Verde Islands", pt: "Cabo Verde", flag: "🇨🇻" },
+            { en: "Equatorial Guinea", pt: "Guiné Equatorial", flag: "🇬🇶" },
+            { en: "Benin", pt: "Benin", flag: "🇧🇯" },
+            { en: "Madagascar", pt: "Madagascar", flag: "🇲🇬" },
+            { en: "Mauritania", pt: "Mauritânia", flag: "🇲🇷" },
+            { en: "Namibia", pt: "Namíbia", flag: "🇳🇦" },
+            { en: "Mozambique", pt: "Moçambique", flag: "🇲🇿" },
+            { en: "Uganda", pt: "Uganda", flag: "🇺🇬" },
+            { en: "Kenya", pt: "Quênia", flag: "🇰🇪" },
+            { en: "Zimbabwe", pt: "Zimbábue", flag: "🇿🇼" },
+            { en: "Libya", pt: "Líbia", flag: "🇱🇾" },
+            { en: "Sudan", pt: "Sudão", flag: "🇸🇩" },
+            { en: "Bahrain", pt: "Bahrein", flag: "🇧🇭" },
+            { en: "Oman", pt: "Omã", flag: "🇴🇲" },
+            { en: "Iraq", pt: "Iraque", flag: "🇮🇶" },
+            { en: "Jordan", pt: "Jordânia", flag: "🇯🇴" },
+            { en: "United Arab Emirates", pt: "Emirados Árabes", flag: "🇦🇪" },
+            { en: "UAE", pt: "Emirados Árabes", flag: "🇦🇪" },
+            { en: "Palestine", pt: "Palestina", flag: "🇵🇸" },
+            { en: "Kuwait", pt: "Kuwait", flag: "🇰🇼" },
+            { en: "Lebanon", pt: "Líbano", flag: "🇱🇧" },
+            { en: "Syria", pt: "Síria", flag: "🇸🇾" },
+            { en: "China", pt: "China", flag: "🇨🇳" },
+            { en: "China PR", pt: "China", flag: "🇨🇳" },
+            { en: "India", pt: "Índia", flag: "🇮🇳" },
+            { en: "Thailand", pt: "Tailândia", flag: "🇹🇭" },
+            { en: "Vietnam", pt: "Vietnã", flag: "🇻🇳" },
+            { en: "Indonesia", pt: "Indonésia", flag: "🇮🇩" },
+            { en: "Malaysia", pt: "Malásia", flag: "🇲🇾" },
+            { en: "Kyrgyzstan", pt: "Quirguistão", flag: "🇰🇬" },
+            { en: "Tajikistan", pt: "Tadjiquistão", flag: "🇹🇯" },
+            { en: "Bulgaria", pt: "Bulgária", flag: "🇧🇬" },
+            { en: "Romania", pt: "Romênia", flag: "🇷🇴" },
+            { en: "Slovenia", pt: "Eslovênia", flag: "🇸🇮" },
+            { en: "Slovakia", pt: "Eslováquia", flag: "🇸🇰" },
+            { en: "Georgia", pt: "Geórgia", flag: "🇬🇪" },
+            { en: "Armenia", pt: "Armênia", flag: "🇦🇲" },
+            { en: "Azerbaijan", pt: "Azerbaijão", flag: "🇦🇿" },
+            { en: "Albania", pt: "Albânia", flag: "🇦🇱" },
+            { en: "North Macedonia", pt: "Macedônia do Norte", flag: "🇲🇰" },
+            { en: "Montenegro", pt: "Montenegro", flag: "🇲🇪" },
+            { en: "Kosovo", pt: "Kosovo", flag: "🇽🇰" },
+            { en: "Israel", pt: "Israel", flag: "🇮🇱" },
+            { en: "Greece", pt: "Grécia", flag: "🇬🇷" },
+            { en: "Hungary", pt: "Hungria", flag: "🇭🇺" },
+            { en: "New Caledonia", pt: "Nova Caledônia", flag: "🇳🇨" },
+            { en: "Tahiti", pt: "Taiti", flag: "🇵🇫" }
+        ];
 
         // Embaralha uma cópia do array (Fisher-Yates) para sortear o chaveamento.
         function embaralhar(arr) {
@@ -1338,7 +1432,7 @@
         }
 
         function bandeiraDeTime(nomePt) {
-            return (SELECOES[nomePt] && SELECOES[nomePt].bandeira) || obterBandeiraPorNome(nomePt) || "⚽";
+            return (SELECOES[nomePt] && SELECOES[nomePt].bandeira) || BANDEIRA_PT[nomePt] || obterBandeiraPorNome(nomePt) || "⚽";
         }
 
         function renderizarJogos() {
@@ -2142,9 +2236,12 @@
                 "new zealand": "Nova Zelândia", "scotland": "Escócia", "morocco": "Marrocos", "haiti": "Haiti"
             };
 
+            // Usa os mapas globais (48 seleções + extras) e cai nos mapas locais como reforço.
+            const nomePt = MAPA_EN_PT[nomeEn] || ptNames[nomeLower] || traduzirSelecao(nomeEn) || (nomeEn.charAt(0).toUpperCase() + nomeEn.slice(1));
+            const bandeira = FLAG_EN[nomeEn] || BANDEIRA_PT[nomePt] || flags[nomeLower] || obterBandeiraPorNome(nomePt) || "⚽";
             return {
-                nome: ptNames[nomeLower] || nomeEn.charAt(0).toUpperCase() + nomeEn.slice(1),
-                bandeira: flags[nomeLower] || "⚽",
+                nome: nomePt,
+                bandeira: bandeira,
                 rating: 72,
                 cor: "rgba(100, 116, 139, 1)"
             };
