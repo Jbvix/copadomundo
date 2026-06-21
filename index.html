@@ -249,13 +249,13 @@
                             <span id="prob-fonte-nota" class="text-xs text-slate-400">Modelo tático</span>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                            <div class="h-[280px] relative">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                            <div class="h-[460px] relative">
                                 <canvas id="chartProbabilidades"></canvas>
                             </div>
                             <div class="space-y-3">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tabela Estatística de Favoritos</h4>
-                                <div id="top-teams-list" class="space-y-2">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Favoritos ao Título (48 seleções)</h4>
+                                <div id="top-teams-list" class="space-y-2 max-h-[420px] overflow-y-auto pr-1 scrollbar-none">
                                     <!-- Dinamicamente renderizado via JS -->
                                 </div>
                             </div>
@@ -298,8 +298,14 @@
                             <p class="text-xs text-slate-400">Altere a estratégia de cada time nacional para recalcular sua probabilidade de sucesso!</p>
                         </div>
 
+                        <!-- Busca de Seleção -->
+                        <div class="relative mb-3">
+                            <input type="text" id="search-tactics" oninput="renderizarControlesTaticos()" placeholder="Buscar seleção..." class="w-full bg-slate-800/80 border border-slate-700 text-xs rounded-lg pl-3 pr-8 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            <i class="fa-solid fa-search absolute right-2.5 top-2.5 text-[10px] text-slate-400"></i>
+                        </div>
+
                         <!-- Menu de Seleções para Configurações Táticas -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4" id="tactics-control-container">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 max-h-[560px] overflow-y-auto pr-1 scrollbar-none" id="tactics-control-container">
                             <!-- Injetado por JS de forma iterativa -->
                         </div>
                     </div>
@@ -697,16 +703,32 @@
         ];
 
         // --- 2. BANCO DE DADOS DE SELEÇÕES E SEUS ELENCOS DE ESTRELAS DE 2026 ---
-        const SELECOES = {
-            "Brasil": { ratingBase: 88, tática: "Contra-Ataque", bandeira: "🇧🇷", cor: "rgba(16, 185, 129, 1)" },
-            "França": { ratingBase: 89, tática: "Ataque Total", bandeira: "🇫🇷", cor: "rgba(59, 130, 246, 1)" },
-            "Argentina": { ratingBase: 87, tática: "Posse de Bola", bandeira: "🇦🇷", cor: "rgba(6, 182, 212, 1)" },
-            "Espanha": { ratingBase: 86, tática: "Posse de Bola", bandeira: "🇪🇸", cor: "rgba(239, 68, 68, 1)" },
-            "Inglaterra": { ratingBase: 87, tática: "Defesa Sólida", bandeira: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", cor: "rgba(255, 255, 255, 1)" },
-            "Alemanha": { ratingBase: 85, tática: "Ataque Total", bandeira: "🇩🇪", cor: "rgba(245, 158, 11, 1)" },
-            "Portugal": { ratingBase: 86, tática: "Contra-Ataque", bandeira: "🇵🇹", cor: "rgba(168, 85, 247, 1)" },
-            "Itália": { ratingBase: 83, tática: "Defesa Sólida", bandeira: "🇮🇹", cor: "rgba(20, 184, 166, 1)" }
+        // SELECOES é preenchido com as 48 seleções a partir de CAMPO_2026 (ver construirSelecoes).
+        const SELECOES = {};
+
+        // Tática padrão das principais seleções; as demais começam em "Posse de Bola".
+        const TATICA_PADRAO = {
+            "Brasil": "Contra-Ataque", "França": "Ataque Total", "Argentina": "Posse de Bola",
+            "Espanha": "Posse de Bola", "Inglaterra": "Defesa Sólida", "Alemanha": "Ataque Total",
+            "Portugal": "Contra-Ataque", "Itália": "Defesa Sólida"
         };
+
+        function corPorIndice(i) {
+            return `hsla(${(i * 47) % 360}, 70%, 55%, 1)`;
+        }
+
+        // Constrói o dicionário SELECOES (48 seleções) usado pelo Dashboard e simulações.
+        function construirSelecoes() {
+            CAMPO_2026.forEach((t, i) => {
+                SELECOES[t.pt] = {
+                    ratingBase: t.r,
+                    tática: TATICA_PADRAO[t.pt] || "Posse de Bola",
+                    bandeira: t.flag,
+                    cor: corPorIndice(i),
+                    en: t.en
+                };
+            });
+        }
 
         const JOGADORES = [
             // Brasil
@@ -779,6 +801,7 @@
 
         // --- LÓGICA DE INICIALIZAÇÃO ---
         window.onload = function() {
+            construirSelecoes();
             calcularScoresJogadores();
             renderizarControlesTaticos();
             popularFiltroSelecoes();
@@ -831,9 +854,14 @@
             if (!timeInfo) return 50;
 
             const jogadoresDoTime = JOGADORES.filter(p => p.selecao === timeNome);
-            const mediaScoreJogadores = jogadoresDoTime.reduce((acc, curr) => acc + curr.scoreIA, 0) / (jogadoresDoTime.length || 1);
-
-            const scoreCalculado = (timeInfo.ratingBase * 0.4) + (mediaScoreJogadores * 0.6);
+            let scoreCalculado;
+            if (jogadoresDoTime.length) {
+                const mediaScoreJogadores = jogadoresDoTime.reduce((acc, curr) => acc + curr.scoreIA, 0) / jogadoresDoTime.length;
+                scoreCalculado = (timeInfo.ratingBase * 0.4) + (mediaScoreJogadores * 0.6);
+            } else {
+                // Seleções sem elenco detalhado usam a força base integral.
+                scoreCalculado = timeInfo.ratingBase;
+            }
             return scoreCalculado + ajusteFormaReal(timeNome);
         }
 
@@ -841,7 +869,8 @@
         // Antes/no início do torneio não há jogos disputados, então o ajuste é zero
         // e as probabilidades caem de volta no modelo tático tradicional.
         function ajusteFormaReal(timePt) {
-            const en = MAPA_PT_EN[timePt];
+            const info = SELECOES[timePt];
+            const en = (info && info.en) || MAPA_PT_EN[timePt];
             const r = en && formaRealMap[en];
             if (!r || !r.played) return 0;
             const ppg = r.pts / r.played;            // pontos por jogo (0 a 3)
@@ -1022,56 +1051,38 @@
 
         // --- 6. MOTOR DE SIMULAÇÃO DE MONTE CARLO ---
         function runMonteCarlo() {
+            const times = Object.keys(SELECOES);
+            const numSimulacoes = 8000;
+
+            // Pré-calcula o "poder" de cada seleção (rating + tática), constante neste run.
+            // O expoente acentua a diferença de força, evitando um campo de 48 muito achatado.
+            const poderDe = {};
             const vitoriasPorTime = {};
-            Object.keys(SELECOES).forEach(time => {
+            times.forEach(time => {
+                const rating = obterRatingCalculadoTime(time);
+                const mod = MODIFICADORES_TACTICOS[SELECOES[time].tática];
+                poderDe[time] = Math.pow(Math.max(1, rating * mod.ataque * mod.consistência), 2.2);
                 vitoriasPorTime[time] = 0;
             });
 
-            const numSimulacoes = 10000;
-
             for (let s = 0; s < numSimulacoes; s++) {
-                let timesAtivos = Object.keys(SELECOES);
-                
+                let timesAtivos = embaralhar(times); // chaveamento sorteado a cada simulação
                 while (timesAtivos.length > 1) {
-                    let proximosAtivos = [];
+                    const proximosAtivos = [];
                     for (let i = 0; i < timesAtivos.length; i += 2) {
                         const time1 = timesAtivos[i];
-                        const time2 = timesAtivos[i+1];
-                        
-                        if (!time2) {
-                            proximosAtivos.push(time1);
-                            continue;
-                        }
-
-                        const rating1 = obterRatingCalculadoTime(time1);
-                        const rating2 = obterRatingCalculadoTime(time2);
-
-                        const tatica1 = SELECOES[time1].tática;
-                        const tatica2 = SELECOES[time2].tática;
-
-                        const mod1 = MODIFICADORES_TACTICOS[tatica1];
-                        const mod2 = MODIFICADORES_TACTICOS[tatica2];
-
-                        const poder1 = rating1 * mod1.ataque * mod1.consistência;
-                        const poder2 = rating2 * mod2.ataque * mod2.consistência;
-
-                        const chance1 = poder1 / (poder1 + poder2);
-                        const rolagem = Math.random();
-
-                        if (rolagem < chance1) {
-                            proximosAtivos.push(time1);
-                        } else {
-                            proximosAtivos.push(time2);
-                        }
+                        const time2 = timesAtivos[i + 1];
+                        if (!time2) { proximosAtivos.push(time1); continue; }
+                        const p1 = poderDe[time1];
+                        const p2 = poderDe[time2];
+                        proximosAtivos.push(Math.random() < p1 / (p1 + p2) ? time1 : time2);
                     }
                     timesAtivos = proximosAtivos;
                 }
-
-                const campeaoDaSimulacao = timesAtivos[0];
-                vitoriasPorTime[campeaoDaSimulacao]++;
+                vitoriasPorTime[timesAtivos[0]]++;
             }
 
-            Object.keys(SELECOES).forEach(time => {
+            times.forEach(time => {
                 probabilidadesCampeao[time] = parseFloat(((vitoriasPorTime[time] / numSimulacoes) * 100).toFixed(1));
             });
 
@@ -1081,8 +1092,10 @@
 
         // --- 7. ATUALIZAÇÃO DE INTERFACE E ELEMENTOS VISUAIS ---
         function atualizarGraficosDashboard() {
+            // Com o campo completo (48), o gráfico mostra os 16 mais prováveis.
             const dataSorted = Object.entries(probabilidadesCampeao)
-                .sort((a, b) => b[1] - a[1]);
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 16);
 
             const labels = dataSorted.map(item => `${SELECOES[item[0]].bandeira} ${item[0]}`);
             const data = dataSorted.map(item => item[1]);
@@ -1166,7 +1179,20 @@
             const container = document.getElementById('tactics-control-container');
             container.innerHTML = '';
 
-            Object.entries(SELECOES).forEach(([time, info]) => {
+            const buscaEl = document.getElementById('search-tactics');
+            const busca = (buscaEl && buscaEl.value || '').toLowerCase().trim();
+
+            // Ordena por força (rating) e aplica o filtro de busca.
+            const lista = Object.entries(SELECOES)
+                .filter(([time]) => !busca || time.toLowerCase().includes(busca))
+                .sort((a, b) => b[1].ratingBase - a[1].ratingBase);
+
+            if (!lista.length) {
+                container.innerHTML = '<p class="text-xs text-slate-500 py-4 text-center">Nenhuma seleção encontrada.</p>';
+                return;
+            }
+
+            lista.forEach(([time, info]) => {
                 const taticasDisponiveis = Object.keys(MODIFICADORES_TACTICOS);
                 let optionsHtml = '';
                 
