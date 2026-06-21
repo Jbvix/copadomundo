@@ -302,9 +302,9 @@
                 </div>
 
                 <!-- Coluna 3: Painel Lateral de Controle de Táticas -->
-                <div class="space-y-6">
+                <div class="flex flex-col h-full min-h-0">
                     <!-- Configurações de Força e Táticas de Países -->
-                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md h-full flex flex-col">
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md flex-1 min-h-0 flex flex-col">
                         <div class="mb-4">
                             <h3 class="font-bold text-lg text-white flex items-center gap-2">
                                 <i class="fa-solid fa-sliders text-yellow-400"></i> Painel de Táticas Globais
@@ -1358,12 +1358,16 @@
         let jogosDashboard = JOGOS_MOCK.slice();
         const simuladosManuais = {}; // id -> {golsA, golsB} simulados pelo usuário (preservados no refresh)
 
-        // Converte "MM/DD/YYYY HH:MM" em timestamp; retorna 0 quando não há data.
+        // Converte "MM/DD/YYYY HH:MM" em timestamp; retorna 0 quando inválida/ausente.
         function parseDataLocal(s) {
             if (!s) return 0;
-            const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+            const m = String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/);
             if (!m) return 0;
-            return new Date(+m[3], +m[1] - 1, +m[2], +(m[4] || 0), +(m[5] || 0)).getTime();
+            const mes = +m[1], dia = +m[2], ano = +m[3];
+            // Valida faixas para evitar datas absurdas no filtro.
+            if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || ano < 2018 || ano > 2027) return 0;
+            const d = new Date(ano, mes - 1, dia, +(m[4] || 0), +(m[5] || 0));
+            return isNaN(d.getTime()) ? 0 : d.getTime();
         }
 
         function construirJogosDashboard() {
