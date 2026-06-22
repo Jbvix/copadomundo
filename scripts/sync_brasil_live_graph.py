@@ -253,7 +253,7 @@ def sync_from_api(api_key: str) -> dict:
         all_nodes[n["id"]] = {**all_nodes.get(n["id"], {}), **n}
 
     def add_edge(e: dict):
-        key = (e["from"], e["to"], e["rel"])
+        key = (e["from"], e["to"], e["rel"], e.get("minuto"))
         if key in seen_edge:
             return
         seen_edge.add(key)

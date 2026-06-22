@@ -11,7 +11,7 @@
     <style>
         html, body { height: 100%; margin: 0; background: #020617; overscroll-behavior: none; }
         :root { --header-h: 8.75rem; }
-        @media (min-width: 640px) { :root { --header-h: 4.25rem; } }
+        @media (min-width: 640px) { :root { --header-h: 5rem; } }
         .graph-view { width: 100%; height: calc(100dvh - var(--header-h)); background: #0f172a; }
         #graph-network { touch-action: none; }
         .vis-network:focus { outline: none; }
@@ -65,6 +65,7 @@
             </div>
         </div>
         <div id="match-tabs" class="flex gap-2 px-3 pb-2 overflow-x-auto scrollbar-none"></div>
+        <div id="goals-summary" class="hidden px-3 pb-2 border-t border-slate-800/60 pt-2"></div>
     </header>
 
     <div id="empty-state" class="hidden graph-view flex items-center justify-center p-6 text-center">
@@ -80,6 +81,7 @@
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span>Jogador 🇧🇷</span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#fb923c"></span>Jogador adversário</span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#10b981"></span>Seleção</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#fbbf24"></span>Gol (minuto)</span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#f59e0b"></span>Partida</span>
     </div>
 
@@ -158,22 +160,113 @@
             return ids;
         }
 
+        function getMatchGoals(matchId) {
+            return allEdges
+                .filter(e => e.to === matchId && e.rel === 'marcou_gol')
+                .map(e => {
+                    const player = allNodes.find(n => n.id === e.from);
+                    return {
+                        minuto: e.minuto,
+                        player: player?.label || e.from,
+                        teamId: player?.teamId,
+                        selecao: player?.selecao,
+                        penalty: e.penalty,
+                        own_goal: e.own_goal,
+                    };
+                })
+                .sort((a, b) => (a.minuto ?? 99) - (b.minuto ?? 99));
+        }
+
+        function enrichNodesFromEdges() {
+            const goalsByPlayer = {};
+            allEdges.filter(e => e.rel === 'marcou_gol').forEach(e => {
+                if (!goalsByPlayer[e.from]) goalsByPlayer[e.from] = [];
+                goalsByPlayer[e.from].push(e.minuto);
+            });
+            allNodes = allNodes.map(n => {
+                if (n.type === 'Jogador' && goalsByPlayer[n.id]) {
+                    const mins = goalsByPlayer[n.id].filter(m => m != null).sort((a, b) => a - b);
+                    return { ...n, gols: mins.length, golsMinutos: mins.map(m => `${m}'`).join(', ') };
+                }
+                if (n.type === 'Partida') {
+                    const gols = getMatchGoals(n.id);
+                    return {
+                        ...n,
+                        golsLista: gols,
+                        artilheiros: gols.map(g => {
+                            let s = `${g.player} ${g.minuto}'`;
+                            if (g.penalty) s += ' (P)';
+                            if (g.own_goal) s += ' (GC)';
+                            return s;
+                        }).join(' · '),
+                    };
+                }
+                return n;
+            });
+        }
+
+        function formatGoalLine(g) {
+            let s = `<span class="font-medium text-slate-100">${g.player}</span>`;
+            s += ` <span class="text-amber-400">${g.minuto != null ? g.minuto + "'" : '?'}</span>`;
+            if (g.penalty) s += ' <span class="text-slate-500">(P)</span>';
+            if (g.own_goal) s += ' <span class="text-slate-500">(GC)</span>';
+            return s;
+        }
+
+        function updateGoalsSummary() {
+            const el = document.getElementById('goals-summary');
+            const matchIds = selectedMatchId === 'all'
+                ? matches.filter(m => m.status === 'finished' || m.status === 'live').map(m => m.id)
+                : [selectedMatchId];
+            const sections = matchIds.map(mid => {
+                const m = matches.find(x => x.id === mid) || allNodes.find(n => n.id === mid);
+                const gols = getMatchGoals(mid);
+                if (!gols.length) return '';
+                const title = m?.label || m?.placar || mid;
+                return `<div class="mb-1.5 last:mb-0">
+                    <p class="text-[10px] text-slate-500 mb-1 truncate">${title}</p>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1">${gols.map(g =>
+                        `<span class="text-xs">${formatGoalLine(g)}</span>`).join('')}</div>
+                </div>`;
+            }).filter(Boolean);
+            if (sections.length) {
+                el.innerHTML = `<p class="text-[10px] uppercase tracking-wider text-amber-400/90 font-semibold mb-1.5"><i class="fa-solid fa-futbol mr-1"></i>Artilheiros</p>${sections.join('')}`;
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+                el.innerHTML = '';
+            }
+        }
+
         function edgeStyle(e, focusSet) {
             const isLive = e.source === 'api' || !e.source;
             const rel = e.rel || '';
             const highlight = focusId && (e.from === focusId || e.to === focusId);
             const dim = focusId && focusSet && (!focusSet.has(e.from) || !focusSet.has(e.to));
             let color = isLive ? '#34d399' : '#64748b';
-            if (rel === 'marcou_gol' || rel === 'deu_assistencia') color = '#fbbf24';
-            if (rel === 'recebeu_cartao') color = '#f87171';
+            let label = '';
+            if (rel === 'marcou_gol') {
+                color = '#fbbf24';
+                label = e.minuto != null ? `${e.minuto}' ⚽` : '⚽';
+                if (e.penalty) label += ' P';
+                if (e.own_goal) label += ' GC';
+            } else if (rel === 'deu_assistencia') {
+                color = '#fcd34d';
+                label = e.minuto != null ? `${e.minuto}' A` : 'A';
+            } else if (rel === 'recebeu_cartao') color = '#f87171';
             if (dim) color = 'rgba(15,23,42,0.1)';
+            const scorer = rel === 'marcou_gol' ? allNodes.find(n => n.id === e.from) : null;
+            const edgeTitle = rel === 'marcou_gol' && scorer
+                ? `Gol: ${scorer.label}${e.minuto != null ? ` (${e.minuto}')` : ''}`
+                : (REL_LABELS[rel] || rel);
             return {
-                id: `${e.from}--${e.to}--${rel}`,
+                id: `${e.from}--${e.to}--${rel}--${e.minuto ?? ''}`,
                 from: e.from, to: e.to,
-                title: REL_LABELS[rel] || rel,
+                label, title: edgeTitle,
                 arrows: 'to',
+                font: { size: 9, color: '#fde68a', strokeWidth: 0, background: 'rgba(15,23,42,0.7)' },
                 color: { color },
-                width: highlight ? 2.5 : (rel === 'marcou_gol' ? 2 : 1.2),
+                width: highlight ? 2.5 : (rel === 'marcou_gol' ? 2.5 : 1.2),
                 dashes: !isLive && e.rel === 'enfrentou' ? [4, 6] : false,
             };
         }
@@ -203,14 +296,23 @@
                 };
             }
             const isMatch = t === 'Partida';
+            const isScorer = t === 'Jogador' && n.gols;
+            let label = n.label || '';
+            if (isScorer && !dimmed) {
+                label = `${n.label}${n.gols > 1 ? ` ⚽×${n.gols}` : ' ⚽'}${n.golsMinutos ? ` (${n.golsMinutos})` : ''}`;
+            } else if (isMatch && n.artilheiros && !isMobile()) {
+                label = `${n.placar || n.label}\n⚽ ${n.artilheiros}`;
+            }
+            if (isMobile() && !isFocus && label.length > 18) label = label.slice(0, 16) + '…';
+            const border = isFocus ? '#fff' : (isScorer ? '#fbbf24' : c);
             return {
                 id: n.id,
-                label: isMobile() && !isFocus && (n.label || '').length > 16 ? (n.label || '').slice(0, 14) + '…' : n.label,
-                title: `${n.label} (${t}${teamHint})`,
-                color: { background: c, border: isFocus ? '#fff' : c },
-                font: { color: '#f1f5f9', size: isFocus ? 14 : (isMatch ? 12 : 11) },
-                size: isFocus ? 34 : (isMatch ? 28 : (n.id === 'team-brasil' ? 22 : (t === 'Time' ? 20 : 14))),
-                borderWidth: isFocus ? 3 : (t === 'Jogador' ? 2 : 1),
+                label,
+                title: isScorer ? `${n.label} — ${n.gols} gol(is): ${n.golsMinutos}` : `${n.label} (${t}${teamHint})`,
+                color: { background: c, border },
+                font: { color: '#f1f5f9', size: isFocus ? 14 : (isMatch ? 11 : (isScorer ? 12 : 11)), multi: isMatch && !!n.artilheiros },
+                size: isFocus ? 34 : (isMatch ? 30 : (isScorer ? 20 : (n.id === 'team-brasil' ? 22 : (t === 'Time' ? 20 : 14)))),
+                borderWidth: isFocus ? 3 : (isScorer ? 3 : (t === 'Jogador' ? 2 : 1)),
             };
         }
 
@@ -230,6 +332,7 @@
 
             nodesDS.clear(); edgesDS.clear();
             nodesDS.add(nodes); edgesDS.add(edges);
+            updateGoalsSummary();
         }
 
         function setFocus(id) {
@@ -244,13 +347,29 @@
         }
 
         function showPanel(node) {
-            const skip = new Set(['id', 'label', 'type', 'source']);
-            const rows = Object.entries(node).filter(([k, v]) => !skip.has(k) && v != null && v !== '')
+            const skip = new Set(['id', 'label', 'type', 'source', 'golsLista']);
+            let golsHtml = '';
+            if (node.type === 'Partida') {
+                const gols = node.golsLista || getMatchGoals(node.id);
+                if (gols.length) {
+                    golsHtml = `<div class="mt-3 mb-3 p-3 rounded-xl bg-amber-950/40 border border-amber-800/40">
+                        <p class="text-xs text-amber-400 font-semibold mb-2"><i class="fa-solid fa-futbol mr-1"></i>Gols do jogo</p>
+                        ${gols.map(g => `<div class="flex justify-between items-center py-1.5 border-b border-slate-800/50 last:border-0 text-sm">${formatGoalLine(g)}</div>`).join('')}
+                    </div>`;
+                }
+            }
+            if (node.type === 'Jogador' && node.gols) {
+                golsHtml = `<div class="mt-2 mb-3 px-3 py-2 rounded-xl bg-amber-950/40 border border-amber-800/40 text-sm text-amber-200">
+                    <i class="fa-solid fa-futbol mr-1"></i>${node.gols} gol(is) — ${node.golsMinutos}
+                </div>`;
+            }
+            const rows = Object.entries(node).filter(([k, v]) => !skip.has(k) && v != null && v !== '' && k !== 'artilheiros' && k !== 'golsMinutos' && k !== 'gols')
                 .map(([k, v]) => `<div class="flex justify-between gap-3 py-2 border-b border-slate-800/80"><span class="text-slate-500 text-sm">${FIELD_LABELS[k] || k}</span><span class="text-slate-100 text-sm text-right font-medium">${v}</span></div>`).join('');
             document.getElementById('detail-content').innerHTML = `
                 <p class="text-[10px] uppercase tracking-wider text-amber-400 mb-1">${node.type}</p>
                 <h2 class="text-xl font-bold text-white mb-1">${node.bandeira || ''} ${node.label}</h2>
-                <p class="text-xs text-amber-400/80 mb-3">${getNeighbors(node.id).size} conexões</p>
+                <p class="text-xs text-amber-400/80 mb-1">${getNeighbors(node.id).size} conexões</p>
+                ${golsHtml}
                 ${rows ? `<div>${rows}</div>` : ''}`;
             document.getElementById('detail-panel').classList.add('panel-open');
             document.getElementById('panel-backdrop').classList.add('panel-open');
@@ -298,6 +417,7 @@
             allNodes = payload.nodes || [];
             allEdges = payload.edges || [];
             matches = payload.matches || [];
+            enrichNodesFromEdges();
             const meta = payload.meta || {};
             document.getElementById('subtitle').textContent =
                 `${meta.nodeCount || allNodes.length} nós · ${meta.edgeCount || allEdges.length} links · ${meta.source || 'seed'}`;
@@ -323,7 +443,8 @@
 
         function addNode(map, n) { map.set(n.id, { ...map.get(n.id), ...n }); }
         function addEdge(list, seen, e) {
-            const k = `${e.from}|${e.to}|${e.rel}`;
+            const minKey = e.minuto != null ? `|${e.minuto}` : '';
+            const k = `${e.from}|${e.to}|${e.rel}${minKey}`;
             if (seen.has(k)) return;
             seen.add(k);
             list.push({ ...e, source: 'api' });
@@ -397,7 +518,10 @@
                 const pid = `player-${slug(name)}`;
                 addNode(nodes, { id: pid, type: 'Jogador', label: name, teamId: evTeamId, selecao: evSelecao, source: 'api' });
                 if (et === 'goal' && !det.includes('missed')) {
-                    addEdge(edges, seen, { from: pid, to: mid, rel: 'marcou_gol', minuto: min });
+                    addEdge(edges, seen, {
+                        from: pid, to: mid, rel: 'marcou_gol', minuto: min,
+                        penalty: det.includes('penalty'), own_goal: det.includes('own'),
+                    });
                 } else if (et === 'card') {
                     addEdge(edges, seen, { from: pid, to: mid, rel: 'recebeu_cartao', minuto: min });
                 }
