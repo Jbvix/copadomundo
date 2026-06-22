@@ -185,11 +185,13 @@ def build_from_fixture(fx_item: dict, events: list, lineups: list) -> tuple[list
 
     for lu in lineups or []:
         team_info = lu.get("team") or {}
-        is_brazil = team_info.get("name") == "Brazil"
+        team_name = team_info.get("name", "")
+        team_id = TEAM_EN_TO_ID.get(team_name, f"team-{slugify(team_name)}")
+        selecao = "Brasil" if team_name == "Brazil" else team_name
         coach = lu.get("coach") or {}
         if coach.get("name"):
             cid = f"coach-{slugify(coach['name'])}"
-            nodes.append(node(cid, "Tecnico", coach["name"]))
+            nodes.append(node(cid, "Tecnico", coach["name"], teamId=team_id, selecao=selecao))
             edges.append(edge(cid, mid, "tecnico_da_partida"))
 
         for bucket, rel_base in (("startXI", "jogou_na_partida"), ("substitutes", "entrou_em")):
@@ -200,9 +202,10 @@ def build_from_fixture(fx_item: dict, events: list, lineups: list) -> tuple[list
                     continue
                 pid = f"player-{slugify(pname)}"
                 if not any(n["id"] == pid for n in nodes):
-                    nodes.append(node(pid, "Jogador", pname, selecao="Brasil" if is_brazil else away_name if is_brazil is False else ""))
+                    nodes.append(node(pid, "Jogador", pname, teamId=team_id, selecao=selecao))
                 rel = rel_base if bucket == "startXI" else "entrou_em"
                 edges.append(edge(pid, mid, rel, titular=bucket == "startXI"))
+                edges.append(edge(pid, team_id, "jogou_em"))
 
     for ev in events or []:
         etype = (ev.get("type") or "").lower()
@@ -210,11 +213,14 @@ def build_from_fixture(fx_item: dict, events: list, lineups: list) -> tuple[list
         player = (ev.get("player") or {}).get("name")
         assist = (ev.get("assist") or {}).get("name")
         minute = (ev.get("time") or {}).get("elapsed")
+        ev_team = (ev.get("team") or {}).get("name", "")
+        ev_team_id = TEAM_EN_TO_ID.get(ev_team, f"team-{slugify(ev_team)}")
+        ev_selecao = "Brasil" if ev_team == "Brazil" else ev_team
         if not player:
             continue
         pid = f"player-{slugify(player)}"
         if not any(n["id"] == pid for n in nodes):
-            nodes.append(node(pid, "Jogador", player))
+            nodes.append(node(pid, "Jogador", player, teamId=ev_team_id, selecao=ev_selecao))
         if etype == "goal" and "missed" not in detail:
             edges.append(edge(pid, mid, "marcou_gol", minuto=minute,
                               penalty="penalty" in detail, own_goal="own" in detail))
@@ -224,7 +230,7 @@ def build_from_fixture(fx_item: dict, events: list, lineups: list) -> tuple[list
         if assist:
             aid = f"player-{slugify(assist)}"
             if not any(n["id"] == aid for n in nodes):
-                nodes.append(node(aid, "Jogador", assist))
+                nodes.append(node(aid, "Jogador", assist, teamId=ev_team_id, selecao=ev_selecao))
             edges.append(edge(aid, mid, "deu_assistencia", minuto=minute))
 
     return nodes, edges, match_meta

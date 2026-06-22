@@ -76,6 +76,13 @@
     </div>
     <div id="graph-network" class="graph-view" role="img" aria-label="Grafo Brasil Live"></div>
 
+    <div class="fixed bottom-3 left-3 z-10 flex flex-wrap gap-x-3 gap-y-1 px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-700/80 text-[10px] text-slate-400 pointer-events-none">
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span>Jogador 🇧🇷</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#fb923c"></span>Jogador adversário</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#10b981"></span>Seleção</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#f59e0b"></span>Partida</span>
+    </div>
+
     <button id="focus-chip" type="button" class="hidden fixed top-[calc(var(--header-h)+0.5rem)] left-1/2 -translate-x-1/2 z-20 max-w-[92vw] px-3 py-1.5 rounded-full bg-amber-950/90 border border-amber-700/50 text-[11px] text-amber-200 shadow-lg">Foco ativo</button>
 
     <div id="panel-backdrop" class="fixed inset-0 bg-black/50 z-40 sm:hidden"></div>
@@ -95,12 +102,22 @@
 
     <script>
         const TYPE_COLORS = {
-            Time: '#10b981', Jogador: '#3b82f6', Partida: '#f59e0b', Edicao: '#8b5cf6',
-            Tecnico: '#ec4899', Estadio: '#64748b',
+            Time: '#10b981', Partida: '#f59e0b', Edicao: '#8b5cf6', Estadio: '#64748b',
+        };
+        const PLAYER_BR = '#38bdf8';
+        const PLAYER_OPP = '#fb923c';
+        const TEAM_COLORS = {
+            'team-brasil': '#10b981',
+            'team-marrocos': '#dc2626',
+            'team-haiti': '#6366f1',
+            'team-escocia': '#0ea5e9',
+            'team-argentina': '#75aadb',
+            'team-franca': '#2563eb',
+            'team-alemanha': '#78716c',
         };
         const REL_LABELS = {
             enfrentou: 'Enfrentou', disputou: 'Disputou', realizada_em: 'Realizada em',
-            jogou_na_partida: 'Jogou', entrou_em: 'Entrou', marcou_gol: 'Gol',
+            jogou_na_partida: 'Jogou', jogou_em: 'Seleção', entrou_em: 'Entrou', marcou_gol: 'Gol',
             deu_assistencia: 'Assistência', recebeu_cartao: 'Cartão', tecnico_da_partida: 'Técnico',
         };
         const FIELD_LABELS = {
@@ -161,12 +178,26 @@
             };
         }
 
+        function nodeColor(n) {
+            const t = n.type || 'Nota';
+            if (t === 'Jogador') {
+                return (n.teamId === 'team-brasil' || n.selecao === 'Brasil' || n.selecao === 'Brazil')
+                    ? PLAYER_BR : PLAYER_OPP;
+            }
+            if (t === 'Tecnico') {
+                return n.teamId === 'team-brasil' ? '#f472b6' : '#c084fc';
+            }
+            if (t === 'Time') return TEAM_COLORS[n.id] || '#64748b';
+            return TYPE_COLORS[t] || '#475569';
+        }
+
         function nodeStyle(n, dimmed, isFocus) {
             const t = n.type || 'Nota';
-            const c = TYPE_COLORS[t] || '#475569';
+            const c = nodeColor(n);
+            const teamHint = n.selecao && n.type === 'Jogador' ? ` · ${n.selecao === 'Brazil' ? 'Brasil' : n.selecao}` : '';
             if (dimmed) {
                 return {
-                    id: n.id, label: '', title: n.label,
+                    id: n.id, label: '', title: `${n.label} (${t}${teamHint})`,
                     color: { background: 'rgba(15,23,42,0.3)', border: 'rgba(30,41,59,0.2)' },
                     size: 8, font: { size: 8, color: 'transparent' },
                 };
@@ -175,11 +206,11 @@
             return {
                 id: n.id,
                 label: isMobile() && !isFocus && (n.label || '').length > 16 ? (n.label || '').slice(0, 14) + '…' : n.label,
-                title: `${n.label} (${t})`,
+                title: `${n.label} (${t}${teamHint})`,
                 color: { background: c, border: isFocus ? '#fff' : c },
                 font: { color: '#f1f5f9', size: isFocus ? 14 : (isMatch ? 12 : 11) },
-                size: isFocus ? 34 : (isMatch ? 28 : (n.id === 'team-brasil' ? 22 : 14)),
-                borderWidth: isFocus ? 3 : 1,
+                size: isFocus ? 34 : (isMatch ? 28 : (n.id === 'team-brasil' ? 22 : (t === 'Time' ? 20 : 14))),
+                borderWidth: isFocus ? 3 : (t === 'Jogador' ? 2 : 1),
             };
         }
 
@@ -333,10 +364,13 @@
             }
 
             (lineups || []).forEach(lu => {
+                const teamName = (lu.team || {}).name || '';
+                const teamId = TEAM_EN[teamName] || `team-${slug(teamName)}`;
+                const selecao = teamName === 'Brazil' ? 'Brasil' : teamName;
                 const coach = lu.coach || {};
                 if (coach.name) {
                     const cid = `coach-${slug(coach.name)}`;
-                    addNode(nodes, { id: cid, type: 'Tecnico', label: coach.name, source: 'api' });
+                    addNode(nodes, { id: cid, type: 'Tecnico', label: coach.name, teamId, selecao, source: 'api' });
                     addEdge(edges, seen, { from: cid, to: mid, rel: 'tecnico_da_partida' });
                 }
                 [['startXI', 'jogou_na_partida'], ['substitutes', 'entrou_em']].forEach(([bucket, rel]) => {
@@ -344,8 +378,9 @@
                         const name = (entry.player || {}).name;
                         if (!name) return;
                         const pid = `player-${slug(name)}`;
-                        addNode(nodes, { id: pid, type: 'Jogador', label: name, source: 'api' });
+                        addNode(nodes, { id: pid, type: 'Jogador', label: name, teamId, selecao, source: 'api' });
                         addEdge(edges, seen, { from: pid, to: mid, rel });
+                        addEdge(edges, seen, { from: pid, to: teamId, rel: 'jogou_em' });
                     });
                 });
             });
@@ -355,9 +390,12 @@
                 const det = (ev.detail || '').toLowerCase();
                 const name = (ev.player || {}).name;
                 const min = (ev.time || {}).elapsed;
+                const evTeamName = (ev.team || {}).name || '';
+                const evTeamId = TEAM_EN[evTeamName] || `team-${slug(evTeamName)}`;
+                const evSelecao = evTeamName === 'Brazil' ? 'Brasil' : evTeamName;
                 if (!name) return;
                 const pid = `player-${slug(name)}`;
-                addNode(nodes, { id: pid, type: 'Jogador', label: name, source: 'api' });
+                addNode(nodes, { id: pid, type: 'Jogador', label: name, teamId: evTeamId, selecao: evSelecao, source: 'api' });
                 if (et === 'goal' && !det.includes('missed')) {
                     addEdge(edges, seen, { from: pid, to: mid, rel: 'marcou_gol', minuto: min });
                 } else if (et === 'card') {
@@ -366,7 +404,7 @@
                 const assist = (ev.assist || {}).name;
                 if (assist) {
                     const aid = `player-${slug(assist)}`;
-                    addNode(nodes, { id: aid, type: 'Jogador', label: assist, source: 'api' });
+                    addNode(nodes, { id: aid, type: 'Jogador', label: assist, teamId: evTeamId, selecao: evSelecao, source: 'api' });
                     addEdge(edges, seen, { from: aid, to: mid, rel: 'deu_assistencia', minuto: min });
                 }
             });
