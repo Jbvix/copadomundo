@@ -77,11 +77,6 @@
     </div>
     <div id="graph-network" class="graph-view" role="img" aria-label="Grafo Brasil Live"></div>
 
-    <div id="zone-labels" class="hidden pointer-events-none fixed z-10 left-0 right-0 top-[calc(var(--header-h)+0.75rem)] px-4 flex justify-between text-[11px] font-semibold uppercase tracking-wider">
-        <span class="text-sky-400/90">🇧🇷 Brasil</span>
-        <span class="text-orange-400/90">Adversário</span>
-    </div>
-
     <div class="fixed bottom-3 left-3 z-10 flex flex-wrap gap-x-3 gap-y-1 px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-700/80 text-[10px] text-slate-400 pointer-events-none">
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span>Jogador 🇧🇷</span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#fb923c"></span>Jogador adversário</span>
@@ -321,128 +316,16 @@
             };
         }
 
-        function layoutScale() {
-            return isMobile() ? 0.62 : 1;
-        }
-
-        function getTeamsForMatch(mid) {
-            return allEdges
-                .filter(e => e.to === mid && e.rel === 'enfrentou')
-                .map(e => e.from)
-                .filter(id => (allNodes.find(n => n.id === id) || {}).type === 'Time');
-        }
-
-        function getPlayersForMatch(mid) {
-            const ids = new Set();
-            allEdges.forEach(e => {
-                if (e.to !== mid || !e.from.startsWith('player-')) return;
-                if (['jogou_na_partida', 'entrou_em', 'marcou_gol', 'deu_assistencia', 'recebeu_cartao'].includes(e.rel)) {
-                    ids.add(e.from);
-                }
-            });
-            return [...ids];
-        }
-
-        function placePlayerColumn(positions, pids, cx, cy, scale, side) {
-            const dir = side === 'br' ? -1 : 1;
-            const cols = pids.length > 11 ? 2 : 1;
-            const perCol = Math.ceil(pids.length / cols);
-            pids.forEach((pid, i) => {
-                const col = cols === 1 ? 0 : Math.floor(i / perCol);
-                const row = cols === 1 ? i : i % perCol;
-                positions.set(pid, {
-                    x: cx + dir * (200 + col * 75) * scale,
-                    y: cy + (row - (perCol - 1) / 2) * 34 * scale,
-                });
-            });
-        }
-
-        function layoutOneMatch(mid, cx, cy, positions, scale) {
-            positions.set(mid, { x: cx, y: cy });
-
-            const teamIds = getTeamsForMatch(mid);
-            const brId = teamIds.find(t => t === 'team-brasil');
-            const oppIds = teamIds.filter(t => t !== 'team-brasil');
-
-            if (brId) positions.set(brId, { x: cx - 120 * scale, y: cy - 90 * scale });
-            oppIds.forEach((oid, i) => {
-                positions.set(oid, { x: cx + 120 * scale, y: cy - 90 * scale + i * 36 * scale });
-            });
-
-            const players = getPlayersForMatch(mid);
-            const brPlayers = players.filter(pid => (allNodes.find(n => n.id === pid) || {}).teamId === 'team-brasil');
-            const oppPlayers = players.filter(pid => (allNodes.find(n => n.id === pid) || {}).teamId !== 'team-brasil');
-
-            placePlayerColumn(positions, brPlayers, cx, cy, scale, 'br');
-            placePlayerColumn(positions, oppPlayers, cx, cy, scale, 'opp');
-
-            allEdges.filter(e => e.to === mid && e.rel === 'tecnico_da_partida').forEach(e => {
-                const coach = allNodes.find(n => n.id === e.from);
-                const isBr = coach?.teamId === 'team-brasil';
-                positions.set(e.from, {
-                    x: cx + (isBr ? -160 : 160) * scale,
-                    y: cy + 110 * scale,
-                });
-            });
-
-            allEdges.filter(e => e.from === mid).forEach(e => {
-                if (e.to.startsWith('venue-')) positions.set(e.to, { x: cx, y: cy + 150 * scale });
-            });
-        }
-
-        function computeTeamLayout(visIds) {
-            const positions = new Map();
-            const scale = layoutScale();
-            const matchIds = (selectedMatchId === 'all'
-                ? matches.map(m => m.id)
-                : [selectedMatchId]
-            ).filter(id => id && id !== 'all' && visIds.has(id));
-
-            if (!matchIds.length) {
-                if (visIds.has('team-brasil')) positions.set('team-brasil', { x: -150 * scale, y: 0 });
-                allNodes.filter(n => visIds.has(n.id) && n.type === 'Time' && n.id !== 'team-brasil')
-                    .forEach((t, i) => positions.set(t.id, { x: 150 * scale, y: i * 50 * scale }));
-                return positions;
-            }
-
-            const gapY = 420 * scale;
-            const startY = -((matchIds.length - 1) * gapY) / 2;
-
-            matchIds.forEach((mid, idx) => {
-                layoutOneMatch(mid, 0, startY + idx * gapY, positions, scale);
-            });
-
-            if (visIds.has('wc-2026')) {
-                positions.set('wc-2026', { x: 0, y: startY - gapY * 0.55 });
-            }
-
-            return positions;
-        }
-
-        function applyLayoutToNodes(nodes, visIds) {
-            const layout = computeTeamLayout(visIds);
-            const hasPlayers = allNodes.some(n => visIds.has(n.id) && n.type === 'Jogador');
-            const multiMatch = selectedMatchId === 'all' && matches.length > 1;
-            document.getElementById('zone-labels').classList.toggle('hidden', !hasPlayers || multiMatch);
-
-            return nodes.map(n => {
-                const pos = layout.get(n.id);
-                if (!pos) return n;
-                return { ...n, x: pos.x, y: pos.y, fixed: { x: true, y: true } };
-            });
-        }
-
         function render() {
             if (!nodesDS) return;
             const visIds = visibleForMatch(selectedMatchId);
             const neighbors = focusId ? getNeighbors(focusId) : null;
             const focusSet = focusId ? new Set([focusId, ...neighbors]) : null;
 
-            let nodes = allNodes.filter(n => visIds.has(n.id)).map(n => {
+            const nodes = allNodes.filter(n => visIds.has(n.id)).map(n => {
                 if (!focusId) return nodeStyle(n, false, false);
                 return nodeStyle(n, n.id !== focusId && !neighbors.has(n.id), n.id === focusId);
             });
-            nodes = applyLayoutToNodes(nodes, visIds);
             const edges = allEdges
                 .filter(e => visIds.has(e.from) && visIds.has(e.to))
                 .map(e => edgeStyle(e, focusSet));
@@ -450,16 +333,6 @@
             nodesDS.clear(); edgesDS.clear();
             nodesDS.add(nodes); edgesDS.add(edges);
             updateGoalsSummary();
-
-            if (network) {
-                network.setOptions({ physics: { enabled: false } });
-                setTimeout(() => {
-                    const target = selectedMatchId !== 'all'
-                        ? selectedMatchId
-                        : (matches.find(m => m.status === 'finished')?.id || matches[0]?.id);
-                    if (target) network.focus(target, { scale: isMobile() ? 0.55 : 0.75, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
-                }, 80);
-            }
         }
 
         function setFocus(id) {
@@ -726,17 +599,15 @@
                 edgesDS = new vis.DataSet([]);
                 render();
                 network = new vis.Network(document.getElementById('graph-network'), { nodes: nodesDS, edges: edgesDS }, {
-                    physics: { enabled: false },
+                    physics: { barnesHut: { gravitationalConstant: -2200, springLength: 100 }, stabilization: { iterations: 100 } },
                     interaction: { hover: false, zoomView: true, dragView: true },
-                    edges: { smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.35 } },
+                    edges: { smooth: { type: 'continuous' } },
                 });
                 network.on('click', p => p.nodes.length ? focusNode(p.nodes[0], true) : (hidePanel(), setFocus(null), network.unselectAll()));
-                setTimeout(() => {
-                    const target = selectedMatchId !== 'all'
-                        ? selectedMatchId
-                        : (matches.find(m => m.status === 'finished')?.id || matches[0]?.id || 'team-brasil');
-                    if (target && network) network.focus(target, { scale: isMobile() ? 0.55 : 0.75, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
-                }, 200);
+                network.once('stabilizationIterationsDone', () => {
+                    const target = selectedMatchId !== 'all' ? selectedMatchId : (matches.find(m => m.status === 'finished')?.id || 'team-brasil');
+                    if (target) network.focus(target, { scale: 0.9, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+                });
 
                 document.getElementById('btn-refresh').addEventListener('click', refreshFromApi);
                 document.getElementById('focus-chip').addEventListener('click', () => { hidePanel(); setFocus(null); network.unselectAll(); });
