@@ -120,6 +120,12 @@
 
     <div id="graph-network" role="img" aria-label="Grafo interativo de conexões da Seleção Brasileira"></div>
 
+    <button id="focus-chip" type="button"
+        class="hidden fixed top-[calc(var(--header-h)+0.5rem)] left-1/2 -translate-x-1/2 z-20 max-w-[92vw] px-3 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-700/50 text-[11px] text-emerald-300 shadow-lg active:bg-emerald-900"
+        title="Toque para limpar o foco">
+        Foco ativo
+    </button>
+
     <!-- FAB mobile -->
     <button id="btn-close-graph-hint" type="button"
         class="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full bg-slate-800/90 border border-slate-700 text-xs text-slate-400 pointer-events-none opacity-0 transition-opacity"
@@ -179,28 +185,127 @@
         let allEdges = [];
         let nodesDS = null;
         let edgesDS = null;
+        let focusId = null;
+        let visibleNodeIds = new Set();
 
-        function styleForNode(n) {
+        function getDirectNeighbors(id) {
+            const neighbors = new Set();
+            allEdges.forEach(e => {
+                if (e.from === id) neighbors.add(e.to);
+                if (e.to === id) neighbors.add(e.from);
+            });
+            return neighbors;
+        }
+
+        function styleForNode(n, opts = {}) {
+            const { dimmed = false, isFocus = false } = opts;
             const t = n.type || 'Nota';
             const c = TYPE_COLORS[t] || TYPE_COLORS.Nota;
             const isBrasil = n.id === 'team-brasil';
             const mob = isMobile();
-            const fontSize = mob ? (isBrasil ? 13 : 11) : (isBrasil ? 16 : 13);
-            const nodeSize = mob ? (isBrasil ? 28 : 14) : (isBrasil ? 36 : 18);
+            const fontSize = mob ? (isBrasil && !focusId ? 13 : 11) : (isBrasil && !focusId ? 16 : 13);
+            const nodeSize = mob
+                ? (isFocus ? 32 : isBrasil && !focusId ? 28 : 14)
+                : (isFocus ? 40 : isBrasil && !focusId ? 36 : 18);
+            if (dimmed) {
+                return {
+                    id: n.id,
+                    label: '',
+                    title: `${n.label} (${t})`,
+                    group: t,
+                    color: {
+                        background: 'rgba(15,23,42,0.35)',
+                        border: 'rgba(30,41,59,0.25)',
+                        highlight: { background: c.bg, border: c.border },
+                    },
+                    font: { color: 'rgba(148,163,184,0.2)', size: 8 },
+                    size: 8,
+                    borderWidth: 0,
+                };
+            }
             return {
                 id: n.id,
-                label: mob && (n.label || '').length > 14 ? (n.label || '').slice(0, 12) + '…' : n.label,
+                label: mob && !isFocus && (n.label || '').length > 14 ? (n.label || '').slice(0, 12) + '…' : n.label,
                 title: `${n.label} (${t})`,
                 group: t,
                 color: {
                     background: c.bg,
-                    border: c.border,
+                    border: isFocus ? '#ffffff' : c.border,
                     highlight: { background: c.border, border: '#fff' },
                 },
-                font: { color: c.font, size: fontSize, face: 'system-ui, sans-serif' },
+                font: { color: c.font, size: isFocus ? fontSize + 2 : fontSize, face: 'system-ui, sans-serif' },
                 size: nodeSize,
-                borderWidth: isBrasil ? 3 : 1,
+                borderWidth: isFocus ? 4 : (isBrasil && !focusId ? 3 : 1),
             };
+        }
+
+        function styleForEdge(e, idx, opts = {}) {
+            const { dimmed = false, isDirect = false } = opts;
+            if (dimmed) {
+                return {
+                    id: idx, from: e.from, to: e.to, title: e.rel, arrows: 'to',
+                    color: { color: 'rgba(15,23,42,0.12)', highlight: '#334155' },
+                    width: 0.3, dashes: [2, 8],
+                };
+            }
+            return {
+                id: idx, from: e.from, to: e.to, title: e.rel, arrows: 'to',
+                color: { color: isDirect ? '#34d399' : '#475569', highlight: '#6ee7b7' },
+                width: isDirect ? 2.5 : 1,
+            };
+        }
+
+        function renderGraph() {
+            if (!nodesDS || !edgesDS) return;
+            const neighbors = focusId ? getDirectNeighbors(focusId) : null;
+            const focusSet = focusId ? new Set([focusId, ...neighbors]) : null;
+
+            const nodes = allNodes
+                .filter(n => visibleNodeIds.has(n.id))
+                .map(n => {
+                    if (!focusId) return styleForNode(n);
+                    const isFocus = n.id === focusId;
+                    const isNeighbor = neighbors.has(n.id);
+                    return styleForNode(n, { dimmed: !isFocus && !isNeighbor, isFocus });
+                });
+
+            const edges = allEdges
+                .filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to))
+                .map((e, i) => {
+                    if (!focusId) return styleForEdge(e, i);
+                    const touchesFocus = e.from === focusId || e.to === focusId;
+                    const bothVisible = focusSet.has(e.from) && focusSet.has(e.to);
+                    return styleForEdge(e, i, {
+                        dimmed: !touchesFocus || !bothVisible,
+                        isDirect: touchesFocus,
+                    });
+                });
+
+            nodesDS.clear();
+            edgesDS.clear();
+            nodesDS.add(nodes);
+            edgesDS.add(edges);
+        }
+
+        function setFocus(id) {
+            focusId = id;
+            renderGraph();
+            const chip = document.getElementById('focus-chip');
+            if (chip) {
+                if (id) {
+                    const n = allNodes.find(x => x.id === id);
+                    const count = getDirectNeighbors(id).size;
+                    chip.textContent = `Foco: ${n?.label || id} · ${count} conexões`;
+                    chip.classList.remove('hidden');
+                } else {
+                    chip.classList.add('hidden');
+                }
+            }
+        }
+
+        function clearFocus() {
+            setFocus(null);
+            if (network) network.unselectAll();
         }
 
         function formatValue(k, v) {
@@ -225,8 +330,10 @@
                 }).join('');
             el.innerHTML = `
                 <p class="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">${node.type || 'Nota'}</p>
-                <h2 class="text-xl font-bold text-white mb-3 leading-tight">${node.bandeira || ''} ${node.label}</h2>
+                <h2 class="text-xl font-bold text-white mb-1 leading-tight">${node.bandeira || ''} ${node.label}</h2>
+                <p class="text-xs text-emerald-400/80 mb-3">${getDirectNeighbors(node.id).size} conexões diretas no grafo</p>
                 ${rows ? `<div class="space-y-0 mb-2">${rows}</div>` : ''}
+                <p class="text-[10px] text-slate-500 mt-2">Só vizinhos diretos ficam em destaque. Nem todo nó se liga a todo nó — apenas onde há link no vault.</p>
             `;
             panel.classList.add('panel-open');
             backdrop.classList.add('panel-open');
@@ -238,6 +345,11 @@
             const backdrop = document.getElementById('panel-backdrop');
             backdrop.classList.remove('panel-open');
             backdrop.setAttribute('aria-hidden', 'true');
+        }
+
+        function dismissFocus() {
+            hidePanel();
+            clearFocus();
         }
 
         function getSearchValue() {
@@ -255,7 +367,7 @@
         function applyFilters() {
             const q = getSearchValue();
             const typeF = getFilterValue();
-            const visible = new Set(
+            visibleNodeIds = new Set(
                 allNodes.filter(n => {
                     if (typeF && n.type !== typeF) return false;
                     if (q && !(n.label || '').toLowerCase().includes(q) && !(n.id || '').includes(q)) return false;
@@ -264,17 +376,12 @@
             );
             if (q || typeF) {
                 allEdges.forEach(e => {
-                    if (visible.has(e.from)) visible.add(e.to);
-                    if (visible.has(e.to)) visible.add(e.from);
+                    if (visibleNodeIds.has(e.from)) visibleNodeIds.add(e.to);
+                    if (visibleNodeIds.has(e.to)) visibleNodeIds.add(e.from);
                 });
             }
-            const fn = allNodes.filter(n => visible.has(n.id)).map(styleForNode);
-            const fe = allEdges.filter(e => visible.has(e.from) && visible.has(e.to))
-                .map((e, i) => ({ id: i, from: e.from, to: e.to, title: e.rel, arrows: 'to', color: { color: '#334155', highlight: '#34d399' }, width: 1 }));
-            nodesDS.clear();
-            edgesDS.clear();
-            nodesDS.add(fn);
-            edgesDS.add(fe);
+            if (focusId && !visibleNodeIds.has(focusId)) clearFocus();
+            renderGraph();
         }
 
         function syncInputs(fromMob) {
@@ -288,9 +395,10 @@
 
         function focusNode(id, openPanel = true) {
             if (!network) return;
+            setFocus(id);
             network.selectNodes([id]);
             network.focus(id, {
-                scale: isMobile() ? 0.85 : 1.15,
+                scale: isMobile() ? 0.9 : 1.2,
                 animation: { duration: 500, easingFunction: 'easeInOutQuad' },
             });
             const raw = allNodes.find(n => n.id === id);
@@ -333,7 +441,8 @@
                 },
             });
             nodesDS.clear();
-            nodesDS.add(allNodes.map(styleForNode));
+            nodesDS.add(allNodes.map(n => styleForNode(n)));
+            renderGraph();
         }
 
         async function init() {
@@ -343,15 +452,13 @@
                 const data = await res.json();
                 allNodes = data.nodes || [];
                 allEdges = data.edges || [];
+                visibleNodeIds = new Set(allNodes.map(n => n.id));
 
                 const types = [...new Set(allNodes.map(n => n.type).filter(Boolean))].sort();
                 populateTypeFilters(types);
 
-                nodesDS = new vis.DataSet(allNodes.map(styleForNode));
-                edgesDS = new vis.DataSet(allEdges.map((e, i) => ({
-                    id: i, from: e.from, to: e.to, title: e.rel,
-                    arrows: 'to', color: { color: '#334155', highlight: '#34d399' }, width: 1,
-                })));
+                nodesDS = new vis.DataSet([]);
+                edgesDS = new vis.DataSet([]);
 
                 const container = document.getElementById('graph-network');
                 network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
@@ -374,15 +481,20 @@
                 network.on('click', params => {
                     if (params.nodes.length) {
                         const id = params.nodes[0];
-                        const raw = allNodes.find(n => n.id === id);
-                        if (raw) showPanel(raw);
-                    } else if (!isMobile()) {
-                        hidePanel();
+                        focusNode(id, true);
+                    } else {
+                        dismissFocus();
                     }
                 });
 
+                document.getElementById('focus-chip').addEventListener('click', dismissFocus);
+
                 network.once('stabilizationIterationsDone', () => {
-                    focusNode('team-brasil', false);
+                    renderGraph();
+                    network.focus('team-brasil', {
+                        scale: isMobile() ? 0.75 : 1,
+                        animation: { duration: 600, easingFunction: 'easeInOutQuad' },
+                    });
                     const hint = document.getElementById('btn-close-graph-hint');
                     if (isMobile() && hint) {
                         hint.classList.remove('pointer-events-none');
@@ -407,7 +519,7 @@
                     document.getElementById(id).addEventListener('click', () => focusNode('team-brasil', !isMobile()));
                 });
                 document.getElementById('close-panel').addEventListener('click', hidePanel);
-                document.getElementById('panel-backdrop').addEventListener('click', hidePanel);
+                document.getElementById('panel-backdrop').addEventListener('click', dismissFocus);
 
                 let resizeTimer;
                 window.addEventListener('resize', () => {
