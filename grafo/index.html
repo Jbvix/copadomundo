@@ -240,13 +240,13 @@
                 if (!focusId) return styleForNode2d(n);
                 return styleForNode2d(n, { dimmed: n.id !== focusId && !neighbors.has(n.id), isFocus: n.id === focusId });
             });
-            const edges = allEdges.filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to)).map((e, i) => {
+            const edges = allEdges.filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to)).map(e => {
                 const direct = focusId && (e.from === focusId || e.to === focusId);
                 const dim = focusId && (!direct || !focusSet.has(e.from) || !focusSet.has(e.to));
                 return {
-                    id: i, from: e.from, to: e.to, title: e.rel, arrows: 'to',
-                    color: { color: dim ? 'rgba(15,23,42,0.12)' : (direct ? '#34d399' : '#475569') },
-                    width: direct ? 2.5 : (dim ? 0.3 : 1), dashes: dim ? [2, 8] : false,
+                    id: `${e.from}--${e.to}`, from: e.from, to: e.to, title: e.rel, arrows: 'to',
+                    color: { color: dim ? 'rgba(15,23,42,0.12)' : (direct ? '#34d399' : '#64748b') },
+                    width: direct ? 2.5 : (dim ? 0.3 : 1.5), dashes: dim ? [2, 8] : false,
                 };
             });
             nodesDS.clear(); edgesDS.clear();
@@ -264,7 +264,7 @@
         function color3dLink(l) {
             const s = l.source.id || l.source;
             const t = l.target.id || l.target;
-            if (!focusId) return 'rgba(100,116,139,0.5)';
+            if (!focusId) return 'rgba(148,163,184,0.75)';
             if (s === focusId || t === focusId) return '#34d399';
             return 'rgba(15,23,42,0.06)';
         }
@@ -272,7 +272,8 @@
         function width3dLink(l) {
             const s = l.source.id || l.source;
             const t = l.target.id || l.target;
-            return (focusId && (s === focusId || t === focusId)) ? 2 : 0.4;
+            if (!focusId) return 1.2;
+            return (s === focusId || t === focusId) ? 2.5 : 0.3;
         }
 
         function build3dData() {
@@ -468,6 +469,7 @@
 
                 nodesDS = new vis.DataSet([]);
                 edgesDS = new vis.DataSet([]);
+                render2d();
                 network = new vis.Network(document.getElementById('graph-network'), { nodes: nodesDS, edges: edgesDS }, {
                     physics: { barnesHut: { gravitationalConstant: -2800, springLength: 90 }, stabilization: { iterations: 120 } },
                     interaction: { hover: false, navigationButtons: false, zoomView: true, dragView: true },
@@ -475,7 +477,6 @@
                 });
                 network.on('click', p => p.nodes.length ? focusNode(p.nodes[0], true) : dismissFocus());
                 network.once('stabilizationIterationsDone', () => {
-                    render2d();
                     network.focus('team-brasil', { scale: isMobile() ? 0.75 : 1, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
                 });
 
