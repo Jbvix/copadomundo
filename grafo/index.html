@@ -2,58 +2,151 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#020617">
     <title>Mapa de Conexões — Brasil e Adversários | Copa 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        html, body { height: 100%; margin: 0; background: #020617; }
-        #graph-network { width: 100%; height: calc(100vh - 56px); background: #0f172a; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: #020617;
+            overscroll-behavior: none;
+        }
+        :root {
+            --header-h: 7.5rem;
+        }
+        @media (min-width: 640px) {
+            :root { --header-h: 3.5rem; }
+        }
+        #graph-network {
+            width: 100%;
+            height: calc(100dvh - var(--header-h));
+            background: #0f172a;
+            touch-action: none;
+        }
         .vis-network:focus { outline: none; }
+        /* Bottom sheet mobile */
+        #detail-panel {
+            transition: transform 0.25s ease-out;
+        }
+        @media (max-width: 639px) {
+            #detail-panel {
+                top: auto;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                max-height: min(52dvh, 420px);
+                border-left: none;
+                border-top: 1px solid #334155;
+                border-radius: 1rem 1rem 0 0;
+                transform: translateY(100%);
+                padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+            #detail-panel.panel-open {
+                transform: translateY(0);
+            }
+            #panel-backdrop.panel-open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        @media (min-width: 640px) {
+            #detail-panel {
+                transform: translateX(100%);
+            }
+            #detail-panel.panel-open {
+                transform: translateX(0);
+            }
+            #panel-backdrop { display: none !important; }
+        }
+        #panel-backdrop {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        #panel-drag-handle {
+            display: none;
+        }
+        @media (max-width: 639px) {
+            #panel-drag-handle { display: block; }
+        }
     </style>
 </head>
 <body class="text-slate-200 antialiased">
-    <header class="h-14 border-b border-emerald-900/30 bg-slate-950/95 backdrop-blur flex items-center justify-between px-4 gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-            <a href="/" class="text-slate-400 hover:text-emerald-400 transition-colors shrink-0" title="Voltar ao Predictor">
-                <i class="fa-solid fa-arrow-left"></i>
+    <!-- Header: 2 linhas no mobile -->
+    <header class="border-b border-emerald-900/30 bg-slate-950/95 backdrop-blur sticky top-0 z-30">
+        <div class="flex items-center gap-2 px-3 pt-2 pb-1 sm:px-4 sm:py-0 sm:h-14 sm:justify-between">
+            <a href="/" class="text-slate-400 hover:text-emerald-400 transition-colors shrink-0 p-2 -ml-1 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Voltar ao Predictor" aria-label="Voltar">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
             </a>
-            <div class="min-w-0">
-                <h1 class="text-sm font-bold bg-gradient-to-r from-green-400 to-yellow-300 bg-clip-text text-transparent truncate">
+            <div class="flex-1 min-w-0 sm:flex-none">
+                <h1 class="text-sm sm:text-base font-bold bg-gradient-to-r from-green-400 to-yellow-300 bg-clip-text text-transparent truncate">
                     Mapa de Conexões
                 </h1>
-                <p class="text-[10px] text-slate-500 truncate">Brasil · rivais · Copas · jogadores</p>
+                <p class="text-[10px] text-slate-500 truncate hidden xs:block sm:block">Brasil · rivais · Copas · jogadores</p>
+            </div>
+            <button id="btn-focus-brasil" type="button"
+                class="sm:hidden shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-emerald-600 active:bg-emerald-500 text-white"
+                aria-label="Centralizar Brasil">
+                <i class="fa-solid fa-crosshairs"></i>
+            </button>
+            <div class="hidden sm:flex items-center gap-2 shrink-0">
+                <input type="search" id="search-node-desk" placeholder="Buscar…"
+                    class="w-36 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <select id="filter-type-desk"
+                    class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    <option value="">Todos</option>
+                </select>
+                <button id="btn-focus-brasil-desk" type="button"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white min-h-[44px]">
+                    <i class="fa-solid fa-crosshairs"></i> Brasil
+                </button>
             </div>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
-            <input type="search" id="search-node" placeholder="Buscar…"
-                class="w-28 sm:w-40 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        <!-- Filtros mobile — linha dedicada -->
+        <div class="flex gap-2 px-3 pb-2 sm:hidden">
+            <input type="search" id="search-node" placeholder="Buscar país, jogador…"
+                class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 min-h-[44px]">
             <select id="filter-type"
-                class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                class="w-[38%] max-w-[140px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 min-h-[44px]">
                 <option value="">Todos</option>
             </select>
-            <button id="btn-focus-brasil" type="button"
-                class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white">
-                <i class="fa-solid fa-crosshairs"></i> Brasil
-            </button>
         </div>
     </header>
 
-    <div id="graph-network"></div>
+    <div id="graph-network" role="img" aria-label="Grafo interativo de conexões da Seleção Brasileira"></div>
 
+    <!-- FAB mobile -->
+    <button id="btn-close-graph-hint" type="button"
+        class="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full bg-slate-800/90 border border-slate-700 text-xs text-slate-400 pointer-events-none opacity-0 transition-opacity"
+        aria-hidden="true">
+        Toque em um nó · arraste para mover
+    </button>
+
+    <!-- Backdrop mobile -->
+    <div id="panel-backdrop" class="fixed inset-0 bg-black/50 z-40 sm:hidden" aria-hidden="true"></div>
+
+    <!-- Painel detalhe: bottom sheet (mobile) / sidebar (desktop) -->
     <aside id="detail-panel"
-        class="fixed right-0 top-14 bottom-0 w-full sm:w-80 bg-slate-950/95 border-l border-slate-800 p-4 transform translate-x-full transition-transform duration-200 z-40 overflow-y-auto">
-        <button id="close-panel" type="button" class="absolute top-3 right-3 text-slate-500 hover:text-white">
-            <i class="fa-solid fa-xmark"></i>
+        class="fixed z-50 bg-slate-950/98 backdrop-blur border-slate-800 p-4 overflow-y-auto sm:top-14 sm:right-0 sm:bottom-0 sm:w-80 sm:border-l">
+        <div id="panel-drag-handle" class="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3"></div>
+        <button id="close-panel" type="button"
+            class="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg active:bg-slate-800"
+            aria-label="Fechar">
+            <i class="fa-solid fa-xmark text-xl"></i>
         </button>
-        <div id="detail-content" class="pt-2"></div>
+        <div id="detail-content" class="pt-1 pr-8"></div>
     </aside>
 
-    <div id="load-error" class="hidden fixed inset-0 top-14 flex items-center justify-center bg-slate-950/90 z-50 p-6 text-center">
+    <div id="load-error" class="hidden fixed inset-0 flex items-center justify-center bg-slate-950/95 z-[60] p-6 text-center">
         <div>
             <p class="text-red-400 font-semibold mb-2">Não foi possível carregar o grafo.</p>
-            <p class="text-sm text-slate-400">Execute <code class="text-emerald-400">python scripts/export_obsidian_graph.py</code></p>
+            <p class="text-sm text-slate-400">Execute <code class="text-emerald-400 text-xs">python scripts/export_obsidian_graph.py</code></p>
+            <a href="/" class="inline-block mt-4 text-emerald-400 text-sm underline">Voltar ao Predictor</a>
         </div>
     </div>
 
@@ -69,6 +162,18 @@
             Nota:       { bg: '#475569', border: '#64748b', font: '#f1f5f9' },
         };
 
+        const FIELD_LABELS = {
+            nome_pt: 'Nome', nome_en: 'Nome (EN)', nome: 'Nome', continente: 'Continente',
+            bandeira: 'Bandeira', titulos_copa: 'Títulos na Copa', rival_historico: 'Rival histórico',
+            grupo_2026: 'Grupo 2026', posicao: 'Posição', nacionalidade: 'Nacionalidade',
+            copas: 'Copas disputadas', clube_atual: 'Clube', ano: 'Ano', sede: 'Sede',
+            campeao: 'Campeão', vice: 'Vice', artilheiro: 'Artilheiro', placar: 'Placar',
+            fase: 'Fase', local: 'Local', destaque: 'Destaque', data: 'Data',
+            selecao: 'Seleção', pais: 'País', edicao: 'Edição',
+        };
+
+        const isMobile = () => window.matchMedia('(max-width: 639px)').matches;
+
         let network = null;
         let allNodes = [];
         let allEdges = [];
@@ -79,9 +184,12 @@
             const t = n.type || 'Nota';
             const c = TYPE_COLORS[t] || TYPE_COLORS.Nota;
             const isBrasil = n.id === 'team-brasil';
+            const mob = isMobile();
+            const fontSize = mob ? (isBrasil ? 13 : 11) : (isBrasil ? 16 : 13);
+            const nodeSize = mob ? (isBrasil ? 28 : 14) : (isBrasil ? 36 : 18);
             return {
                 id: n.id,
-                label: n.label,
+                label: mob && (n.label || '').length > 14 ? (n.label || '').slice(0, 12) + '…' : n.label,
                 title: `${n.label} (${t})`,
                 group: t,
                 color: {
@@ -89,36 +197,64 @@
                     border: c.border,
                     highlight: { background: c.border, border: '#fff' },
                 },
-                font: { color: c.font, size: isBrasil ? 16 : 13 },
-                size: isBrasil ? 36 : (t === 'Indice' ? 28 : 18),
+                font: { color: c.font, size: fontSize, face: 'system-ui, sans-serif' },
+                size: nodeSize,
                 borderWidth: isBrasil ? 3 : 1,
             };
         }
 
+        function formatValue(k, v) {
+            if (k === 'rival_historico') return v === true || v === 'true' ? 'Sim' : 'Não';
+            if (Array.isArray(v)) return v.join(', ');
+            return String(v);
+        }
+
         function showPanel(node) {
             const panel = document.getElementById('detail-panel');
+            const backdrop = document.getElementById('panel-backdrop');
             const el = document.getElementById('detail-content');
             const skip = new Set(['id', 'label', 'type', 'path', 'title']);
             const rows = Object.entries(node)
                 .filter(([k, v]) => !skip.has(k) && v != null && v !== '')
-                .map(([k, v]) => `<tr><td class="text-slate-500 pr-2 py-0.5 align-top text-xs">${k}</td><td class="text-slate-200 text-xs">${Array.isArray(v) ? v.join(', ') : v}</td></tr>`)
-                .join('');
+                .map(([k, v]) => {
+                    const lbl = FIELD_LABELS[k] || k.replace(/_/g, ' ');
+                    return `<div class="flex justify-between gap-3 py-2 border-b border-slate-800/80 last:border-0">
+                        <span class="text-slate-500 text-sm shrink-0">${lbl}</span>
+                        <span class="text-slate-100 text-sm text-right font-medium">${formatValue(k, v)}</span>
+                    </div>`;
+                }).join('');
             el.innerHTML = `
                 <p class="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">${node.type || 'Nota'}</p>
-                <h2 class="text-lg font-bold text-white mb-3">${node.bandeira || ''} ${node.label}</h2>
-                ${rows ? `<table class="w-full mb-3">${rows}</table>` : ''}
-                <p class="text-[10px] text-slate-600">${node.path || ''}</p>
+                <h2 class="text-xl font-bold text-white mb-3 leading-tight">${node.bandeira || ''} ${node.label}</h2>
+                ${rows ? `<div class="space-y-0 mb-2">${rows}</div>` : ''}
             `;
-            panel.classList.remove('translate-x-full');
+            panel.classList.add('panel-open');
+            backdrop.classList.add('panel-open');
+            backdrop.setAttribute('aria-hidden', 'false');
         }
 
         function hidePanel() {
-            document.getElementById('detail-panel').classList.add('translate-x-full');
+            document.getElementById('detail-panel').classList.remove('panel-open');
+            const backdrop = document.getElementById('panel-backdrop');
+            backdrop.classList.remove('panel-open');
+            backdrop.setAttribute('aria-hidden', 'true');
+        }
+
+        function getSearchValue() {
+            const mob = document.getElementById('search-node');
+            const desk = document.getElementById('search-node-desk');
+            return ((mob && mob.offsetParent !== null ? mob.value : desk?.value) || '').toLowerCase().trim();
+        }
+
+        function getFilterValue() {
+            const mob = document.getElementById('filter-type');
+            const desk = document.getElementById('filter-type-desk');
+            return (mob && mob.offsetParent !== null ? mob.value : desk?.value) || '';
         }
 
         function applyFilters() {
-            const q = (document.getElementById('search-node').value || '').toLowerCase().trim();
-            const typeF = document.getElementById('filter-type').value;
+            const q = getSearchValue();
+            const typeF = getFilterValue();
             const visible = new Set(
                 allNodes.filter(n => {
                     if (typeF && n.type !== typeF) return false;
@@ -141,12 +277,63 @@
             edgesDS.add(fe);
         }
 
-        function focusNode(id) {
+        function syncInputs(fromMob) {
+            const q = fromMob ? document.getElementById('search-node').value : document.getElementById('search-node-desk').value;
+            const t = fromMob ? document.getElementById('filter-type').value : document.getElementById('filter-type-desk').value;
+            document.getElementById('search-node').value = q;
+            document.getElementById('search-node-desk').value = q;
+            document.getElementById('filter-type').value = t;
+            document.getElementById('filter-type-desk').value = t;
+        }
+
+        function focusNode(id, openPanel = true) {
             if (!network) return;
             network.selectNodes([id]);
-            network.focus(id, { scale: 1.2, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+            network.focus(id, {
+                scale: isMobile() ? 0.85 : 1.15,
+                animation: { duration: 500, easingFunction: 'easeInOutQuad' },
+            });
             const raw = allNodes.find(n => n.id === id);
-            if (raw) showPanel(raw);
+            if (raw && openPanel) showPanel(raw);
+        }
+
+        function populateTypeFilters(types) {
+            ['filter-type', 'filter-type-desk'].forEach(selId => {
+                const sel = document.getElementById(selId);
+                types.forEach(t => {
+                    const o = document.createElement('option');
+                    o.value = t;
+                    o.textContent = t;
+                    sel.appendChild(o);
+                });
+            });
+        }
+
+        function buildNetwork() {
+            if (!network) return;
+            const mob = isMobile();
+            network.setOptions({
+                physics: {
+                    enabled: true,
+                    barnesHut: {
+                        gravitationalConstant: mob ? -2800 : -4200,
+                        springLength: mob ? 90 : 120,
+                        springConstant: 0.04,
+                    },
+                    stabilization: { iterations: mob ? 120 : 180 },
+                },
+                interaction: {
+                    hover: !mob,
+                    tooltipDelay: 120,
+                    multiselect: false,
+                    navigationButtons: !mob,
+                    zoomView: true,
+                    dragView: true,
+                    dragNodes: true,
+                },
+            });
+            nodesDS.clear();
+            nodesDS.add(allNodes.map(styleForNode));
         }
 
         async function init() {
@@ -158,13 +345,7 @@
                 allEdges = data.edges || [];
 
                 const types = [...new Set(allNodes.map(n => n.type).filter(Boolean))].sort();
-                const sel = document.getElementById('filter-type');
-                types.forEach(t => {
-                    const o = document.createElement('option');
-                    o.value = t;
-                    o.textContent = t;
-                    sel.appendChild(o);
-                });
+                populateTypeFilters(types);
 
                 nodesDS = new vis.DataSet(allNodes.map(styleForNode));
                 edgesDS = new vis.DataSet(allEdges.map((e, i) => ({
@@ -176,10 +357,17 @@
                 network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
                     physics: {
                         enabled: true,
-                        barnesHut: { gravitationalConstant: -4200, springLength: 120, springConstant: 0.04 },
-                        stabilization: { iterations: 180 },
+                        barnesHut: { gravitationalConstant: -2800, springLength: 90, springConstant: 0.04 },
+                        stabilization: { iterations: 120 },
                     },
-                    interaction: { hover: true, tooltipDelay: 120, multiselect: false, navigationButtons: true },
+                    interaction: {
+                        hover: false,
+                        tooltipDelay: 120,
+                        multiselect: false,
+                        navigationButtons: false,
+                        zoomView: true,
+                        dragView: true,
+                    },
                     edges: { smooth: { type: 'continuous' } },
                 });
 
@@ -188,15 +376,46 @@
                         const id = params.nodes[0];
                         const raw = allNodes.find(n => n.id === id);
                         if (raw) showPanel(raw);
-                    } else hidePanel();
+                    } else if (!isMobile()) {
+                        hidePanel();
+                    }
                 });
 
-                network.once('stabilizationIterationsDone', () => focusNode('team-brasil'));
+                network.once('stabilizationIterationsDone', () => {
+                    focusNode('team-brasil', false);
+                    const hint = document.getElementById('btn-close-graph-hint');
+                    if (isMobile() && hint) {
+                        hint.classList.remove('pointer-events-none');
+                        hint.style.opacity = '1';
+                        setTimeout(() => { hint.style.opacity = '0'; }, 4000);
+                    }
+                });
 
-                document.getElementById('search-node').addEventListener('input', applyFilters);
-                document.getElementById('filter-type').addEventListener('change', applyFilters);
-                document.getElementById('btn-focus-brasil').addEventListener('click', () => focusNode('team-brasil'));
+                ['search-node', 'search-node-desk'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', () => {
+                        syncInputs(id === 'search-node');
+                        applyFilters();
+                    });
+                });
+                ['filter-type', 'filter-type-desk'].forEach(id => {
+                    document.getElementById(id).addEventListener('change', () => {
+                        syncInputs(id === 'filter-type');
+                        applyFilters();
+                    });
+                });
+                ['btn-focus-brasil', 'btn-focus-brasil-desk'].forEach(id => {
+                    document.getElementById(id).addEventListener('click', () => focusNode('team-brasil', !isMobile()));
+                });
                 document.getElementById('close-panel').addEventListener('click', hidePanel);
+                document.getElementById('panel-backdrop').addEventListener('click', hidePanel);
+
+                let resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(buildNetwork, 200);
+                });
+
+                window.matchMedia('(max-width: 639px)').addEventListener('change', buildNetwork);
             } catch (e) {
                 console.error(e);
                 document.getElementById('load-error').classList.remove('hidden');
