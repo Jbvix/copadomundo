@@ -1,0 +1,2672 @@
+{
+  "meta": {
+    "version": "1.0",
+    "generated": "2026-06-21",
+    "source": "obsidian-vault",
+    "nodeCount": 86,
+    "edgeCount": 264
+  },
+  "nodes": [
+    {
+      "id": "indice-principal",
+      "type": "Indice",
+      "label": "Rede da Seleção Brasileira",
+      "path": "00-Indice.md"
+    },
+    {
+      "id": "club-al-hilal",
+      "type": "Clube",
+      "label": "Al-Hilal",
+      "path": "Clubes\\Al-Hilal.md",
+      "nome": "Al-Hilal",
+      "pais": "Arábia Saudita",
+      "bandeira": "🇸🇦"
+    },
+    {
+      "id": "club-arsenal",
+      "type": "Clube",
+      "label": "Arsenal",
+      "path": "Clubes\\Arsenal.md",
+      "nome": "Arsenal",
+      "pais": "Inglaterra",
+      "bandeira": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+    },
+    {
+      "id": "club-barcelona",
+      "type": "Clube",
+      "label": "Barcelona",
+      "path": "Clubes\\Barcelona.md",
+      "nome": "Barcelona",
+      "pais": "Espanha",
+      "bandeira": "🇪🇸"
+    },
+    {
+      "id": "club-bayern",
+      "type": "Clube",
+      "label": "Bayern München",
+      "path": "Clubes\\Bayern-Munchen.md",
+      "nome": "Bayern München",
+      "pais": "Alemanha",
+      "bandeira": "🇩🇪"
+    },
+    {
+      "id": "club-chelsea",
+      "type": "Clube",
+      "label": "Chelsea",
+      "path": "Clubes\\Chelsea.md",
+      "nome": "Chelsea",
+      "pais": "Inglaterra",
+      "bandeira": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+    },
+    {
+      "id": "club-inter",
+      "type": "Clube",
+      "label": "Inter de Milão",
+      "path": "Clubes\\Inter-Milan.md",
+      "nome": "Inter de Milão",
+      "pais": "Itália",
+      "bandeira": "🇮🇹"
+    },
+    {
+      "id": "club-liverpool",
+      "type": "Clube",
+      "label": "Liverpool",
+      "path": "Clubes\\Liverpool.md",
+      "nome": "Liverpool",
+      "pais": "Inglaterra",
+      "bandeira": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+    },
+    {
+      "id": "club-man-utd",
+      "type": "Clube",
+      "label": "Manchester United",
+      "path": "Clubes\\Manchester-United.md",
+      "nome": "Manchester United",
+      "pais": "Inglaterra",
+      "bandeira": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+    },
+    {
+      "id": "club-newcastle",
+      "type": "Clube",
+      "label": "Newcastle United",
+      "path": "Clubes\\Newcastle.md",
+      "nome": "Newcastle United",
+      "pais": "Inglaterra",
+      "bandeira": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+    },
+    {
+      "id": "club-psg",
+      "type": "Clube",
+      "label": "Paris Saint-Germain",
+      "path": "Clubes\\PSG.md",
+      "nome": "Paris Saint-Germain",
+      "pais": "França",
+      "bandeira": "🇫🇷"
+    },
+    {
+      "id": "club-real-madrid",
+      "type": "Clube",
+      "label": "Real Madrid",
+      "path": "Clubes\\Real-Madrid.md",
+      "nome": "Real Madrid",
+      "pais": "Espanha",
+      "bandeira": "🇪🇸"
+    },
+    {
+      "id": "club-santos",
+      "type": "Clube",
+      "label": "Santos FC",
+      "path": "Clubes\\Santos.md",
+      "nome": "Santos FC",
+      "pais": "Brasil",
+      "bandeira": "🇧🇷"
+    },
+    {
+      "id": "wc-1950",
+      "type": "Edicao",
+      "label": "1950",
+      "path": "Edicoes\\WC-1950.md",
+      "ano": 1950,
+      "sede": "Brasil",
+      "campeao": "Uruguai",
+      "vice": "Brasil",
+      "artilheiro": "Ademir de Menezes (9 gols)"
+    },
+    {
+      "id": "wc-1958",
+      "type": "Edicao",
+      "label": "1958",
+      "path": "Edicoes\\WC-1958.md",
+      "ano": 1958,
+      "sede": "Suécia",
+      "campeao": "Brasil",
+      "vice": "Suécia",
+      "artilheiro": "Just Fontaine (13 gols)"
+    },
+    {
+      "id": "wc-1962",
+      "type": "Edicao",
+      "label": "1962",
+      "path": "Edicoes\\WC-1962.md",
+      "ano": 1962,
+      "sede": "Chile",
+      "campeao": "Brasil",
+      "vice": "Tchecoslováquia",
+      "artilheiro": "Vários (4 gols)"
+    },
+    {
+      "id": "wc-1970",
+      "type": "Edicao",
+      "label": "1970",
+      "path": "Edicoes\\WC-1970.md",
+      "ano": 1970,
+      "sede": "México",
+      "campeao": "Brasil",
+      "vice": "Itália",
+      "artilheiro": "Gerd Müller (10 gols)"
+    },
+    {
+      "id": "wc-1994",
+      "type": "Edicao",
+      "label": "1994",
+      "path": "Edicoes\\WC-1994.md",
+      "ano": 1994,
+      "sede": "EUA",
+      "campeao": "Brasil",
+      "vice": "Itália",
+      "artilheiro": "Oleg Salenko / Stoichkov (6 gols)"
+    },
+    {
+      "id": "wc-1998",
+      "type": "Edicao",
+      "label": "1998",
+      "path": "Edicoes\\WC-1998.md",
+      "ano": 1998,
+      "sede": "França",
+      "campeao": "França",
+      "vice": "Brasil",
+      "artilheiro": "Davor Šuker (6 gols)"
+    },
+    {
+      "id": "wc-2002",
+      "type": "Edicao",
+      "label": "2002",
+      "path": "Edicoes\\WC-2002.md",
+      "ano": 2002,
+      "sede": "Japão / Coreia do Sul",
+      "campeao": "Brasil",
+      "vice": "Alemanha",
+      "artilheiro": "Ronaldo Fenômeno (8 gols)"
+    },
+    {
+      "id": "wc-2014",
+      "type": "Edicao",
+      "label": "2014",
+      "path": "Edicoes\\WC-2014.md",
+      "ano": 2014,
+      "sede": "Brasil",
+      "campeao": "Alemanha",
+      "vice": "Argentina",
+      "artilheiro": "James Rodríguez (6 gols)"
+    },
+    {
+      "id": "wc-2018",
+      "type": "Edicao",
+      "label": "2018",
+      "path": "Edicoes\\WC-2018.md",
+      "ano": 2018,
+      "sede": "Rússia",
+      "campeao": "França",
+      "vice": "Croácia",
+      "artilheiro": "Harry Kane (6 gols)"
+    },
+    {
+      "id": "wc-2022",
+      "type": "Edicao",
+      "label": "2022",
+      "path": "Edicoes\\WC-2022.md",
+      "ano": 2022,
+      "sede": "Catar",
+      "campeao": "Argentina",
+      "vice": "França",
+      "artilheiro": "Kylian Mbappé (8 gols)"
+    },
+    {
+      "id": "wc-2026",
+      "type": "Edicao",
+      "label": "2026",
+      "path": "Edicoes\\WC-2026.md",
+      "ano": 2026,
+      "sede": "EUA / México / Canadá",
+      "campeao": "—",
+      "vice": "—",
+      "artilheiro": "—"
+    },
+    {
+      "id": "player-ghiggia",
+      "type": "Jogador",
+      "label": "Alcides Ghiggia",
+      "path": "Jogadores\\Alcides-Ghiggia.md",
+      "nome": "Alcides Ghiggia",
+      "posicao": "Atacante",
+      "nacionalidade": "Uruguai",
+      "copas": [
+        1950
+      ],
+      "clube_atual": "Peñarol"
+    },
+    {
+      "id": "player-alisson",
+      "type": "Jogador",
+      "label": "Alisson",
+      "path": "Jogadores\\Alisson.md",
+      "nome": "Alisson",
+      "posicao": "Goleiro",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2018,
+        2022,
+        2026
+      ],
+      "clube_atual": "Liverpool"
+    },
+    {
+      "id": "player-bruno-guimaraes",
+      "type": "Jogador",
+      "label": "Bruno Guimarães",
+      "path": "Jogadores\\Bruno-Guimaraes.md",
+      "nome": "Bruno Guimarães",
+      "posicao": "Meio-campo",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2022,
+        2026
+      ],
+      "clube_atual": "Newcastle"
+    },
+    {
+      "id": "player-cafu",
+      "type": "Jogador",
+      "label": "Cafu",
+      "path": "Jogadores\\Cafu.md",
+      "nome": "Cafu",
+      "posicao": "Lateral",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1994,
+        1998,
+        2002,
+        2006
+      ],
+      "clube_atual": "Roma"
+    },
+    {
+      "id": "player-casemiro",
+      "type": "Jogador",
+      "label": "Casemiro",
+      "path": "Jogadores\\Casemiro.md",
+      "nome": "Casemiro",
+      "posicao": "Meio-campo",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2018,
+        2022,
+        2026
+      ],
+      "clube_atual": "Manchester United"
+    },
+    {
+      "id": "player-maradona",
+      "type": "Jogador",
+      "label": "Diego Maradona",
+      "path": "Jogadores\\Diego-Maradona.md",
+      "nome": "Diego Maradona",
+      "posicao": "Atacante",
+      "nacionalidade": "Argentina",
+      "copas": [
+        1982,
+        1986,
+        1990,
+        1994
+      ],
+      "clube_atual": "—"
+    },
+    {
+      "id": "player-endrick",
+      "type": "Jogador",
+      "label": "Endrick",
+      "path": "Jogadores\\Endrick.md",
+      "nome": "Endrick",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2026
+      ],
+      "clube_atual": "Real Madrid"
+    },
+    {
+      "id": "player-estevao",
+      "type": "Jogador",
+      "label": "Estêvão",
+      "path": "Jogadores\\Estevao.md",
+      "nome": "Estêvão",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2026
+      ],
+      "clube_atual": "Chelsea"
+    },
+    {
+      "id": "player-gabriel-magalhaes",
+      "type": "Jogador",
+      "label": "Gabriel Magalhães",
+      "path": "Jogadores\\Gabriel-Magalhaes.md",
+      "nome": "Gabriel Magalhães",
+      "posicao": "Zagueiro",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2026
+      ],
+      "clube_atual": "Arsenal"
+    },
+    {
+      "id": "player-garrincha",
+      "type": "Jogador",
+      "label": "Garrincha",
+      "path": "Jogadores\\Garrincha.md",
+      "nome": "Garrincha",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1958,
+        1962,
+        1966
+      ],
+      "clube_atual": "Botafogo"
+    },
+    {
+      "id": "player-mbappe",
+      "type": "Jogador",
+      "label": "Kylian Mbappé",
+      "path": "Jogadores\\Kylian-Mbappe.md",
+      "nome": "Kylian Mbappé",
+      "posicao": "Atacante",
+      "nacionalidade": "França",
+      "copas": [
+        2018,
+        2022
+      ],
+      "clube_atual": "Real Madrid"
+    },
+    {
+      "id": "player-messi",
+      "type": "Jogador",
+      "label": "Lionel Messi",
+      "path": "Jogadores\\Lionel-Messi.md",
+      "nome": "Lionel Messi",
+      "posicao": "Atacante",
+      "nacionalidade": "Argentina",
+      "copas": [
+        2006,
+        2010,
+        2014,
+        2018,
+        2022
+      ],
+      "clube_atual": "Inter Miami"
+    },
+    {
+      "id": "player-modric",
+      "type": "Jogador",
+      "label": "Luka Modrić",
+      "path": "Jogadores\\Luka-Modric.md",
+      "nome": "Luka Modrić",
+      "posicao": "Meio-campo",
+      "nacionalidade": "Croácia",
+      "copas": [
+        2006,
+        2014,
+        2018,
+        2022
+      ],
+      "clube_atual": "Real Madrid"
+    },
+    {
+      "id": "player-marquinhos",
+      "type": "Jogador",
+      "label": "Marquinhos",
+      "path": "Jogadores\\Marquinhos.md",
+      "nome": "Marquinhos",
+      "posicao": "Zagueiro",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2014,
+        2018,
+        2022,
+        2026
+      ],
+      "clube_atual": "PSG"
+    },
+    {
+      "id": "player-klose",
+      "type": "Jogador",
+      "label": "Miroslav Klose",
+      "path": "Jogadores\\Miroslav-Klose.md",
+      "nome": "Miroslav Klose",
+      "posicao": "Atacante",
+      "nacionalidade": "Alemanha",
+      "copas": [
+        2002,
+        2006,
+        2010,
+        2014
+      ],
+      "clube_atual": "Lazio"
+    },
+    {
+      "id": "player-neymar",
+      "type": "Jogador",
+      "label": "Neymar",
+      "path": "Jogadores\\Neymar.md",
+      "nome": "Neymar",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2014,
+        2018,
+        2022,
+        2026
+      ],
+      "clube_atual": "Al-Hilal"
+    },
+    {
+      "id": "player-paolo-rossi",
+      "type": "Jogador",
+      "label": "Paolo Rossi",
+      "path": "Jogadores\\Paolo-Rossi.md",
+      "nome": "Paolo Rossi",
+      "posicao": "Atacante",
+      "nacionalidade": "Itália",
+      "copas": [
+        1978,
+        1982,
+        1986
+      ],
+      "clube_atual": "Juventus"
+    },
+    {
+      "id": "player-pele",
+      "type": "Jogador",
+      "label": "Pelé",
+      "path": "Jogadores\\Pele.md",
+      "nome": "Pelé",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1958,
+        1962,
+        1966,
+        1970
+      ],
+      "clube_atual": "Santos"
+    },
+    {
+      "id": "player-raphinha",
+      "type": "Jogador",
+      "label": "Raphinha",
+      "path": "Jogadores\\Raphinha.md",
+      "nome": "Raphinha",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2022,
+        2026
+      ],
+      "clube_atual": "Barcelona"
+    },
+    {
+      "id": "player-rivaldo",
+      "type": "Jogador",
+      "label": "Rivaldo",
+      "path": "Jogadores\\Rivaldo.md",
+      "nome": "Rivaldo",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1998,
+        2002
+      ],
+      "clube_atual": "Barcelona"
+    },
+    {
+      "id": "player-baggio",
+      "type": "Jogador",
+      "label": "Roberto Baggio",
+      "path": "Jogadores\\Roberto-Baggio.md",
+      "nome": "Roberto Baggio",
+      "posicao": "Atacante",
+      "nacionalidade": "Itália",
+      "copas": [
+        1990,
+        1994,
+        1998
+      ],
+      "clube_atual": "Juventus"
+    },
+    {
+      "id": "player-rodrygo",
+      "type": "Jogador",
+      "label": "Rodrygo",
+      "path": "Jogadores\\Rodrygo.md",
+      "nome": "Rodrygo",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2022,
+        2026
+      ],
+      "clube_atual": "Real Madrid"
+    },
+    {
+      "id": "player-romario",
+      "type": "Jogador",
+      "label": "Romário",
+      "path": "Jogadores\\Romario.md",
+      "nome": "Romário",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1990,
+        1994
+      ],
+      "clube_atual": "Flamengo"
+    },
+    {
+      "id": "player-ronaldo-fenomeno",
+      "type": "Jogador",
+      "label": "Ronaldo Fenômeno",
+      "path": "Jogadores\\Ronaldo-Fenomeno.md",
+      "nome": "Ronaldo Fenômeno",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1994,
+        1998,
+        2002,
+        2006
+      ],
+      "clube_atual": "Corinthians"
+    },
+    {
+      "id": "player-muller",
+      "type": "Jogador",
+      "label": "Thomas Müller",
+      "path": "Jogadores\\Thomas-Muller.md",
+      "nome": "Thomas Müller",
+      "posicao": "Atacante",
+      "nacionalidade": "Alemanha",
+      "copas": [
+        2010,
+        2014,
+        2018,
+        2022
+      ],
+      "clube_atual": "Bayern München"
+    },
+    {
+      "id": "player-vinicius-jr",
+      "type": "Jogador",
+      "label": "Vinícius Júnior",
+      "path": "Jogadores\\Vinicius-Junior.md",
+      "nome": "Vinícius Júnior",
+      "posicao": "Atacante",
+      "nacionalidade": "Brasil",
+      "copas": [
+        2022,
+        2026
+      ],
+      "clube_atual": "Real Madrid"
+    },
+    {
+      "id": "player-zico",
+      "type": "Jogador",
+      "label": "Zico",
+      "path": "Jogadores\\Zico.md",
+      "nome": "Zico",
+      "posicao": "Meio-campo",
+      "nacionalidade": "Brasil",
+      "copas": [
+        1978,
+        1982,
+        1986
+      ],
+      "clube_atual": "Flamengo"
+    },
+    {
+      "id": "player-zidane",
+      "type": "Jogador",
+      "label": "Zinedine Zidane",
+      "path": "Jogadores\\Zinedine-Zidane.md",
+      "nome": "Zinedine Zidane",
+      "posicao": "Meio-campo",
+      "nacionalidade": "França",
+      "copas": [
+        1998,
+        2002,
+        2006
+      ],
+      "clube_atual": "Real Madrid"
+    },
+    {
+      "id": "match-1950-final",
+      "type": "Partida",
+      "label": "Uruguai 2 × 1 Brasil",
+      "path": "Partidas\\Final-1950-URU-BRA.md",
+      "ano": 1950,
+      "data": "1950-07-16",
+      "placar": "Uruguai 2 × 1 Brasil",
+      "fase": "Final",
+      "edicao": 1950,
+      "local": "Maracanã, Rio de Janeiro",
+      "destaque": "Maracanaço"
+    },
+    {
+      "id": "match-1958-final",
+      "type": "Partida",
+      "label": "Brasil 5 × 2 Suécia",
+      "path": "Partidas\\Final-1958-BRA-SUE.md",
+      "ano": 1958,
+      "data": "1958-06-29",
+      "placar": "Brasil 5 × 2 Suécia",
+      "fase": "Final",
+      "edicao": 1958,
+      "local": "Råsunda, Estocolmo",
+      "destaque": "Primeiro título brasileiro"
+    },
+    {
+      "id": "match-1962-final",
+      "type": "Partida",
+      "label": "Brasil 3 × 1 Tchecoslováquia",
+      "path": "Partidas\\Final-1962-BRA-TCH.md",
+      "ano": 1962,
+      "data": "1962-06-17",
+      "placar": "Brasil 3 × 1 Tchecoslováquia",
+      "fase": "Final",
+      "edicao": 1962,
+      "local": "Estadio Nacional, Santiago",
+      "destaque": "Bicampeonato"
+    },
+    {
+      "id": "match-1970-final",
+      "type": "Partida",
+      "label": "Brasil 4 × 1 Itália",
+      "path": "Partidas\\Final-1970-BRA-ITA.md",
+      "ano": 1970,
+      "data": "1970-06-21",
+      "placar": "Brasil 4 × 1 Itália",
+      "fase": "Final",
+      "edicao": 1970,
+      "local": "Estadio Azteca, Cidade do México",
+      "destaque": "Tricampeonato — futebol-arte"
+    },
+    {
+      "id": "match-1994-final",
+      "type": "Partida",
+      "label": "Brasil 0 × 0 (3 × 2 pen) Itália",
+      "path": "Partidas\\Final-1994-BRA-ITA.md",
+      "ano": 1994,
+      "data": "1994-07-17",
+      "placar": "Brasil 0 × 0 (3 × 2 pen) Itália",
+      "fase": "Final",
+      "edicao": 1994,
+      "local": "Rose Bowl, Pasadena",
+      "destaque": "Tetra nos pênaltis"
+    },
+    {
+      "id": "match-1998-final",
+      "type": "Partida",
+      "label": "França 3 × 0 Brasil",
+      "path": "Partidas\\Final-1998-FRA-BRA.md",
+      "ano": 1998,
+      "data": "1998-07-12",
+      "placar": "França 3 × 0 Brasil",
+      "fase": "Final",
+      "edicao": 1998,
+      "local": "Stade de France, Saint-Denis",
+      "destaque": "Dois gols de cabeça de Zidane"
+    },
+    {
+      "id": "match-2002-final",
+      "type": "Partida",
+      "label": "Brasil 2 × 0 Alemanha",
+      "path": "Partidas\\Final-2002-BRA-ALE.md",
+      "ano": 2002,
+      "data": "2002-06-30",
+      "placar": "Brasil 2 × 0 Alemanha",
+      "fase": "Final",
+      "edicao": 2002,
+      "local": "International Stadium, Yokohama",
+      "destaque": "Penta — Ronaldo Fenômeno artilheiro"
+    },
+    {
+      "id": "match-2022-final",
+      "type": "Partida",
+      "label": "Argentina 3 × 3 (4 × 2 pen) França",
+      "path": "Partidas\\Final-2022-ARG-FRA.md",
+      "ano": 2022,
+      "data": "2022-12-18",
+      "placar": "Argentina 3 × 3 (4 × 2 pen) França",
+      "fase": "Final",
+      "edicao": 2022,
+      "local": "Lusail Stadium, Lusail",
+      "destaque": "Contexto — rival Messi/Neymar"
+    },
+    {
+      "id": "match-2026-gc2",
+      "type": "Partida",
+      "label": "Brasil × Haiti",
+      "path": "Partidas\\GrupoC-2026-BRA-HAI.md",
+      "ano": 2026,
+      "data": "2026-06-19",
+      "placar": "Brasil × Haiti",
+      "fase": "Grupo C — Rodada 2",
+      "edicao": 2026,
+      "local": "Lincoln Financial Field, Filadélfia",
+      "destaque": "Segundo jogo do Brasil"
+    },
+    {
+      "id": "match-2026-gc1",
+      "type": "Partida",
+      "label": "Brasil × Marrocos",
+      "path": "Partidas\\GrupoC-2026-BRA-MAR.md",
+      "ano": 2026,
+      "data": "2026-06-13",
+      "placar": "Brasil × Marrocos",
+      "fase": "Grupo C — Rodada 1",
+      "edicao": 2026,
+      "local": "MetLife Stadium, Nova Jersey",
+      "destaque": "Abertura do Grupo C"
+    },
+    {
+      "id": "match-2026-gc3",
+      "type": "Partida",
+      "label": "Escócia × Brasil",
+      "path": "Partidas\\GrupoC-2026-SCO-BRA.md",
+      "ano": 2026,
+      "data": "2026-06-24",
+      "placar": "Escócia × Brasil",
+      "fase": "Grupo C — Rodada 3",
+      "edicao": 2026,
+      "local": "Hard Rock Stadium, Miami",
+      "destaque": "Fechamento do grupo"
+    },
+    {
+      "id": "match-2018-quartas",
+      "type": "Partida",
+      "label": "Bélgica 2 × 1 Brasil",
+      "path": "Partidas\\Quartas-2018-BRA-BEL.md",
+      "ano": 2018,
+      "data": "2018-07-06",
+      "placar": "Bélgica 2 × 1 Brasil",
+      "fase": "Quartas de final",
+      "edicao": 2018,
+      "local": "Kazan Arena, Kazan",
+      "destaque": "Gol nos acréscimos"
+    },
+    {
+      "id": "match-2022-quartas",
+      "type": "Partida",
+      "label": "Croácia 1 × 1 (4 × 2 pen) Brasil",
+      "path": "Partidas\\Quartas-2022-CRO-BRA.md",
+      "ano": 2022,
+      "data": "2022-12-09",
+      "placar": "Croácia 1 × 1 (4 × 2 pen) Brasil",
+      "fase": "Quartas de final",
+      "edicao": 2022,
+      "local": "Estádio Education City, Al Rayyan",
+      "destaque": "Eliminação nos pênaltis"
+    },
+    {
+      "id": "match-2014-semifinal",
+      "type": "Partida",
+      "label": "Alemanha 7 × 1 Brasil",
+      "path": "Partidas\\Semifinal-2014-ALE-BRA.md",
+      "ano": 2014,
+      "data": "2014-07-08",
+      "placar": "Alemanha 7 × 1 Brasil",
+      "fase": "Semifinal",
+      "edicao": 2014,
+      "local": "Mineirão, Belo Horizonte",
+      "destaque": "Maior derrota do Brasil em Copas"
+    },
+    {
+      "id": "coach-deschamps",
+      "type": "Tecnico",
+      "label": "Didier Deschamps",
+      "path": "Tecnicos\\Didier-Deschamps.md",
+      "nome": "Didier Deschamps",
+      "selecao": "França",
+      "copas": [
+        2018,
+        2022
+      ]
+    },
+    {
+      "id": "coach-dorival",
+      "type": "Tecnico",
+      "label": "Dorival Júnior",
+      "path": "Tecnicos\\Dorival-Junior.md",
+      "nome": "Dorival Júnior",
+      "selecao": "Brasil",
+      "copas": [
+        2026
+      ]
+    },
+    {
+      "id": "coach-scolari",
+      "type": "Tecnico",
+      "label": "Luiz Felipe Scolari",
+      "path": "Tecnicos\\Felipao-Scolari.md",
+      "nome": "Luiz Felipe Scolari",
+      "selecao": "Brasil",
+      "copas": [
+        2002,
+        2014
+      ]
+    },
+    {
+      "id": "coach-low",
+      "type": "Tecnico",
+      "label": "Joachim Löw",
+      "path": "Tecnicos\\Joachim-Low.md",
+      "nome": "Joachim Löw",
+      "selecao": "Alemanha",
+      "copas": [
+        2014
+      ]
+    },
+    {
+      "id": "coach-zagallo",
+      "type": "Tecnico",
+      "label": "Mário Zagallo",
+      "path": "Tecnicos\\Mario-Zagallo.md",
+      "nome": "Mário Zagallo",
+      "selecao": "Brasil",
+      "copas": [
+        1970,
+        1994
+      ]
+    },
+    {
+      "id": "coach-tite",
+      "type": "Tecnico",
+      "label": "Tite",
+      "path": "Tecnicos\\Tite.md",
+      "nome": "Tite",
+      "selecao": "Brasil",
+      "copas": [
+        2018,
+        2022
+      ]
+    },
+    {
+      "id": "team-alemanha",
+      "type": "Time",
+      "label": "Alemanha",
+      "path": "Times\\Alemanha.md",
+      "nome_pt": "Alemanha",
+      "nome_en": "Germany",
+      "continente": "Europa",
+      "bandeira": "🇩🇪",
+      "titulos_copa": 4,
+      "rival_historico": true
+    },
+    {
+      "id": "team-argentina",
+      "type": "Time",
+      "label": "Argentina",
+      "path": "Times\\Argentina.md",
+      "nome_pt": "Argentina",
+      "nome_en": "Argentina",
+      "continente": "América do Sul",
+      "bandeira": "🇦🇷",
+      "titulos_copa": 3,
+      "rival_historico": true
+    },
+    {
+      "id": "team-belgica",
+      "type": "Time",
+      "label": "Bélgica",
+      "path": "Times\\Belgica.md",
+      "nome_pt": "Bélgica",
+      "nome_en": "Belgium",
+      "continente": "Europa",
+      "bandeira": "🇧🇪",
+      "titulos_copa": 0,
+      "rival_historico": false
+    },
+    {
+      "id": "team-brasil",
+      "type": "Time",
+      "label": "Brasil",
+      "path": "Times\\Brasil.md",
+      "nome_pt": "Brasil",
+      "nome_en": "Brazil",
+      "continente": "América do Sul",
+      "bandeira": "🇧🇷",
+      "titulos_copa": 5,
+      "rival_historico": true,
+      "grupo_2026": "C"
+    },
+    {
+      "id": "team-croacia",
+      "type": "Time",
+      "label": "Croácia",
+      "path": "Times\\Croacia.md",
+      "nome_pt": "Croácia",
+      "nome_en": "Croatia",
+      "continente": "Europa",
+      "bandeira": "🇭🇷",
+      "titulos_copa": 0,
+      "rival_historico": false
+    },
+    {
+      "id": "team-escocia",
+      "type": "Time",
+      "label": "Escócia",
+      "path": "Times\\Escocia.md",
+      "nome_pt": "Escócia",
+      "nome_en": "Scotland",
+      "continente": "Europa",
+      "bandeira": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      "titulos_copa": 0,
+      "rival_historico": false,
+      "grupo_2026": "C"
+    },
+    {
+      "id": "team-franca",
+      "type": "Time",
+      "label": "França",
+      "path": "Times\\Franca.md",
+      "nome_pt": "França",
+      "nome_en": "France",
+      "continente": "Europa",
+      "bandeira": "🇫🇷",
+      "titulos_copa": 2,
+      "rival_historico": true
+    },
+    {
+      "id": "team-haiti",
+      "type": "Time",
+      "label": "Haiti",
+      "path": "Times\\Haiti.md",
+      "nome_pt": "Haiti",
+      "nome_en": "Haiti",
+      "continente": "América do Norte",
+      "bandeira": "🇭🇹",
+      "titulos_copa": 0,
+      "rival_historico": false,
+      "grupo_2026": "C"
+    },
+    {
+      "id": "team-holanda",
+      "type": "Time",
+      "label": "Holanda",
+      "path": "Times\\Holanda.md",
+      "nome_pt": "Holanda",
+      "nome_en": "Netherlands",
+      "continente": "Europa",
+      "bandeira": "🇳🇱",
+      "titulos_copa": 0,
+      "rival_historico": true
+    },
+    {
+      "id": "team-italia",
+      "type": "Time",
+      "label": "Itália",
+      "path": "Times\\Italia.md",
+      "nome_pt": "Itália",
+      "nome_en": "Italy",
+      "continente": "Europa",
+      "bandeira": "🇮🇹",
+      "titulos_copa": 4,
+      "rival_historico": true
+    },
+    {
+      "id": "team-marrocos",
+      "type": "Time",
+      "label": "Marrocos",
+      "path": "Times\\Marrocos.md",
+      "nome_pt": "Marrocos",
+      "nome_en": "Morocco",
+      "continente": "África",
+      "bandeira": "🇲🇦",
+      "titulos_copa": 0,
+      "rival_historico": false,
+      "grupo_2026": "C"
+    },
+    {
+      "id": "team-suecia",
+      "type": "Time",
+      "label": "Suécia",
+      "path": "Times\\Suecia.md",
+      "nome_pt": "Suécia",
+      "nome_en": "Sweden",
+      "continente": "Europa",
+      "bandeira": "🇸🇪",
+      "titulos_copa": 0,
+      "rival_historico": false
+    },
+    {
+      "id": "team-tchecoslovaquia",
+      "type": "Time",
+      "label": "Tchecoslováquia",
+      "path": "Times\\Tchecoslovaquia.md",
+      "nome_pt": "Tchecoslováquia",
+      "nome_en": "Czechoslovakia",
+      "continente": "Europa",
+      "bandeira": "🇨🇿",
+      "titulos_copa": 0,
+      "rival_historico": false
+    },
+    {
+      "id": "team-uruguai",
+      "type": "Time",
+      "label": "Uruguai",
+      "path": "Times\\Uruguai.md",
+      "nome_pt": "Uruguai",
+      "nome_en": "Uruguay",
+      "continente": "América do Sul",
+      "bandeira": "🇺🇾",
+      "titulos_copa": 2,
+      "rival_historico": true
+    }
+  ],
+  "edges": [
+    {
+      "from": "indice-principal",
+      "to": "team-brasil",
+      "rel": "referencia",
+      "label": "Brasil"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-marrocos",
+      "rel": "referencia",
+      "label": "Marrocos"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-haiti",
+      "rel": "referencia",
+      "label": "Haiti"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-escocia",
+      "rel": "referencia",
+      "label": "Escocia"
+    },
+    {
+      "from": "indice-principal",
+      "to": "match-2026-gc1",
+      "rel": "referencia",
+      "label": "GrupoC-2026-BRA-MAR"
+    },
+    {
+      "from": "indice-principal",
+      "to": "match-2026-gc2",
+      "rel": "referencia",
+      "label": "GrupoC-2026-BRA-HAI"
+    },
+    {
+      "from": "indice-principal",
+      "to": "match-2026-gc3",
+      "rel": "referencia",
+      "label": "GrupoC-2026-SCO-BRA"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-argentina",
+      "rel": "referencia",
+      "label": "Argentina"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-alemanha",
+      "rel": "referencia",
+      "label": "Alemanha"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-italia",
+      "rel": "referencia",
+      "label": "Italia"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-uruguai",
+      "rel": "referencia",
+      "label": "Uruguai"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-franca",
+      "rel": "referencia",
+      "label": "Franca"
+    },
+    {
+      "from": "indice-principal",
+      "to": "team-holanda",
+      "rel": "referencia",
+      "label": "Holanda"
+    },
+    {
+      "from": "indice-principal",
+      "to": "wc-1958",
+      "rel": "referencia",
+      "label": "WC-1958"
+    },
+    {
+      "from": "indice-principal",
+      "to": "wc-1962",
+      "rel": "referencia",
+      "label": "WC-1962"
+    },
+    {
+      "from": "indice-principal",
+      "to": "wc-1970",
+      "rel": "referencia",
+      "label": "WC-1970"
+    },
+    {
+      "from": "indice-principal",
+      "to": "wc-1994",
+      "rel": "referencia",
+      "label": "WC-1994"
+    },
+    {
+      "from": "indice-principal",
+      "to": "wc-2002",
+      "rel": "referencia",
+      "label": "WC-2002"
+    },
+    {
+      "from": "indice-principal",
+      "to": "match-1950-final",
+      "rel": "referencia",
+      "label": "Final-1950-URU-BRA"
+    },
+    {
+      "from": "indice-principal",
+      "to": "match-2014-semifinal",
+      "rel": "referencia",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "indice-principal",
+      "to": "match-2002-final",
+      "rel": "referencia",
+      "label": "Final-2002-BRA-ALE"
+    },
+    {
+      "from": "club-al-hilal",
+      "to": "player-neymar",
+      "rel": "relacionado",
+      "label": "Neymar"
+    },
+    {
+      "from": "club-arsenal",
+      "to": "player-gabriel-magalhaes",
+      "rel": "relacionado",
+      "label": "Gabriel-Magalhaes"
+    },
+    {
+      "from": "club-barcelona",
+      "to": "player-rivaldo",
+      "rel": "relacionado",
+      "label": "Rivaldo"
+    },
+    {
+      "from": "club-barcelona",
+      "to": "player-raphinha",
+      "rel": "relacionado",
+      "label": "Raphinha"
+    },
+    {
+      "from": "club-bayern",
+      "to": "player-muller",
+      "rel": "relacionado",
+      "label": "Thomas-Muller"
+    },
+    {
+      "from": "club-chelsea",
+      "to": "player-estevao",
+      "rel": "relacionado",
+      "label": "Estevao"
+    },
+    {
+      "from": "club-liverpool",
+      "to": "player-alisson",
+      "rel": "relacionado",
+      "label": "Alisson"
+    },
+    {
+      "from": "club-man-utd",
+      "to": "player-casemiro",
+      "rel": "relacionado",
+      "label": "Casemiro"
+    },
+    {
+      "from": "club-newcastle",
+      "to": "player-bruno-guimaraes",
+      "rel": "relacionado",
+      "label": "Bruno-Guimaraes"
+    },
+    {
+      "from": "club-psg",
+      "to": "player-marquinhos",
+      "rel": "relacionado",
+      "label": "Marquinhos"
+    },
+    {
+      "from": "club-real-madrid",
+      "to": "player-vinicius-jr",
+      "rel": "relacionado",
+      "label": "Vinicius-Junior"
+    },
+    {
+      "from": "club-real-madrid",
+      "to": "player-rodrygo",
+      "rel": "relacionado",
+      "label": "Rodrygo"
+    },
+    {
+      "from": "club-real-madrid",
+      "to": "player-endrick",
+      "rel": "relacionado",
+      "label": "Endrick"
+    },
+    {
+      "from": "club-santos",
+      "to": "player-pele",
+      "rel": "relacionado",
+      "label": "Pele"
+    },
+    {
+      "from": "wc-1950",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-1950",
+      "to": "team-uruguai",
+      "rel": "relacionado",
+      "label": "Uruguai"
+    },
+    {
+      "from": "wc-1950",
+      "to": "match-1950-final",
+      "rel": "relacionado",
+      "label": "Final-1950-URU-BRA"
+    },
+    {
+      "from": "wc-1958",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-1958",
+      "to": "match-1958-final",
+      "rel": "relacionado",
+      "label": "Final-1958-BRA-SUE"
+    },
+    {
+      "from": "wc-1958",
+      "to": "player-pele",
+      "rel": "relacionado",
+      "label": "Pele"
+    },
+    {
+      "from": "wc-1958",
+      "to": "player-garrincha",
+      "rel": "relacionado",
+      "label": "Garrincha"
+    },
+    {
+      "from": "wc-1962",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-1962",
+      "to": "match-1962-final",
+      "rel": "relacionado",
+      "label": "Final-1962-BRA-TCH"
+    },
+    {
+      "from": "wc-1962",
+      "to": "player-garrincha",
+      "rel": "relacionado",
+      "label": "Garrincha"
+    },
+    {
+      "from": "wc-1970",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-1970",
+      "to": "match-1970-final",
+      "rel": "relacionado",
+      "label": "Final-1970-BRA-ITA"
+    },
+    {
+      "from": "wc-1970",
+      "to": "player-pele",
+      "rel": "relacionado",
+      "label": "Pele"
+    },
+    {
+      "from": "wc-1970",
+      "to": "coach-zagallo",
+      "rel": "relacionado",
+      "label": "Mario-Zagallo"
+    },
+    {
+      "from": "wc-1994",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-1994",
+      "to": "match-1994-final",
+      "rel": "relacionado",
+      "label": "Final-1994-BRA-ITA"
+    },
+    {
+      "from": "wc-1994",
+      "to": "player-romario",
+      "rel": "relacionado",
+      "label": "Romario"
+    },
+    {
+      "from": "wc-1994",
+      "to": "player-baggio",
+      "rel": "relacionado",
+      "label": "Roberto-Baggio"
+    },
+    {
+      "from": "wc-1998",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-1998",
+      "to": "team-franca",
+      "rel": "relacionado",
+      "label": "Franca"
+    },
+    {
+      "from": "wc-1998",
+      "to": "match-1998-final",
+      "rel": "relacionado",
+      "label": "Final-1998-FRA-BRA"
+    },
+    {
+      "from": "wc-1998",
+      "to": "player-zidane",
+      "rel": "relacionado",
+      "label": "Zinedine-Zidane"
+    },
+    {
+      "from": "wc-2002",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-2002",
+      "to": "match-2002-final",
+      "rel": "relacionado",
+      "label": "Final-2002-BRA-ALE"
+    },
+    {
+      "from": "wc-2002",
+      "to": "player-ronaldo-fenomeno",
+      "rel": "relacionado",
+      "label": "Ronaldo-Fenomeno"
+    },
+    {
+      "from": "wc-2002",
+      "to": "coach-scolari",
+      "rel": "relacionado",
+      "label": "Felipao-Scolari"
+    },
+    {
+      "from": "wc-2014",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-2014",
+      "to": "match-2014-semifinal",
+      "rel": "relacionado",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "wc-2014",
+      "to": "coach-scolari",
+      "rel": "relacionado",
+      "label": "Felipao-Scolari"
+    },
+    {
+      "from": "wc-2014",
+      "to": "player-muller",
+      "rel": "relacionado",
+      "label": "Thomas-Muller"
+    },
+    {
+      "from": "wc-2018",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-2018",
+      "to": "match-2018-quartas",
+      "rel": "relacionado",
+      "label": "Quartas-2018-BRA-BEL"
+    },
+    {
+      "from": "wc-2018",
+      "to": "coach-tite",
+      "rel": "relacionado",
+      "label": "Tite"
+    },
+    {
+      "from": "wc-2022",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-2022",
+      "to": "team-argentina",
+      "rel": "relacionado",
+      "label": "Argentina"
+    },
+    {
+      "from": "wc-2022",
+      "to": "match-2022-quartas",
+      "rel": "relacionado",
+      "label": "Quartas-2022-CRO-BRA"
+    },
+    {
+      "from": "wc-2022",
+      "to": "match-2022-final",
+      "rel": "relacionado",
+      "label": "Final-2022-ARG-FRA"
+    },
+    {
+      "from": "wc-2022",
+      "to": "player-messi",
+      "rel": "relacionado",
+      "label": "Lionel-Messi"
+    },
+    {
+      "from": "wc-2026",
+      "to": "team-brasil",
+      "rel": "relacionado",
+      "label": "Brasil"
+    },
+    {
+      "from": "wc-2026",
+      "to": "match-2026-gc1",
+      "rel": "relacionado",
+      "label": "GrupoC-2026-BRA-MAR"
+    },
+    {
+      "from": "wc-2026",
+      "to": "match-2026-gc2",
+      "rel": "relacionado",
+      "label": "GrupoC-2026-BRA-HAI"
+    },
+    {
+      "from": "wc-2026",
+      "to": "match-2026-gc3",
+      "rel": "relacionado",
+      "label": "GrupoC-2026-SCO-BRA"
+    },
+    {
+      "from": "player-ghiggia",
+      "to": "team-uruguai",
+      "rel": "jogou_em",
+      "label": "Uruguai"
+    },
+    {
+      "from": "player-ghiggia",
+      "to": "match-1950-final",
+      "rel": "marcou_em",
+      "label": "Final-1950-URU-BRA"
+    },
+    {
+      "from": "player-alisson",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-alisson",
+      "to": "club-liverpool",
+      "rel": "atua_no_clube",
+      "label": "Liverpool"
+    },
+    {
+      "from": "player-bruno-guimaraes",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-bruno-guimaraes",
+      "to": "club-newcastle",
+      "rel": "atua_no_clube",
+      "label": "Newcastle"
+    },
+    {
+      "from": "player-cafu",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-cafu",
+      "to": "match-2002-final",
+      "rel": "marcou_em",
+      "label": "Final-2002-BRA-ALE"
+    },
+    {
+      "from": "player-casemiro",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-casemiro",
+      "to": "club-man-utd",
+      "rel": "atua_no_clube",
+      "label": "Manchester-United"
+    },
+    {
+      "from": "player-maradona",
+      "to": "team-argentina",
+      "rel": "jogou_em",
+      "label": "Argentina"
+    },
+    {
+      "from": "player-maradona",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-endrick",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-endrick",
+      "to": "club-real-madrid",
+      "rel": "atua_no_clube",
+      "label": "Real-Madrid"
+    },
+    {
+      "from": "player-estevao",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-estevao",
+      "to": "club-chelsea",
+      "rel": "atua_no_clube",
+      "label": "Chelsea"
+    },
+    {
+      "from": "player-gabriel-magalhaes",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-gabriel-magalhaes",
+      "to": "club-arsenal",
+      "rel": "atua_no_clube",
+      "label": "Arsenal"
+    },
+    {
+      "from": "player-garrincha",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-garrincha",
+      "to": "match-1962-final",
+      "rel": "marcou_em",
+      "label": "Final-1962-BRA-TCH"
+    },
+    {
+      "from": "player-mbappe",
+      "to": "team-franca",
+      "rel": "jogou_em",
+      "label": "Franca"
+    },
+    {
+      "from": "player-mbappe",
+      "to": "match-2022-final",
+      "rel": "marcou_em",
+      "label": "Final-2022-ARG-FRA"
+    },
+    {
+      "from": "player-mbappe",
+      "to": "club-real-madrid",
+      "rel": "atua_no_clube",
+      "label": "Real-Madrid"
+    },
+    {
+      "from": "player-messi",
+      "to": "team-argentina",
+      "rel": "jogou_em",
+      "label": "Argentina"
+    },
+    {
+      "from": "player-messi",
+      "to": "match-2022-final",
+      "rel": "marcou_em",
+      "label": "Final-2022-ARG-FRA"
+    },
+    {
+      "from": "player-messi",
+      "to": "player-neymar",
+      "rel": "relacionado",
+      "label": "Neymar"
+    },
+    {
+      "from": "player-modric",
+      "to": "team-croacia",
+      "rel": "jogou_em",
+      "label": "Croacia"
+    },
+    {
+      "from": "player-modric",
+      "to": "match-2022-quartas",
+      "rel": "marcou_em",
+      "label": "Quartas-2022-CRO-BRA"
+    },
+    {
+      "from": "player-modric",
+      "to": "club-real-madrid",
+      "rel": "atua_no_clube",
+      "label": "Real-Madrid"
+    },
+    {
+      "from": "player-marquinhos",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-marquinhos",
+      "to": "club-psg",
+      "rel": "atua_no_clube",
+      "label": "PSG"
+    },
+    {
+      "from": "player-klose",
+      "to": "team-alemanha",
+      "rel": "jogou_em",
+      "label": "Alemanha"
+    },
+    {
+      "from": "player-neymar",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-neymar",
+      "to": "match-2014-semifinal",
+      "rel": "marcou_em",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "player-neymar",
+      "to": "match-2022-quartas",
+      "rel": "marcou_em",
+      "label": "Quartas-2022-CRO-BRA"
+    },
+    {
+      "from": "player-neymar",
+      "to": "player-messi",
+      "rel": "relacionado",
+      "label": "Lionel-Messi"
+    },
+    {
+      "from": "player-neymar",
+      "to": "club-al-hilal",
+      "rel": "atua_no_clube",
+      "label": "Al-Hilal"
+    },
+    {
+      "from": "player-paolo-rossi",
+      "to": "team-italia",
+      "rel": "jogou_em",
+      "label": "Italia"
+    },
+    {
+      "from": "player-pele",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-pele",
+      "to": "match-1958-final",
+      "rel": "marcou_em",
+      "label": "Final-1958-BRA-SUE"
+    },
+    {
+      "from": "player-pele",
+      "to": "match-1970-final",
+      "rel": "marcou_em",
+      "label": "Final-1970-BRA-ITA"
+    },
+    {
+      "from": "player-pele",
+      "to": "club-santos",
+      "rel": "atua_no_clube",
+      "label": "Santos"
+    },
+    {
+      "from": "player-raphinha",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-raphinha",
+      "to": "club-barcelona",
+      "rel": "atua_no_clube",
+      "label": "Barcelona"
+    },
+    {
+      "from": "player-rivaldo",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-rivaldo",
+      "to": "match-2002-final",
+      "rel": "marcou_em",
+      "label": "Final-2002-BRA-ALE"
+    },
+    {
+      "from": "player-rivaldo",
+      "to": "club-barcelona",
+      "rel": "atua_no_clube",
+      "label": "Barcelona"
+    },
+    {
+      "from": "player-baggio",
+      "to": "team-italia",
+      "rel": "jogou_em",
+      "label": "Italia"
+    },
+    {
+      "from": "player-baggio",
+      "to": "match-1994-final",
+      "rel": "marcou_em",
+      "label": "Final-1994-BRA-ITA"
+    },
+    {
+      "from": "player-rodrygo",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-rodrygo",
+      "to": "club-real-madrid",
+      "rel": "atua_no_clube",
+      "label": "Real-Madrid"
+    },
+    {
+      "from": "player-romario",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-romario",
+      "to": "match-1994-final",
+      "rel": "marcou_em",
+      "label": "Final-1994-BRA-ITA"
+    },
+    {
+      "from": "player-ronaldo-fenomeno",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-ronaldo-fenomeno",
+      "to": "match-2002-final",
+      "rel": "marcou_em",
+      "label": "Final-2002-BRA-ALE"
+    },
+    {
+      "from": "player-muller",
+      "to": "team-alemanha",
+      "rel": "jogou_em",
+      "label": "Alemanha"
+    },
+    {
+      "from": "player-muller",
+      "to": "match-2014-semifinal",
+      "rel": "marcou_em",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "player-muller",
+      "to": "club-bayern",
+      "rel": "atua_no_clube",
+      "label": "Bayern-Munchen"
+    },
+    {
+      "from": "player-vinicius-jr",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-vinicius-jr",
+      "to": "club-real-madrid",
+      "rel": "atua_no_clube",
+      "label": "Real-Madrid"
+    },
+    {
+      "from": "player-zico",
+      "to": "team-brasil",
+      "rel": "jogou_em",
+      "label": "Brasil"
+    },
+    {
+      "from": "player-zidane",
+      "to": "team-franca",
+      "rel": "jogou_em",
+      "label": "Franca"
+    },
+    {
+      "from": "player-zidane",
+      "to": "match-1998-final",
+      "rel": "marcou_em",
+      "label": "Final-1998-FRA-BRA"
+    },
+    {
+      "from": "player-zidane",
+      "to": "club-real-madrid",
+      "rel": "atua_no_clube",
+      "label": "Real-Madrid"
+    },
+    {
+      "from": "match-1950-final",
+      "to": "wc-1950",
+      "rel": "disputou",
+      "label": "WC-1950"
+    },
+    {
+      "from": "match-1950-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-1950-final",
+      "to": "team-uruguai",
+      "rel": "enfrentou",
+      "label": "Uruguai"
+    },
+    {
+      "from": "match-1950-final",
+      "to": "player-ghiggia",
+      "rel": "relacionado",
+      "label": "Alcides-Ghiggia"
+    },
+    {
+      "from": "match-1958-final",
+      "to": "wc-1958",
+      "rel": "disputou",
+      "label": "WC-1958"
+    },
+    {
+      "from": "match-1958-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-1958-final",
+      "to": "team-suecia",
+      "rel": "enfrentou",
+      "label": "Suecia"
+    },
+    {
+      "from": "match-1958-final",
+      "to": "player-pele",
+      "rel": "relacionado",
+      "label": "Pele"
+    },
+    {
+      "from": "match-1962-final",
+      "to": "wc-1962",
+      "rel": "disputou",
+      "label": "WC-1962"
+    },
+    {
+      "from": "match-1962-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-1962-final",
+      "to": "team-tchecoslovaquia",
+      "rel": "enfrentou",
+      "label": "Tchecoslovaquia"
+    },
+    {
+      "from": "match-1962-final",
+      "to": "player-garrincha",
+      "rel": "relacionado",
+      "label": "Garrincha"
+    },
+    {
+      "from": "match-1970-final",
+      "to": "wc-1970",
+      "rel": "disputou",
+      "label": "WC-1970"
+    },
+    {
+      "from": "match-1970-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-1970-final",
+      "to": "team-italia",
+      "rel": "enfrentou",
+      "label": "Italia"
+    },
+    {
+      "from": "match-1970-final",
+      "to": "player-pele",
+      "rel": "relacionado",
+      "label": "Pele"
+    },
+    {
+      "from": "match-1994-final",
+      "to": "wc-1994",
+      "rel": "disputou",
+      "label": "WC-1994"
+    },
+    {
+      "from": "match-1994-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-1994-final",
+      "to": "team-italia",
+      "rel": "enfrentou",
+      "label": "Italia"
+    },
+    {
+      "from": "match-1994-final",
+      "to": "player-romario",
+      "rel": "relacionado",
+      "label": "Romario"
+    },
+    {
+      "from": "match-1994-final",
+      "to": "player-baggio",
+      "rel": "relacionado",
+      "label": "Roberto-Baggio"
+    },
+    {
+      "from": "match-1998-final",
+      "to": "wc-1998",
+      "rel": "disputou",
+      "label": "WC-1998"
+    },
+    {
+      "from": "match-1998-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-1998-final",
+      "to": "team-franca",
+      "rel": "enfrentou",
+      "label": "Franca"
+    },
+    {
+      "from": "match-1998-final",
+      "to": "player-zidane",
+      "rel": "relacionado",
+      "label": "Zinedine-Zidane"
+    },
+    {
+      "from": "match-2002-final",
+      "to": "wc-2002",
+      "rel": "disputou",
+      "label": "WC-2002"
+    },
+    {
+      "from": "match-2002-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2002-final",
+      "to": "team-alemanha",
+      "rel": "enfrentou",
+      "label": "Alemanha"
+    },
+    {
+      "from": "match-2002-final",
+      "to": "player-ronaldo-fenomeno",
+      "rel": "relacionado",
+      "label": "Ronaldo-Fenomeno"
+    },
+    {
+      "from": "match-2022-final",
+      "to": "wc-2022",
+      "rel": "disputou",
+      "label": "WC-2022"
+    },
+    {
+      "from": "match-2022-final",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2022-final",
+      "to": "team-argentina",
+      "rel": "enfrentou",
+      "label": "Argentina"
+    },
+    {
+      "from": "match-2022-final",
+      "to": "team-franca",
+      "rel": "enfrentou",
+      "label": "Franca"
+    },
+    {
+      "from": "match-2022-final",
+      "to": "player-messi",
+      "rel": "relacionado",
+      "label": "Lionel-Messi"
+    },
+    {
+      "from": "match-2022-final",
+      "to": "player-mbappe",
+      "rel": "relacionado",
+      "label": "Kylian-Mbappe"
+    },
+    {
+      "from": "match-2026-gc2",
+      "to": "wc-2026",
+      "rel": "disputou",
+      "label": "WC-2026"
+    },
+    {
+      "from": "match-2026-gc2",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2026-gc2",
+      "to": "team-haiti",
+      "rel": "enfrentou",
+      "label": "Haiti"
+    },
+    {
+      "from": "match-2026-gc1",
+      "to": "wc-2026",
+      "rel": "disputou",
+      "label": "WC-2026"
+    },
+    {
+      "from": "match-2026-gc1",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2026-gc1",
+      "to": "team-marrocos",
+      "rel": "enfrentou",
+      "label": "Marrocos"
+    },
+    {
+      "from": "match-2026-gc3",
+      "to": "wc-2026",
+      "rel": "disputou",
+      "label": "WC-2026"
+    },
+    {
+      "from": "match-2026-gc3",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2026-gc3",
+      "to": "team-escocia",
+      "rel": "enfrentou",
+      "label": "Escocia"
+    },
+    {
+      "from": "match-2018-quartas",
+      "to": "wc-2018",
+      "rel": "disputou",
+      "label": "WC-2018"
+    },
+    {
+      "from": "match-2018-quartas",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2018-quartas",
+      "to": "team-belgica",
+      "rel": "enfrentou",
+      "label": "Belgica"
+    },
+    {
+      "from": "match-2022-quartas",
+      "to": "wc-2022",
+      "rel": "disputou",
+      "label": "WC-2022"
+    },
+    {
+      "from": "match-2022-quartas",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2022-quartas",
+      "to": "team-croacia",
+      "rel": "enfrentou",
+      "label": "Croacia"
+    },
+    {
+      "from": "match-2022-quartas",
+      "to": "player-modric",
+      "rel": "relacionado",
+      "label": "Luka-Modric"
+    },
+    {
+      "from": "match-2022-quartas",
+      "to": "player-neymar",
+      "rel": "relacionado",
+      "label": "Neymar"
+    },
+    {
+      "from": "match-2014-semifinal",
+      "to": "wc-2014",
+      "rel": "disputou",
+      "label": "WC-2014"
+    },
+    {
+      "from": "match-2014-semifinal",
+      "to": "team-brasil",
+      "rel": "enfrentou",
+      "label": "Brasil"
+    },
+    {
+      "from": "match-2014-semifinal",
+      "to": "team-alemanha",
+      "rel": "enfrentou",
+      "label": "Alemanha"
+    },
+    {
+      "from": "match-2014-semifinal",
+      "to": "player-muller",
+      "rel": "relacionado",
+      "label": "Thomas-Muller"
+    },
+    {
+      "from": "match-2014-semifinal",
+      "to": "player-klose",
+      "rel": "relacionado",
+      "label": "Miroslav-Klose"
+    },
+    {
+      "from": "coach-deschamps",
+      "to": "team-franca",
+      "rel": "tecnico_de",
+      "label": "Franca"
+    },
+    {
+      "from": "coach-deschamps",
+      "to": "wc-2018",
+      "rel": "relacionado",
+      "label": "WC-2018"
+    },
+    {
+      "from": "coach-deschamps",
+      "to": "wc-2022",
+      "rel": "relacionado",
+      "label": "WC-2022"
+    },
+    {
+      "from": "coach-dorival",
+      "to": "team-brasil",
+      "rel": "tecnico_de",
+      "label": "Brasil"
+    },
+    {
+      "from": "coach-dorival",
+      "to": "wc-2026",
+      "rel": "relacionado",
+      "label": "WC-2026"
+    },
+    {
+      "from": "coach-scolari",
+      "to": "wc-2002",
+      "rel": "relacionado",
+      "label": "WC-2002"
+    },
+    {
+      "from": "coach-scolari",
+      "to": "match-2014-semifinal",
+      "rel": "relacionado",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "coach-low",
+      "to": "team-alemanha",
+      "rel": "tecnico_de",
+      "label": "Alemanha"
+    },
+    {
+      "from": "coach-low",
+      "to": "match-2014-semifinal",
+      "rel": "relacionado",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "coach-zagallo",
+      "to": "wc-1970",
+      "rel": "relacionado",
+      "label": "WC-1970"
+    },
+    {
+      "from": "coach-zagallo",
+      "to": "wc-1994",
+      "rel": "relacionado",
+      "label": "WC-1994"
+    },
+    {
+      "from": "coach-tite",
+      "to": "team-brasil",
+      "rel": "tecnico_de",
+      "label": "Brasil"
+    },
+    {
+      "from": "coach-tite",
+      "to": "wc-2018",
+      "rel": "relacionado",
+      "label": "WC-2018"
+    },
+    {
+      "from": "coach-tite",
+      "to": "wc-2022",
+      "rel": "relacionado",
+      "label": "WC-2022"
+    },
+    {
+      "from": "team-alemanha",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-alemanha",
+      "to": "match-2002-final",
+      "rel": "relacionado",
+      "label": "Final-2002-BRA-ALE"
+    },
+    {
+      "from": "team-alemanha",
+      "to": "match-2014-semifinal",
+      "rel": "relacionado",
+      "label": "Semifinal-2014-ALE-BRA"
+    },
+    {
+      "from": "team-argentina",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-argentina",
+      "to": "match-2022-final",
+      "rel": "relacionado",
+      "label": "Final-2022-ARG-FRA"
+    },
+    {
+      "from": "team-belgica",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-belgica",
+      "to": "match-2018-quartas",
+      "rel": "relacionado",
+      "label": "Quartas-2018-BRA-BEL"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-argentina",
+      "rel": "rival_historico",
+      "label": "Argentina"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-alemanha",
+      "rel": "rival_historico",
+      "label": "Alemanha"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-italia",
+      "rel": "rival_historico",
+      "label": "Italia"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-uruguai",
+      "rel": "rival_historico",
+      "label": "Uruguai"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-franca",
+      "rel": "rival_historico",
+      "label": "Franca"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-holanda",
+      "rel": "rival_historico",
+      "label": "Holanda"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-marrocos",
+      "rel": "rival_historico",
+      "label": "Marrocos"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-haiti",
+      "rel": "rival_historico",
+      "label": "Haiti"
+    },
+    {
+      "from": "team-brasil",
+      "to": "team-escocia",
+      "rel": "rival_historico",
+      "label": "Escocia"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-1950",
+      "rel": "participou_de",
+      "label": "WC-1950"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-1958",
+      "rel": "participou_de",
+      "label": "WC-1958"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-1962",
+      "rel": "participou_de",
+      "label": "WC-1962"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-1970",
+      "rel": "participou_de",
+      "label": "WC-1970"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-1994",
+      "rel": "participou_de",
+      "label": "WC-1994"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-1998",
+      "rel": "participou_de",
+      "label": "WC-1998"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-2002",
+      "rel": "participou_de",
+      "label": "WC-2002"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-2014",
+      "rel": "participou_de",
+      "label": "WC-2014"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-2018",
+      "rel": "participou_de",
+      "label": "WC-2018"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-2022",
+      "rel": "participou_de",
+      "label": "WC-2022"
+    },
+    {
+      "from": "team-brasil",
+      "to": "wc-2026",
+      "rel": "participou_de",
+      "label": "WC-2026"
+    },
+    {
+      "from": "team-brasil",
+      "to": "coach-dorival",
+      "rel": "relacionado",
+      "label": "Dorival-Junior"
+    },
+    {
+      "from": "team-brasil",
+      "to": "coach-tite",
+      "rel": "relacionado",
+      "label": "Tite"
+    },
+    {
+      "from": "team-brasil",
+      "to": "coach-scolari",
+      "rel": "relacionado",
+      "label": "Felipao-Scolari"
+    },
+    {
+      "from": "team-brasil",
+      "to": "coach-zagallo",
+      "rel": "relacionado",
+      "label": "Mario-Zagallo"
+    },
+    {
+      "from": "team-croacia",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-croacia",
+      "to": "match-2022-quartas",
+      "rel": "relacionado",
+      "label": "Quartas-2022-CRO-BRA"
+    },
+    {
+      "from": "team-escocia",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-escocia",
+      "to": "match-2026-gc3",
+      "rel": "relacionado",
+      "label": "GrupoC-2026-SCO-BRA"
+    },
+    {
+      "from": "team-franca",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-franca",
+      "to": "match-1998-final",
+      "rel": "relacionado",
+      "label": "Final-1998-FRA-BRA"
+    },
+    {
+      "from": "team-franca",
+      "to": "match-2022-final",
+      "rel": "relacionado",
+      "label": "Final-2022-ARG-FRA"
+    },
+    {
+      "from": "team-haiti",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-haiti",
+      "to": "match-2026-gc2",
+      "rel": "relacionado",
+      "label": "GrupoC-2026-BRA-HAI"
+    },
+    {
+      "from": "team-holanda",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-italia",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-italia",
+      "to": "match-1970-final",
+      "rel": "relacionado",
+      "label": "Final-1970-BRA-ITA"
+    },
+    {
+      "from": "team-italia",
+      "to": "match-1994-final",
+      "rel": "relacionado",
+      "label": "Final-1994-BRA-ITA"
+    },
+    {
+      "from": "team-marrocos",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-marrocos",
+      "to": "match-2026-gc1",
+      "rel": "relacionado",
+      "label": "GrupoC-2026-BRA-MAR"
+    },
+    {
+      "from": "team-suecia",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-suecia",
+      "to": "match-1958-final",
+      "rel": "relacionado",
+      "label": "Final-1958-BRA-SUE"
+    },
+    {
+      "from": "team-tchecoslovaquia",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-tchecoslovaquia",
+      "to": "match-1962-final",
+      "rel": "relacionado",
+      "label": "Final-1962-BRA-TCH"
+    },
+    {
+      "from": "team-uruguai",
+      "to": "team-brasil",
+      "rel": "rival_historico",
+      "label": "Brasil"
+    },
+    {
+      "from": "team-uruguai",
+      "to": "match-1950-final",
+      "rel": "relacionado",
+      "label": "Final-1950-URU-BRA"
+    }
+  ]
+}

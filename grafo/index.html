@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Conexões — Brasil e Adversários | Copa 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        html, body { height: 100%; margin: 0; background: #020617; }
+        #graph-network { width: 100%; height: calc(100vh - 56px); background: #0f172a; }
+        .vis-network:focus { outline: none; }
+    </style>
+</head>
+<body class="text-slate-200 antialiased">
+    <header class="h-14 border-b border-emerald-900/30 bg-slate-950/95 backdrop-blur flex items-center justify-between px-4 gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+            <a href="/" class="text-slate-400 hover:text-emerald-400 transition-colors shrink-0" title="Voltar ao Predictor">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div class="min-w-0">
+                <h1 class="text-sm font-bold bg-gradient-to-r from-green-400 to-yellow-300 bg-clip-text text-transparent truncate">
+                    Mapa de Conexões
+                </h1>
+                <p class="text-[10px] text-slate-500 truncate">Brasil · rivais · Copas · jogadores</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <input type="search" id="search-node" placeholder="Buscar…"
+                class="w-28 sm:w-40 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <select id="filter-type"
+                class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <option value="">Todos</option>
+            </select>
+            <button id="btn-focus-brasil" type="button"
+                class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white">
+                <i class="fa-solid fa-crosshairs"></i> Brasil
+            </button>
+        </div>
+    </header>
+
+    <div id="graph-network"></div>
+
+    <aside id="detail-panel"
+        class="fixed right-0 top-14 bottom-0 w-full sm:w-80 bg-slate-950/95 border-l border-slate-800 p-4 transform translate-x-full transition-transform duration-200 z-40 overflow-y-auto">
+        <button id="close-panel" type="button" class="absolute top-3 right-3 text-slate-500 hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="detail-content" class="pt-2"></div>
+    </aside>
+
+    <div id="load-error" class="hidden fixed inset-0 top-14 flex items-center justify-center bg-slate-950/90 z-50 p-6 text-center">
+        <div>
+            <p class="text-red-400 font-semibold mb-2">Não foi possível carregar o grafo.</p>
+            <p class="text-sm text-slate-400">Execute <code class="text-emerald-400">python scripts/export_obsidian_graph.py</code></p>
+        </div>
+    </div>
+
+    <script>
+        const TYPE_COLORS = {
+            Time:       { bg: '#10b981', border: '#34d399', font: '#ecfdf5' },
+            Jogador:    { bg: '#3b82f6', border: '#60a5fa', font: '#eff6ff' },
+            Partida:    { bg: '#f59e0b', border: '#fbbf24', font: '#fffbeb' },
+            Edicao:     { bg: '#8b5cf6', border: '#a78bfa', font: '#f5f3ff' },
+            Tecnico:    { bg: '#ec4899', border: '#f472b6', font: '#fdf2f8' },
+            Clube:      { bg: '#64748b', border: '#94a3b8', font: '#f8fafc' },
+            Indice:     { bg: '#eab308', border: '#fde047', font: '#422006' },
+            Nota:       { bg: '#475569', border: '#64748b', font: '#f1f5f9' },
+        };
+
+        let network = null;
+        let allNodes = [];
+        let allEdges = [];
+        let nodesDS = null;
+        let edgesDS = null;
+
+        function styleForNode(n) {
+            const t = n.type || 'Nota';
+            const c = TYPE_COLORS[t] || TYPE_COLORS.Nota;
+            const isBrasil = n.id === 'team-brasil';
+            return {
+                id: n.id,
+                label: n.label,
+                title: `${n.label} (${t})`,
+                group: t,
+                color: {
+                    background: c.bg,
+                    border: c.border,
+                    highlight: { background: c.border, border: '#fff' },
+                },
+                font: { color: c.font, size: isBrasil ? 16 : 13 },
+                size: isBrasil ? 36 : (t === 'Indice' ? 28 : 18),
+                borderWidth: isBrasil ? 3 : 1,
+            };
+        }
+
+        function showPanel(node) {
+            const panel = document.getElementById('detail-panel');
+            const el = document.getElementById('detail-content');
+            const skip = new Set(['id', 'label', 'type', 'path', 'title']);
+            const rows = Object.entries(node)
+                .filter(([k, v]) => !skip.has(k) && v != null && v !== '')
+                .map(([k, v]) => `<tr><td class="text-slate-500 pr-2 py-0.5 align-top text-xs">${k}</td><td class="text-slate-200 text-xs">${Array.isArray(v) ? v.join(', ') : v}</td></tr>`)
+                .join('');
+            el.innerHTML = `
+                <p class="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">${node.type || 'Nota'}</p>
+                <h2 class="text-lg font-bold text-white mb-3">${node.bandeira || ''} ${node.label}</h2>
+                ${rows ? `<table class="w-full mb-3">${rows}</table>` : ''}
+                <p class="text-[10px] text-slate-600">${node.path || ''}</p>
+            `;
+            panel.classList.remove('translate-x-full');
+        }
+
+        function hidePanel() {
+            document.getElementById('detail-panel').classList.add('translate-x-full');
+        }
+
+        function applyFilters() {
+            const q = (document.getElementById('search-node').value || '').toLowerCase().trim();
+            const typeF = document.getElementById('filter-type').value;
+            const visible = new Set(
+                allNodes.filter(n => {
+                    if (typeF && n.type !== typeF) return false;
+                    if (q && !(n.label || '').toLowerCase().includes(q) && !(n.id || '').includes(q)) return false;
+                    return true;
+                }).map(n => n.id)
+            );
+            if (q || typeF) {
+                allEdges.forEach(e => {
+                    if (visible.has(e.from)) visible.add(e.to);
+                    if (visible.has(e.to)) visible.add(e.from);
+                });
+            }
+            const fn = allNodes.filter(n => visible.has(n.id)).map(styleForNode);
+            const fe = allEdges.filter(e => visible.has(e.from) && visible.has(e.to))
+                .map((e, i) => ({ id: i, from: e.from, to: e.to, title: e.rel, arrows: 'to', color: { color: '#334155', highlight: '#34d399' }, width: 1 }));
+            nodesDS.clear();
+            edgesDS.clear();
+            nodesDS.add(fn);
+            edgesDS.add(fe);
+        }
+
+        function focusNode(id) {
+            if (!network) return;
+            network.selectNodes([id]);
+            network.focus(id, { scale: 1.2, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+            const raw = allNodes.find(n => n.id === id);
+            if (raw) showPanel(raw);
+        }
+
+        async function init() {
+            try {
+                const res = await fetch('/data/worldcup-graph.json');
+                if (!res.ok) throw new Error(res.status);
+                const data = await res.json();
+                allNodes = data.nodes || [];
+                allEdges = data.edges || [];
+
+                const types = [...new Set(allNodes.map(n => n.type).filter(Boolean))].sort();
+                const sel = document.getElementById('filter-type');
+                types.forEach(t => {
+                    const o = document.createElement('option');
+                    o.value = t;
+                    o.textContent = t;
+                    sel.appendChild(o);
+                });
+
+                nodesDS = new vis.DataSet(allNodes.map(styleForNode));
+                edgesDS = new vis.DataSet(allEdges.map((e, i) => ({
+                    id: i, from: e.from, to: e.to, title: e.rel,
+                    arrows: 'to', color: { color: '#334155', highlight: '#34d399' }, width: 1,
+                })));
+
+                const container = document.getElementById('graph-network');
+                network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+                    physics: {
+                        enabled: true,
+                        barnesHut: { gravitationalConstant: -4200, springLength: 120, springConstant: 0.04 },
+                        stabilization: { iterations: 180 },
+                    },
+                    interaction: { hover: true, tooltipDelay: 120, multiselect: false, navigationButtons: true },
+                    edges: { smooth: { type: 'continuous' } },
+                });
+
+                network.on('click', params => {
+                    if (params.nodes.length) {
+                        const id = params.nodes[0];
+                        const raw = allNodes.find(n => n.id === id);
+                        if (raw) showPanel(raw);
+                    } else hidePanel();
+                });
+
+                network.once('stabilizationIterationsDone', () => focusNode('team-brasil'));
+
+                document.getElementById('search-node').addEventListener('input', applyFilters);
+                document.getElementById('filter-type').addEventListener('change', applyFilters);
+                document.getElementById('btn-focus-brasil').addEventListener('click', () => focusNode('team-brasil'));
+                document.getElementById('close-panel').addEventListener('click', hidePanel);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('load-error').classList.remove('hidden');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
