@@ -13,7 +13,7 @@
     <style>
         html, body { height: 100%; margin: 0; background: #020617; overscroll-behavior: none; }
         :root { --header-h: 7.5rem; }
-        @media (min-width: 640px) { :root { --header-h: 3.5rem; } }
+        @media (min-width: 640px) { :root { --header-h: 5.25rem; } }
         .graph-view {
             width: 100%;
             height: calc(100dvh - var(--header-h));
@@ -90,6 +90,17 @@
             <select id="filter-type" class="w-[38%] max-w-[140px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-2.5 text-sm text-white min-h-[44px]">
                 <option value="">Todos</option>
             </select>
+        </div>
+        <div class="px-3 pb-2">
+            <a href="/grafo/brasil-live/" class="flex items-center justify-center gap-2 w-full sm:w-auto sm:inline-flex px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600/90 to-yellow-600/80 hover:from-amber-500 hover:to-yellow-500 text-white text-sm font-semibold border border-amber-500/30 shadow-lg shadow-amber-900/20 min-h-[44px]">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-200 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-100"></span>
+                </span>
+                <i class="fa-solid fa-bolt"></i>
+                Brasil Live — grafo pós-jogo
+                <i class="fa-solid fa-arrow-right text-xs opacity-80"></i>
+            </a>
         </div>
     </header>
 

@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "version": "1.0",
+    "generated": "2026-06-22",
+    "source": "seed",
+    "status": "awaiting_matches",
+    "nodeCount": 8,
+    "edgeCount": 9,
+    "matchCount": 3
+  },
+  "matches": [
+    {
+      "id": "match-2026-gc1",
+      "label": "Brasil × Marrocos",
+      "status": "scheduled",
+      "fase": "Grupo C — Rodada 1",
+      "data": "2026-06-13",
+      "local": "MetLife Stadium, Nova Jersey",
+      "opponentId": "team-marrocos",
+      "opponent": "Marrocos"
+    },
+    {
+      "id": "match-2026-gc2",
+      "label": "Brasil × Haiti",
+      "status": "scheduled",
+      "fase": "Grupo C — Rodada 2",
+      "data": "2026-06-19",
+      "local": "Lincoln Financial Field, Filadélfia",
+      "opponentId": "team-haiti",
+      "opponent": "Haiti"
+    },
+    {
+      "id": "match-2026-gc3",
+      "label": "Escócia × Brasil",
+      "status": "scheduled",
+      "fase": "Grupo C — Rodada 3",
+      "data": "2026-06-24",
+      "local": "Hard Rock Stadium, Miami",
+      "opponentId": "team-escocia",
+      "opponent": "Escócia"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "team-brasil",
+      "type": "Time",
+      "label": "Brasil",
+      "source": "api",
+      "bandeira": "🇧🇷",
+      "nacionalidade": "Brasil"
+    },
+    {
+      "id": "team-marrocos",
+      "type": "Time",
+      "label": "Marrocos",
+      "source": "api",
+      "bandeira": "🇲🇦"
+    },
+    {
+      "id": "team-haiti",
+      "type": "Time",
+      "label": "Haiti",
+      "source": "api",
+      "bandeira": "🇭🇹"
+    },
+    {
+      "id": "team-escocia",
+      "type": "Time",
+      "label": "Escócia",
+      "source": "api",
+      "bandeira": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+    },
+    {
+      "id": "wc-2026",
+      "type": "Edicao",
+      "label": "Copa 2026",
+      "source": "api",
+      "ano": 2026
+    },
+    {
+      "id": "match-2026-gc1",
+      "type": "Partida",
+      "label": "Brasil × Marrocos",
+      "source": "api",
+      "placar": "—",
+      "fase": "Grupo C — Rodada 1",
+      "data": "2026-06-13",
+      "local": "MetLife Stadium, Nova Jersey",
+      "status": "scheduled"
+    },
+    {
+      "id": "match-2026-gc2",
+      "type": "Partida",
+      "label": "Brasil × Haiti",
+      "source": "api",
+      "placar": "—",
+      "fase": "Grupo C — Rodada 2",
+      "data": "2026-06-19",
+      "local": "Lincoln Financial Field, Filadélfia",
+      "status": "scheduled"
+    },
+    {
+      "id": "match-2026-gc3",
+      "type": "Partida",
+      "label": "Escócia × Brasil",
+      "source": "api",
+      "placar": "—",
+      "fase": "Grupo C — Rodada 3",
+      "data": "2026-06-24",
+      "local": "Hard Rock Stadium, Miami",
+      "status": "scheduled"
+    }
+  ],
+  "edges": [
+    {
+      "from": "team-brasil",
+      "to": "match-2026-gc1",
+      "rel": "enfrentou",
+      "source": "api"
+    },
+    {
+      "from": "team-marrocos",
+      "to": "match-2026-gc1",
+      "rel": "enfrentou",
+      "source": "api"
+    },
+    {
+      "from": "match-2026-gc1",
+      "to": "wc-2026",
+      "rel": "disputou",
+      "source": "api"
+    },
+    {
+      "from": "team-brasil",
+      "to": "match-2026-gc2",
+      "rel": "enfrentou",
+      "source": "api"
+    },
+    {
+      "from": "team-haiti",
+      "to": "match-2026-gc2",
+      "rel": "enfrentou",
+      "source": "api"
+    },
+    {
+      "from": "match-2026-gc2",
+      "to": "wc-2026",
+      "rel": "disputou",
+      "source": "api"
+    },
+    {
+      "from": "team-brasil",
+      "to": "match-2026-gc3",
+      "rel": "enfrentou",
+      "source": "api"
+    },
+    {
+      "from": "team-escocia",
+      "to": "match-2026-gc3",
+      "rel": "enfrentou",
+      "source": "api"
+    },
+    {
+      "from": "match-2026-gc3",
+      "to": "wc-2026",
+      "rel": "disputou",
+      "source": "api"
+    }
+  ]
+}

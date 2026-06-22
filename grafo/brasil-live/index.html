@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#020617">
+    <title>Brasil Live — Grafo pós-jogo | Copa 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        html, body { height: 100%; margin: 0; background: #020617; overscroll-behavior: none; }
+        :root { --header-h: 8.75rem; }
+        @media (min-width: 640px) { :root { --header-h: 4.25rem; } }
+        .graph-view { width: 100%; height: calc(100dvh - var(--header-h)); background: #0f172a; }
+        #graph-network { touch-action: none; }
+        .vis-network:focus { outline: none; }
+        #detail-panel { transition: transform 0.25s ease-out; }
+        @media (max-width: 639px) {
+            #detail-panel {
+                top: auto; left: 0; right: 0; bottom: 0; width: 100%;
+                max-height: min(52dvh, 420px); border-left: none;
+                border-top: 1px solid #334155; border-radius: 1rem 1rem 0 0;
+                transform: translateY(100%);
+                padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+            #detail-panel.panel-open { transform: translateY(0); }
+            #panel-backdrop.panel-open { opacity: 1; pointer-events: auto; }
+        }
+        @media (min-width: 640px) {
+            #detail-panel { transform: translateX(100%); }
+            #detail-panel.panel-open { transform: translateX(0); }
+            #panel-backdrop { display: none !important; }
+        }
+        #panel-backdrop { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .match-tab.active { background: rgba(251, 191, 36, 0.15); border-color: #fbbf24; color: #fde68a; }
+        @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .live-dot { animation: pulse-live 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="text-slate-200 antialiased">
+    <header class="border-b border-amber-900/40 bg-slate-950/95 backdrop-blur sticky top-0 z-30">
+        <div class="flex items-center gap-1 px-2 pt-2 pb-1 sm:px-4 sm:py-0 sm:h-14 sm:justify-between">
+            <a href="/grafo/" class="text-slate-400 hover:text-amber-400 shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Mapa histórico">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+            </a>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-sm sm:text-base font-bold bg-gradient-to-r from-yellow-400 to-emerald-400 bg-clip-text text-transparent truncate">
+                        Brasil Live
+                    </h1>
+                    <span id="status-badge" class="hidden shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        <span class="live-dot inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1"></span> Ao vivo
+                    </span>
+                </div>
+                <p id="subtitle" class="text-[10px] text-slate-500 truncate">Grafo pós-jogo · API-Football · Copa 2026</p>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button id="btn-refresh" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-amber-600 hover:bg-amber-500 text-white" aria-label="Atualizar da API">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <a href="/" class="hidden sm:flex items-center gap-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300 hover:text-white min-h-[44px]">
+                    <i class="fa-solid fa-futbol"></i> Predictor
+                </a>
+            </div>
+        </div>
+        <div id="match-tabs" class="flex gap-2 px-3 pb-2 overflow-x-auto scrollbar-none"></div>
+    </header>
+
+    <div id="empty-state" class="hidden graph-view flex items-center justify-center p-6 text-center">
+        <div class="max-w-sm">
+            <i class="fa-solid fa-hourglass-half text-4xl text-amber-500/60 mb-4"></i>
+            <p class="text-slate-300 font-medium mb-2">Aguardando jogos do Brasil</p>
+            <p class="text-sm text-slate-500">Após cada partida encerrada, o grafo será montado com escalação, gols e conexões reais da API.</p>
+        </div>
+    </div>
+    <div id="graph-network" class="graph-view" role="img" aria-label="Grafo Brasil Live"></div>
+
+    <button id="focus-chip" type="button" class="hidden fixed top-[calc(var(--header-h)+0.5rem)] left-1/2 -translate-x-1/2 z-20 max-w-[92vw] px-3 py-1.5 rounded-full bg-amber-950/90 border border-amber-700/50 text-[11px] text-amber-200 shadow-lg">Foco ativo</button>
+
+    <div id="panel-backdrop" class="fixed inset-0 bg-black/50 z-40 sm:hidden"></div>
+    <aside id="detail-panel" class="fixed z-50 bg-slate-950/98 backdrop-blur border-slate-800 p-4 overflow-y-auto sm:top-[4.25rem] sm:right-0 sm:bottom-0 sm:w-80 sm:border-l">
+        <button id="close-panel" type="button" class="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white" aria-label="Fechar">
+            <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+        <div id="detail-content" class="pt-1 pr-8"></div>
+    </aside>
+
+    <div id="load-error" class="hidden fixed inset-0 flex items-center justify-center bg-slate-950/95 z-[60] p-6 text-center">
+        <div>
+            <p class="text-red-400 font-semibold mb-2">Não foi possível carregar o grafo.</p>
+            <a href="/grafo/" class="text-amber-400 text-sm underline">Voltar ao mapa histórico</a>
+        </div>
+    </div>
+
+    <script>
+        const TYPE_COLORS = {
+            Time: '#10b981', Jogador: '#3b82f6', Partida: '#f59e0b', Edicao: '#8b5cf6',
+            Tecnico: '#ec4899', Estadio: '#64748b',
+        };
+        const REL_LABELS = {
+            enfrentou: 'Enfrentou', disputou: 'Disputou', realizada_em: 'Realizada em',
+            jogou_na_partida: 'Jogou', entrou_em: 'Entrou', marcou_gol: 'Gol',
+            deu_assistencia: 'Assistência', recebeu_cartao: 'Cartão', tecnico_da_partida: 'Técnico',
+        };
+        const FIELD_LABELS = {
+            placar: 'Placar', fase: 'Fase', data: 'Data', local: 'Local', status: 'Status',
+            minuto: 'Minuto', selecao: 'Seleção', cidade: 'Cidade', fixture_id: 'Fixture ID',
+        };
+        const TEAM_EN = {
+            Brazil: 'team-brasil', Morocco: 'team-marrocos', Haiti: 'team-haiti',
+            Scotland: 'team-escocia', Argentina: 'team-argentina', France: 'team-franca',
+        };
+        const FINISHED = new Set(['FT', 'AET', 'PEN']);
+        const LIVE = new Set(['1H', '2H', 'HT', 'ET', 'PEN', 'LIVE']);
+
+        let network = null, nodesDS = null, edgesDS = null;
+        let allNodes = [], allEdges = [], matches = [];
+        let selectedMatchId = 'all', focusId = null;
+
+        const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
+        const isMobile = () => window.matchMedia('(max-width: 639px)').matches;
+
+        function getNeighbors(id) {
+            const n = new Set();
+            allEdges.forEach(e => {
+                if (e.from === id) n.add(e.to);
+                if (e.to === id) n.add(e.from);
+            });
+            return n;
+        }
+
+        function visibleForMatch(matchId) {
+            if (matchId === 'all') return new Set(allNodes.map(n => n.id));
+            const ids = new Set([matchId, 'team-brasil', 'wc-2026']);
+            allEdges.forEach(e => {
+                if (e.from === matchId || e.to === matchId) {
+                    ids.add(e.from); ids.add(e.to);
+                }
+            });
+            return ids;
+        }
+
+        function edgeStyle(e, focusSet) {
+            const isLive = e.source === 'api' || !e.source;
+            const rel = e.rel || '';
+            const highlight = focusId && (e.from === focusId || e.to === focusId);
+            const dim = focusId && focusSet && (!focusSet.has(e.from) || !focusSet.has(e.to));
+            let color = isLive ? '#34d399' : '#64748b';
+            if (rel === 'marcou_gol' || rel === 'deu_assistencia') color = '#fbbf24';
+            if (rel === 'recebeu_cartao') color = '#f87171';
+            if (dim) color = 'rgba(15,23,42,0.1)';
+            return {
+                id: `${e.from}--${e.to}--${rel}`,
+                from: e.from, to: e.to,
+                title: REL_LABELS[rel] || rel,
+                arrows: 'to',
+                color: { color },
+                width: highlight ? 2.5 : (rel === 'marcou_gol' ? 2 : 1.2),
+                dashes: !isLive && e.rel === 'enfrentou' ? [4, 6] : false,
+            };
+        }
+
+        function nodeStyle(n, dimmed, isFocus) {
+            const t = n.type || 'Nota';
+            const c = TYPE_COLORS[t] || '#475569';
+            if (dimmed) {
+                return {
+                    id: n.id, label: '', title: n.label,
+                    color: { background: 'rgba(15,23,42,0.3)', border: 'rgba(30,41,59,0.2)' },
+                    size: 8, font: { size: 8, color: 'transparent' },
+                };
+            }
+            const isMatch = t === 'Partida';
+            return {
+                id: n.id,
+                label: isMobile() && !isFocus && (n.label || '').length > 16 ? (n.label || '').slice(0, 14) + '…' : n.label,
+                title: `${n.label} (${t})`,
+                color: { background: c, border: isFocus ? '#fff' : c },
+                font: { color: '#f1f5f9', size: isFocus ? 14 : (isMatch ? 12 : 11) },
+                size: isFocus ? 34 : (isMatch ? 28 : (n.id === 'team-brasil' ? 22 : 14)),
+                borderWidth: isFocus ? 3 : 1,
+            };
+        }
+
+        function render() {
+            if (!nodesDS) return;
+            const visIds = visibleForMatch(selectedMatchId);
+            const neighbors = focusId ? getNeighbors(focusId) : null;
+            const focusSet = focusId ? new Set([focusId, ...neighbors]) : null;
+
+            const nodes = allNodes.filter(n => visIds.has(n.id)).map(n => {
+                if (!focusId) return nodeStyle(n, false, false);
+                return nodeStyle(n, n.id !== focusId && !neighbors.has(n.id), n.id === focusId);
+            });
+            const edges = allEdges
+                .filter(e => visIds.has(e.from) && visIds.has(e.to))
+                .map(e => edgeStyle(e, focusSet));
+
+            nodesDS.clear(); edgesDS.clear();
+            nodesDS.add(nodes); edgesDS.add(edges);
+        }
+
+        function setFocus(id) {
+            focusId = id;
+            render();
+            const chip = document.getElementById('focus-chip');
+            if (id) {
+                const n = allNodes.find(x => x.id === id);
+                chip.textContent = `Foco: ${n?.label || id} · toque para limpar`;
+                chip.classList.remove('hidden');
+            } else chip.classList.add('hidden');
+        }
+
+        function showPanel(node) {
+            const skip = new Set(['id', 'label', 'type', 'source']);
+            const rows = Object.entries(node).filter(([k, v]) => !skip.has(k) && v != null && v !== '')
+                .map(([k, v]) => `<div class="flex justify-between gap-3 py-2 border-b border-slate-800/80"><span class="text-slate-500 text-sm">${FIELD_LABELS[k] || k}</span><span class="text-slate-100 text-sm text-right font-medium">${v}</span></div>`).join('');
+            document.getElementById('detail-content').innerHTML = `
+                <p class="text-[10px] uppercase tracking-wider text-amber-400 mb-1">${node.type}</p>
+                <h2 class="text-xl font-bold text-white mb-1">${node.bandeira || ''} ${node.label}</h2>
+                <p class="text-xs text-amber-400/80 mb-3">${getNeighbors(node.id).size} conexões</p>
+                ${rows ? `<div>${rows}</div>` : ''}`;
+            document.getElementById('detail-panel').classList.add('panel-open');
+            document.getElementById('panel-backdrop').classList.add('panel-open');
+        }
+
+        function hidePanel() {
+            document.getElementById('detail-panel').classList.remove('panel-open');
+            document.getElementById('panel-backdrop').classList.remove('panel-open');
+        }
+
+        function focusNode(id, openPanel = true) {
+            setFocus(id);
+            if (network) {
+                network.selectNodes([id]);
+                network.focus(id, { scale: isMobile() ? 0.85 : 1.1, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+            }
+            const raw = allNodes.find(n => n.id === id);
+            if (raw && openPanel) showPanel(raw);
+        }
+
+        function buildTabs() {
+            const el = document.getElementById('match-tabs');
+            const tabs = [{ id: 'all', label: 'Todos os jogos' }, ...matches.map(m => ({
+                id: m.id,
+                label: m.status === 'finished' ? `✓ ${m.label}` : m.label,
+                status: m.status,
+            }))];
+            el.innerHTML = tabs.map(t => `
+                <button type="button" data-match="${t.id}" class="match-tab shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-slate-400 hover:border-amber-600/50 ${t.id === selectedMatchId ? 'active' : ''}">
+                    ${t.label}
+                </button>`).join('');
+            el.querySelectorAll('.match-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedMatchId = btn.dataset.match;
+                    el.querySelectorAll('.match-tab').forEach(b => b.classList.toggle('active', b.dataset.match === selectedMatchId));
+                    setFocus(null);
+                    if (network) network.unselectAll();
+                    render();
+                    if (selectedMatchId !== 'all') focusNode(selectedMatchId, false);
+                });
+            });
+        }
+
+        function mergeGraph(payload) {
+            allNodes = payload.nodes || [];
+            allEdges = payload.edges || [];
+            matches = payload.matches || [];
+            const meta = payload.meta || {};
+            document.getElementById('subtitle').textContent =
+                `${meta.nodeCount || allNodes.length} nós · ${meta.edgeCount || allEdges.length} links · ${meta.source || 'seed'}`;
+            const hasLive = matches.some(m => m.status === 'live');
+            document.getElementById('status-badge').classList.toggle('hidden', !hasLive);
+            const finished = matches.filter(m => m.status === 'finished');
+            if (finished.length && selectedMatchId === 'all') {
+                selectedMatchId = finished[finished.length - 1].id;
+            }
+            buildTabs();
+            const hasContent = allNodes.length > 0;
+            document.getElementById('graph-network').classList.toggle('hidden', !hasContent);
+            document.getElementById('empty-state').classList.toggle('hidden', hasContent);
+            if (hasContent) render();
+        }
+
+        async function afFetch(path, params = {}) {
+            const qs = new URLSearchParams({ path, ...params }).toString();
+            const res = await fetch(`/api/af?${qs}`);
+            if (!res.ok) throw new Error(res.status);
+            return res.json();
+        }
+
+        function addNode(map, n) { map.set(n.id, { ...map.get(n.id), ...n }); }
+        function addEdge(list, seen, e) {
+            const k = `${e.from}|${e.to}|${e.rel}`;
+            if (seen.has(k)) return;
+            seen.add(k);
+            list.push({ ...e, source: 'api' });
+        }
+
+        function buildFromFixture(item, events, lineups) {
+            const nodes = new Map(), edges = [], seen = new Set();
+            const fx = item.fixture || {};
+            const teams = item.teams || {};
+            const goals = item.goals || {};
+            const home = teams.home || {}, away = teams.away || {};
+            const fid = fx.id;
+            const mid = `match-af-${fid}`;
+            const gh = goals.home, ga = goals.away;
+            const placar = gh != null ? `${gh}×${ga}` : '—';
+            const label = `${home.name} ${gh ?? ''}×${ga ?? ''} ${away.name}`.replace(/\s+/g, ' ').trim();
+
+            const status = ((fx.status || {}).short || '').toUpperCase();
+            const matchStatus = FINISHED.has(status) ? 'finished' : LIVE.has(status) ? 'live' : 'scheduled';
+
+            [home, away].forEach(t => {
+                const tid = TEAM_EN[t.name] || `team-${slug(t.name)}`;
+                addNode(nodes, { id: tid, type: 'Time', label: t.name, source: 'api' });
+                addEdge(edges, seen, { from: tid, to: mid, rel: 'enfrentou' });
+            });
+            addNode(nodes, { id: 'wc-2026', type: 'Edicao', label: 'Copa 2026', ano: 2026, source: 'api' });
+            addNode(nodes, {
+                id: mid, type: 'Partida', label, placar, fase: (item.league || {}).round || '',
+                data: (fx.date || '').slice(0, 10), status: matchStatus, fixture_id: fid, source: 'api',
+            });
+            addEdge(edges, seen, { from: mid, to: 'wc-2026', rel: 'disputou' });
+
+            const venue = fx.venue || {};
+            if (venue.name) {
+                const vid = `venue-${slug(venue.name)}`;
+                addNode(nodes, { id: vid, type: 'Estadio', label: venue.name, cidade: venue.city || '', source: 'api' });
+                addEdge(edges, seen, { from: mid, to: vid, rel: 'realizada_em' });
+            }
+
+            (lineups || []).forEach(lu => {
+                const coach = lu.coach || {};
+                if (coach.name) {
+                    const cid = `coach-${slug(coach.name)}`;
+                    addNode(nodes, { id: cid, type: 'Tecnico', label: coach.name, source: 'api' });
+                    addEdge(edges, seen, { from: cid, to: mid, rel: 'tecnico_da_partida' });
+                }
+                [['startXI', 'jogou_na_partida'], ['substitutes', 'entrou_em']].forEach(([bucket, rel]) => {
+                    (lu[bucket] || []).forEach(entry => {
+                        const name = (entry.player || {}).name;
+                        if (!name) return;
+                        const pid = `player-${slug(name)}`;
+                        addNode(nodes, { id: pid, type: 'Jogador', label: name, source: 'api' });
+                        addEdge(edges, seen, { from: pid, to: mid, rel });
+                    });
+                });
+            });
+
+            (events || []).forEach(ev => {
+                const et = (ev.type || '').toLowerCase();
+                const det = (ev.detail || '').toLowerCase();
+                const name = (ev.player || {}).name;
+                const min = (ev.time || {}).elapsed;
+                if (!name) return;
+                const pid = `player-${slug(name)}`;
+                addNode(nodes, { id: pid, type: 'Jogador', label: name, source: 'api' });
+                if (et === 'goal' && !det.includes('missed')) {
+                    addEdge(edges, seen, { from: pid, to: mid, rel: 'marcou_gol', minuto: min });
+                } else if (et === 'card') {
+                    addEdge(edges, seen, { from: pid, to: mid, rel: 'recebeu_cartao', minuto: min });
+                }
+                const assist = (ev.assist || {}).name;
+                if (assist) {
+                    const aid = `player-${slug(assist)}`;
+                    addNode(nodes, { id: aid, type: 'Jogador', label: assist, source: 'api' });
+                    addEdge(edges, seen, { from: aid, to: mid, rel: 'deu_assistencia', minuto: min });
+                }
+            });
+
+            return {
+                nodes: [...nodes.values()],
+                edges,
+                match: { id: mid, fixtureId: fid, label, status: matchStatus, placar, data: (fx.date || '').slice(0, 10) },
+            };
+        }
+
+        async function refreshFromApi() {
+            const btn = document.getElementById('btn-refresh');
+            btn.querySelector('i').classList.add('fa-spin');
+            try {
+                const data = await afFetch('/fixtures', { league: 1, season: 2026, team: 6 });
+                const items = (data.response || []).filter(it => {
+                    const h = (it.teams || {}).home || {};
+                    const a = (it.teams || {}).away || {};
+                    return h.name === 'Brazil' || a.name === 'Brazil';
+                });
+                if (!items.length) return false;
+
+                const allNodesMap = new Map(), allEdges = [], allMatches = [], seenE = new Set();
+                for (const item of items) {
+                    const fid = item.fixture?.id;
+                    if (!fid) continue;
+                    const st = ((item.fixture?.status || {}).short || '').toUpperCase();
+                    let events = [], lineups = [];
+                    if (FINISHED.has(st) || LIVE.has(st)) {
+                        try {
+                            const ev = await afFetch('/fixtures/events', { fixture: fid });
+                            events = ev.response || [];
+                        } catch (_) {}
+                        try {
+                            const lu = await afFetch('/fixtures/lineups', { fixture: fid });
+                            lineups = lu.response || [];
+                        } catch (_) {}
+                    }
+                    const built = buildFromFixture(item, events, lineups);
+                    built.nodes.forEach(n => addNode(allNodesMap, n));
+                    built.edges.forEach(e => addEdge(allEdges, seenE, e));
+                    allMatches.push(built.match);
+                }
+                allMatches.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+                mergeGraph({
+                    meta: { source: 'api-football', nodeCount: allNodesMap.size, edgeCount: allEdges.length, matchCount: allMatches.length, status: 'live' },
+                    matches: allMatches,
+                    nodes: [...allNodesMap.values()],
+                    edges: allEdges,
+                });
+                return true;
+            } catch (e) {
+                console.warn('API refresh failed', e);
+                return false;
+            } finally {
+                btn.querySelector('i').classList.remove('fa-spin');
+            }
+        }
+
+        async function init() {
+            try {
+                const res = await fetch('/data/brasil-live-graph.json');
+                if (!res.ok) throw new Error(res.status);
+                mergeGraph(await res.json());
+
+                nodesDS = new vis.DataSet([]);
+                edgesDS = new vis.DataSet([]);
+                render();
+                network = new vis.Network(document.getElementById('graph-network'), { nodes: nodesDS, edges: edgesDS }, {
+                    physics: { barnesHut: { gravitationalConstant: -2200, springLength: 100 }, stabilization: { iterations: 100 } },
+                    interaction: { hover: false, zoomView: true, dragView: true },
+                    edges: { smooth: { type: 'continuous' } },
+                });
+                network.on('click', p => p.nodes.length ? focusNode(p.nodes[0], true) : (hidePanel(), setFocus(null), network.unselectAll()));
+                network.once('stabilizationIterationsDone', () => {
+                    const target = selectedMatchId !== 'all' ? selectedMatchId : (matches.find(m => m.status === 'finished')?.id || 'team-brasil');
+                    if (target) network.focus(target, { scale: 0.9, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+                });
+
+                document.getElementById('btn-refresh').addEventListener('click', refreshFromApi);
+                document.getElementById('focus-chip').addEventListener('click', () => { hidePanel(); setFocus(null); network.unselectAll(); });
+                document.getElementById('close-panel').addEventListener('click', hidePanel);
+                document.getElementById('panel-backdrop').addEventListener('click', () => { hidePanel(); setFocus(null); network.unselectAll(); });
+
+                await refreshFromApi();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('load-error').classList.remove('hidden');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
