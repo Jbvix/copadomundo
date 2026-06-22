@@ -8,166 +8,169 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/3d-force-graph@1.73.3/dist/3d-force-graph.min.js"></script>
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            background: #020617;
-            overscroll-behavior: none;
-        }
-        :root {
-            --header-h: 7.5rem;
-        }
-        @media (min-width: 640px) {
-            :root { --header-h: 3.5rem; }
-        }
-        #graph-network {
+        html, body { height: 100%; margin: 0; background: #020617; overscroll-behavior: none; }
+        :root { --header-h: 7.5rem; }
+        @media (min-width: 640px) { :root { --header-h: 3.5rem; } }
+        .graph-view {
             width: 100%;
             height: calc(100dvh - var(--header-h));
             background: #0f172a;
-            touch-action: none;
         }
+        #graph-network { touch-action: none; }
+        #graph-network.hidden, #graph-3d.hidden { display: none !important; }
         .vis-network:focus { outline: none; }
-        /* Bottom sheet mobile */
-        #detail-panel {
-            transition: transform 0.25s ease-out;
-        }
+        #detail-panel { transition: transform 0.25s ease-out; }
         @media (max-width: 639px) {
             #detail-panel {
-                top: auto;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                max-height: min(52dvh, 420px);
-                border-left: none;
-                border-top: 1px solid #334155;
-                border-radius: 1rem 1rem 0 0;
+                top: auto; left: 0; right: 0; bottom: 0; width: 100%;
+                max-height: min(52dvh, 420px); border-left: none;
+                border-top: 1px solid #334155; border-radius: 1rem 1rem 0 0;
                 transform: translateY(100%);
                 padding-bottom: env(safe-area-inset-bottom, 0);
             }
-            #detail-panel.panel-open {
-                transform: translateY(0);
-            }
-            #panel-backdrop.panel-open {
-                opacity: 1;
-                pointer-events: auto;
-            }
-        }
-        @media (min-width: 640px) {
-            #detail-panel {
-                transform: translateX(100%);
-            }
-            #detail-panel.panel-open {
-                transform: translateX(0);
-            }
-            #panel-backdrop { display: none !important; }
-        }
-        #panel-backdrop {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-        }
-        #panel-drag-handle {
-            display: none;
-        }
-        @media (max-width: 639px) {
+            #detail-panel.panel-open { transform: translateY(0); }
+            #panel-backdrop.panel-open { opacity: 1; pointer-events: auto; }
             #panel-drag-handle { display: block; }
         }
+        @media (min-width: 640px) {
+            #detail-panel { transform: translateX(100%); }
+            #detail-panel.panel-open { transform: translateX(0); }
+            #panel-backdrop { display: none !important; }
+        }
+        #panel-backdrop { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        #panel-drag-handle { display: none; }
+        #help-modal:not(.open) { display: none; }
+        #help-modal.open { display: flex; }
     </style>
 </head>
 <body class="text-slate-200 antialiased">
-    <!-- Header: 2 linhas no mobile -->
     <header class="border-b border-emerald-900/30 bg-slate-950/95 backdrop-blur sticky top-0 z-30">
-        <div class="flex items-center gap-2 px-3 pt-2 pb-1 sm:px-4 sm:py-0 sm:h-14 sm:justify-between">
-            <a href="/" class="text-slate-400 hover:text-emerald-400 transition-colors shrink-0 p-2 -ml-1 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Voltar ao Predictor" aria-label="Voltar">
+        <div class="flex items-center gap-1 px-2 pt-2 pb-1 sm:px-4 sm:py-0 sm:h-14 sm:justify-between sm:gap-2">
+            <a href="/" class="text-slate-400 hover:text-emerald-400 shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Voltar">
                 <i class="fa-solid fa-arrow-left text-lg"></i>
             </a>
-            <div class="flex-1 min-w-0 sm:flex-none">
-                <h1 class="text-sm sm:text-base font-bold bg-gradient-to-r from-green-400 to-yellow-300 bg-clip-text text-transparent truncate">
-                    Mapa de Conexões
-                </h1>
-                <p class="text-[10px] text-slate-500 truncate hidden xs:block sm:block">Brasil · rivais · Copas · jogadores</p>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-sm sm:text-base font-bold bg-gradient-to-r from-green-400 to-yellow-300 bg-clip-text text-transparent truncate">Mapa de Conexões</h1>
+                <p class="text-[10px] text-slate-500 truncate sm:block hidden">Brasil · rivais · Copas · jogadores</p>
             </div>
-            <button id="btn-focus-brasil" type="button"
-                class="sm:hidden shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-emerald-600 active:bg-emerald-500 text-white"
-                aria-label="Centralizar Brasil">
-                <i class="fa-solid fa-crosshairs"></i>
-            </button>
+            <!-- Ações mobile -->
+            <div class="flex items-center gap-1 sm:hidden shrink-0">
+                <button id="btn-help-mob" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-300" aria-label="Ajuda">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+                <button id="btn-toggle-view-mob" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-violet-700 border border-violet-600 text-white" aria-label="Ver 3D">
+                    <i class="fa-solid fa-cube"></i>
+                </button>
+                <button id="btn-focus-brasil" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-emerald-600 text-white" aria-label="Centralizar Brasil">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </button>
+            </div>
+            <!-- Desktop -->
             <div class="hidden sm:flex items-center gap-2 shrink-0">
-                <input type="search" id="search-node-desk" placeholder="Buscar…"
-                    class="w-36 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                <select id="filter-type-desk"
-                    class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <input type="search" id="search-node-desk" placeholder="Buscar…" class="w-32 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <select id="filter-type-desk" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
                     <option value="">Todos</option>
                 </select>
-                <button id="btn-focus-brasil-desk" type="button"
-                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white min-h-[44px]">
+                <button id="btn-help-desk" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white" aria-label="Ajuda">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+                <button id="btn-toggle-view-desk" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-700 hover:bg-violet-600 text-sm font-semibold text-white min-h-[44px]" aria-label="Ver 3D">
+                    <i class="fa-solid fa-cube"></i> 3D
+                </button>
+                <button id="btn-focus-brasil-desk" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white min-h-[44px]">
                     <i class="fa-solid fa-crosshairs"></i> Brasil
                 </button>
             </div>
         </div>
-        <!-- Filtros mobile — linha dedicada -->
         <div class="flex gap-2 px-3 pb-2 sm:hidden">
-            <input type="search" id="search-node" placeholder="Buscar país, jogador…"
-                class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 min-h-[44px]">
-            <select id="filter-type"
-                class="w-[38%] max-w-[140px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 min-h-[44px]">
+            <input type="search" id="search-node" placeholder="Buscar país, jogador…" class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white min-h-[44px]">
+            <select id="filter-type" class="w-[38%] max-w-[140px] bg-slate-800 border border-slate-700 rounded-xl px-2 py-2.5 text-sm text-white min-h-[44px]">
                 <option value="">Todos</option>
             </select>
         </div>
     </header>
 
-    <div id="graph-network" role="img" aria-label="Grafo interativo de conexões da Seleção Brasileira"></div>
+    <div id="graph-network" class="graph-view" role="img" aria-label="Grafo 2D"></div>
+    <div id="graph-3d" class="graph-view hidden" role="img" aria-label="Grafo 3D"></div>
 
-    <button id="focus-chip" type="button"
-        class="hidden fixed top-[calc(var(--header-h)+0.5rem)] left-1/2 -translate-x-1/2 z-20 max-w-[92vw] px-3 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-700/50 text-[11px] text-emerald-300 shadow-lg active:bg-emerald-900"
-        title="Toque para limpar o foco">
-        Foco ativo
-    </button>
+    <button id="focus-chip" type="button" class="hidden fixed top-[calc(var(--header-h)+0.5rem)] left-1/2 -translate-x-1/2 z-20 max-w-[92vw] px-3 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-700/50 text-[11px] text-emerald-300 shadow-lg">Foco ativo</button>
 
-    <!-- FAB mobile -->
-    <button id="btn-close-graph-hint" type="button"
-        class="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full bg-slate-800/90 border border-slate-700 text-xs text-slate-400 pointer-events-none opacity-0 transition-opacity"
-        aria-hidden="true">
-        Toque em um nó · arraste para mover
-    </button>
-
-    <!-- Backdrop mobile -->
     <div id="panel-backdrop" class="fixed inset-0 bg-black/50 z-40 sm:hidden" aria-hidden="true"></div>
 
-    <!-- Painel detalhe: bottom sheet (mobile) / sidebar (desktop) -->
-    <aside id="detail-panel"
-        class="fixed z-50 bg-slate-950/98 backdrop-blur border-slate-800 p-4 overflow-y-auto sm:top-14 sm:right-0 sm:bottom-0 sm:w-80 sm:border-l">
+    <aside id="detail-panel" class="fixed z-50 bg-slate-950/98 backdrop-blur border-slate-800 p-4 overflow-y-auto sm:top-14 sm:right-0 sm:bottom-0 sm:w-80 sm:border-l">
         <div id="panel-drag-handle" class="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3"></div>
-        <button id="close-panel" type="button"
-            class="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg active:bg-slate-800"
-            aria-label="Fechar">
+        <button id="close-panel" type="button" class="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white" aria-label="Fechar">
             <i class="fa-solid fa-xmark text-xl"></i>
         </button>
         <div id="detail-content" class="pt-1 pr-8"></div>
     </aside>
 
+    <!-- Modal Ajuda -->
+    <div id="help-modal" class="fixed inset-0 z-[70] items-center justify-center p-4 bg-black/70 backdrop-blur-sm" role="dialog" aria-labelledby="help-title">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full max-h-[85dvh] overflow-y-auto shadow-2xl">
+            <div class="sticky top-0 bg-slate-900/95 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+                <h2 id="help-title" class="font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question text-emerald-400"></i> Como usar o mapa
+                </h2>
+                <button id="close-help" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white" aria-label="Fechar ajuda">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-4 text-sm text-slate-300">
+                <section>
+                    <h3 class="font-semibold text-emerald-400 mb-1">O que é isto?</h3>
+                    <p>Rede de conhecimento da Seleção Brasileira e adversários, gerada a partir do vault Obsidian. Cada bolinha é uma nota; cada linha é um link <code class="text-xs bg-slate-800 px-1 rounded">[[ ]]</code> entre notas.</p>
+                </section>
+                <section>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Nem tudo se conecta</h3>
+                    <p>Dois nós só se ligam se houver relação no vault. Brasil não liga a todos os 86 nós — apenas aos vizinhos diretos (times, jogadores, partidas citadas na nota).</p>
+                </section>
+                <section>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Cores por tipo</h3>
+                    <ul class="grid grid-cols-2 gap-1 text-xs">
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>Time</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"></span>Jogador</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Partida</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-violet-500 mr-1"></span>Edição</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-pink-500 mr-1"></span>Técnico</li>
+                        <li><span class="inline-block w-2 h-2 rounded-full bg-slate-500 mr-1"></span>Clube</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Modo foco</h3>
+                    <p>Toque em um nó: vizinhos diretos ficam visíveis; o resto esmaece. Setas verdes = conexões diretas. Toque no fundo ou no chip <em>Foco: …</em> para limpar.</p>
+                </section>
+                <section>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Visualização 2D</h3>
+                    <ul class="list-disc pl-4 space-y-1 text-xs">
+                        <li>Arraste para mover o mapa · pinça para zoom</li>
+                        <li>Busque por nome ou filtre por tipo</li>
+                        <li>Botão <i class="fa-solid fa-crosshairs"></i> centraliza o Brasil</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3 class="font-semibold text-violet-400 mb-1">Visualização 3D</h3>
+                    <p class="text-xs">Botão <i class="fa-solid fa-cube"></i> alterna para o grafo em três dimensões. Arraste para girar · scroll para zoom · clique nos nós como no 2D. Recomendado em telas maiores; no celular pode consumir mais bateria.</p>
+                </section>
+            </div>
+        </div>
+    </div>
+
     <div id="load-error" class="hidden fixed inset-0 flex items-center justify-center bg-slate-950/95 z-[60] p-6 text-center">
         <div>
             <p class="text-red-400 font-semibold mb-2">Não foi possível carregar o grafo.</p>
-            <p class="text-sm text-slate-400">Execute <code class="text-emerald-400 text-xs">python scripts/export_obsidian_graph.py</code></p>
             <a href="/" class="inline-block mt-4 text-emerald-400 text-sm underline">Voltar ao Predictor</a>
         </div>
     </div>
 
     <script>
         const TYPE_COLORS = {
-            Time:       { bg: '#10b981', border: '#34d399', font: '#ecfdf5' },
-            Jogador:    { bg: '#3b82f6', border: '#60a5fa', font: '#eff6ff' },
-            Partida:    { bg: '#f59e0b', border: '#fbbf24', font: '#fffbeb' },
-            Edicao:     { bg: '#8b5cf6', border: '#a78bfa', font: '#f5f3ff' },
-            Tecnico:    { bg: '#ec4899', border: '#f472b6', font: '#fdf2f8' },
-            Clube:      { bg: '#64748b', border: '#94a3b8', font: '#f8fafc' },
-            Indice:     { bg: '#eab308', border: '#fde047', font: '#422006' },
-            Nota:       { bg: '#475569', border: '#64748b', font: '#f1f5f9' },
+            Time: '#10b981', Jogador: '#3b82f6', Partida: '#f59e0b', Edicao: '#8b5cf6',
+            Tecnico: '#ec4899', Clube: '#64748b', Indice: '#eab308', Nota: '#475569',
         };
-
         const FIELD_LABELS = {
             nome_pt: 'Nome', nome_en: 'Nome (EN)', nome: 'Nome', continente: 'Continente',
             bandeira: 'Bandeira', titulos_copa: 'Títulos na Copa', rival_historico: 'Rival histórico',
@@ -180,13 +183,10 @@
 
         const isMobile = () => window.matchMedia('(max-width: 639px)').matches;
 
-        let network = null;
-        let allNodes = [];
-        let allEdges = [];
-        let nodesDS = null;
-        let edgesDS = null;
-        let focusId = null;
-        let visibleNodeIds = new Set();
+        let network = null, graph3d = null, nodesDS = null, edgesDS = null;
+        let allNodes = [], allEdges = [];
+        let focusId = null, visibleNodeIds = new Set();
+        let viewMode = '2d';
 
         function getDirectNeighbors(id) {
             const neighbors = new Set();
@@ -197,115 +197,181 @@
             return neighbors;
         }
 
-        function styleForNode(n, opts = {}) {
+        function isInFocus(nid) {
+            if (!focusId) return true;
+            if (nid === focusId) return true;
+            return getDirectNeighbors(focusId).has(nid);
+        }
+
+        function isDirectLink(from, to) {
+            return focusId && (from === focusId || to === focusId);
+        }
+
+        /* ── 2D (vis-network) ── */
+        function styleForNode2d(n, opts = {}) {
             const { dimmed = false, isFocus = false } = opts;
             const t = n.type || 'Nota';
             const c = TYPE_COLORS[t] || TYPE_COLORS.Nota;
-            const isBrasil = n.id === 'team-brasil';
             const mob = isMobile();
-            const fontSize = mob ? (isBrasil && !focusId ? 13 : 11) : (isBrasil && !focusId ? 16 : 13);
-            const nodeSize = mob
-                ? (isFocus ? 32 : isBrasil && !focusId ? 28 : 14)
-                : (isFocus ? 40 : isBrasil && !focusId ? 36 : 18);
             if (dimmed) {
                 return {
-                    id: n.id,
-                    label: '',
-                    title: `${n.label} (${t})`,
-                    group: t,
-                    color: {
-                        background: 'rgba(15,23,42,0.35)',
-                        border: 'rgba(30,41,59,0.25)',
-                        highlight: { background: c.bg, border: c.border },
-                    },
-                    font: { color: 'rgba(148,163,184,0.2)', size: 8 },
-                    size: 8,
-                    borderWidth: 0,
+                    id: n.id, label: '', title: `${n.label} (${t})`, group: t,
+                    color: { background: 'rgba(15,23,42,0.35)', border: 'rgba(30,41,59,0.25)' },
+                    font: { color: 'rgba(148,163,184,0.2)', size: 8 }, size: 8, borderWidth: 0,
                 };
             }
+            const isBrasil = n.id === 'team-brasil';
             return {
                 id: n.id,
                 label: mob && !isFocus && (n.label || '').length > 14 ? (n.label || '').slice(0, 12) + '…' : n.label,
-                title: `${n.label} (${t})`,
-                group: t,
-                color: {
-                    background: c.bg,
-                    border: isFocus ? '#ffffff' : c.border,
-                    highlight: { background: c.border, border: '#fff' },
-                },
-                font: { color: c.font, size: isFocus ? fontSize + 2 : fontSize, face: 'system-ui, sans-serif' },
-                size: nodeSize,
-                borderWidth: isFocus ? 4 : (isBrasil && !focusId ? 3 : 1),
+                title: `${n.label} (${t})`, group: t,
+                color: { background: c, border: isFocus ? '#fff' : c, highlight: { background: c, border: '#fff' } },
+                font: { color: '#f1f5f9', size: isFocus ? 14 : (mob ? 11 : 13) },
+                size: isFocus ? 36 : (isBrasil && !focusId ? 30 : 16),
+                borderWidth: isFocus ? 4 : 1,
             };
         }
 
-        function styleForEdge(e, idx, opts = {}) {
-            const { dimmed = false, isDirect = false } = opts;
-            if (dimmed) {
+        function render2d() {
+            if (!nodesDS) return;
+            const neighbors = focusId ? getDirectNeighbors(focusId) : null;
+            const focusSet = focusId ? new Set([focusId, ...neighbors]) : null;
+            const nodes = allNodes.filter(n => visibleNodeIds.has(n.id)).map(n => {
+                if (!focusId) return styleForNode2d(n);
+                return styleForNode2d(n, { dimmed: n.id !== focusId && !neighbors.has(n.id), isFocus: n.id === focusId });
+            });
+            const edges = allEdges.filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to)).map((e, i) => {
+                const direct = focusId && (e.from === focusId || e.to === focusId);
+                const dim = focusId && (!direct || !focusSet.has(e.from) || !focusSet.has(e.to));
                 return {
-                    id: idx, from: e.from, to: e.to, title: e.rel, arrows: 'to',
-                    color: { color: 'rgba(15,23,42,0.12)', highlight: '#334155' },
-                    width: 0.3, dashes: [2, 8],
+                    id: i, from: e.from, to: e.to, title: e.rel, arrows: 'to',
+                    color: { color: dim ? 'rgba(15,23,42,0.12)' : (direct ? '#34d399' : '#475569') },
+                    width: direct ? 2.5 : (dim ? 0.3 : 1), dashes: dim ? [2, 8] : false,
                 };
-            }
-            return {
-                id: idx, from: e.from, to: e.to, title: e.rel, arrows: 'to',
-                color: { color: isDirect ? '#34d399' : '#475569', highlight: '#6ee7b7' },
-                width: isDirect ? 2.5 : 1,
-            };
+            });
+            nodesDS.clear(); edgesDS.clear();
+            nodesDS.add(nodes); edgesDS.add(edges);
+        }
+
+        /* ── 3D (force-graph) ── */
+        function color3dNode(n) {
+            if (!focusId) return TYPE_COLORS[n.type] || TYPE_COLORS.Nota;
+            if (n.id === focusId) return '#ffffff';
+            if (getDirectNeighbors(focusId).has(n.id)) return TYPE_COLORS[n.type] || TYPE_COLORS.Nota;
+            return 'rgba(30,41,59,0.12)';
+        }
+
+        function color3dLink(l) {
+            const s = l.source.id || l.source;
+            const t = l.target.id || l.target;
+            if (!focusId) return 'rgba(100,116,139,0.5)';
+            if (s === focusId || t === focusId) return '#34d399';
+            return 'rgba(15,23,42,0.06)';
+        }
+
+        function width3dLink(l) {
+            const s = l.source.id || l.source;
+            const t = l.target.id || l.target;
+            return (focusId && (s === focusId || t === focusId)) ? 2 : 0.4;
+        }
+
+        function build3dData() {
+            const nodes = allNodes.filter(n => visibleNodeIds.has(n.id)).map(n => ({ ...n }));
+            const ids = new Set(nodes.map(n => n.id));
+            const links = allEdges.filter(e => ids.has(e.from) && ids.has(e.to))
+                .map(e => ({ source: e.from, target: e.to, rel: e.rel }));
+            return { nodes, links };
+        }
+
+        function init3d() {
+            if (graph3d) return;
+            graph3d = ForceGraph3D()(document.getElementById('graph-3d'))
+                .backgroundColor('#0f172a')
+                .showNavInfo(false)
+                .nodeLabel(n => `${n.label} (${n.type})`)
+                .nodeVal(n => n.id === focusId ? 12 : (n.id === 'team-brasil' ? 10 : 5))
+                .nodeColor(color3dNode)
+                .linkColor(color3dLink)
+                .linkWidth(width3dLink)
+                .linkOpacity(0.85)
+                .onNodeClick(node => focusNode(node.id, true))
+                .onBackgroundClick(() => dismissFocus());
+        }
+
+        function render3d() {
+            if (!graph3d) init3d();
+            graph3d.graphData(build3dData());
+            graph3d.nodeColor(color3dNode).linkColor(color3dLink).linkWidth(width3dLink);
+            graph3d.nodeVal(n => n.id === focusId ? 14 : (n.id === 'team-brasil' ? 10 : 5));
+        }
+
+        function cameraToNode(id, delay = 400) {
+            if (!graph3d) return;
+            setTimeout(() => {
+                const node = graph3d.graphData().nodes.find(n => n.id === id);
+                if (node && node.x != null) {
+                    const dist = 140;
+                    graph3d.cameraPosition({ x: node.x, y: node.y, z: node.z + dist }, node, 700);
+                }
+            }, delay);
         }
 
         function renderGraph() {
-            if (!nodesDS || !edgesDS) return;
-            const neighbors = focusId ? getDirectNeighbors(focusId) : null;
-            const focusSet = focusId ? new Set([focusId, ...neighbors]) : null;
-
-            const nodes = allNodes
-                .filter(n => visibleNodeIds.has(n.id))
-                .map(n => {
-                    if (!focusId) return styleForNode(n);
-                    const isFocus = n.id === focusId;
-                    const isNeighbor = neighbors.has(n.id);
-                    return styleForNode(n, { dimmed: !isFocus && !isNeighbor, isFocus });
-                });
-
-            const edges = allEdges
-                .filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to))
-                .map((e, i) => {
-                    if (!focusId) return styleForEdge(e, i);
-                    const touchesFocus = e.from === focusId || e.to === focusId;
-                    const bothVisible = focusSet.has(e.from) && focusSet.has(e.to);
-                    return styleForEdge(e, i, {
-                        dimmed: !touchesFocus || !bothVisible,
-                        isDirect: touchesFocus,
-                    });
-                });
-
-            nodesDS.clear();
-            edgesDS.clear();
-            nodesDS.add(nodes);
-            edgesDS.add(edges);
+            if (viewMode === '2d') render2d();
+            else render3d();
         }
 
         function setFocus(id) {
             focusId = id;
             renderGraph();
             const chip = document.getElementById('focus-chip');
-            if (chip) {
-                if (id) {
-                    const n = allNodes.find(x => x.id === id);
-                    const count = getDirectNeighbors(id).size;
-                    chip.textContent = `Foco: ${n?.label || id} · ${count} conexões`;
-                    chip.classList.remove('hidden');
-                } else {
-                    chip.classList.add('hidden');
-                }
-            }
+            if (!chip) return;
+            if (id) {
+                const n = allNodes.find(x => x.id === id);
+                chip.textContent = `Foco: ${n?.label || id} · ${getDirectNeighbors(id).size} conexões — toque para limpar`;
+                chip.classList.remove('hidden');
+            } else chip.classList.add('hidden');
         }
 
         function clearFocus() {
             setFocus(null);
             if (network) network.unselectAll();
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            document.getElementById('graph-network').classList.toggle('hidden', mode === '3d');
+            document.getElementById('graph-3d').classList.toggle('hidden', mode === '2d');
+            const icon2d = '<i class="fa-solid fa-border-all"></i>';
+            const icon3d = '<i class="fa-solid fa-cube"></i>';
+            const label = mode === '3d' ? '2D' : '3D';
+            ['btn-toggle-view-mob', 'btn-toggle-view-desk'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                if (id.includes('desk')) btn.innerHTML = mode === '3d' ? icon2d + ' 2D' : icon3d + ' 3D';
+                else btn.innerHTML = mode === '3d' ? icon2d : icon3d;
+                btn.setAttribute('aria-label', mode === '3d' ? 'Ver 2D' : 'Ver 3D');
+            });
+            if (mode === '3d') {
+                init3d();
+                render3d();
+                if (focusId) cameraToNode(focusId, 600);
+                else cameraToNode('team-brasil', 800);
+            } else render2d();
+        }
+
+        function toggleView() {
+            setViewMode(viewMode === '2d' ? '3d' : '2d');
+        }
+
+        function openHelp() {
+            document.getElementById('help-modal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeHelp() {
+            document.getElementById('help-modal').classList.remove('open');
+            document.body.style.overflow = '';
         }
 
         function formatValue(k, v) {
@@ -315,71 +381,48 @@
         }
 
         function showPanel(node) {
-            const panel = document.getElementById('detail-panel');
-            const backdrop = document.getElementById('panel-backdrop');
-            const el = document.getElementById('detail-content');
             const skip = new Set(['id', 'label', 'type', 'path', 'title']);
-            const rows = Object.entries(node)
-                .filter(([k, v]) => !skip.has(k) && v != null && v !== '')
-                .map(([k, v]) => {
-                    const lbl = FIELD_LABELS[k] || k.replace(/_/g, ' ');
-                    return `<div class="flex justify-between gap-3 py-2 border-b border-slate-800/80 last:border-0">
-                        <span class="text-slate-500 text-sm shrink-0">${lbl}</span>
-                        <span class="text-slate-100 text-sm text-right font-medium">${formatValue(k, v)}</span>
-                    </div>`;
-                }).join('');
-            el.innerHTML = `
-                <p class="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">${node.type || 'Nota'}</p>
-                <h2 class="text-xl font-bold text-white mb-1 leading-tight">${node.bandeira || ''} ${node.label}</h2>
-                <p class="text-xs text-emerald-400/80 mb-3">${getDirectNeighbors(node.id).size} conexões diretas no grafo</p>
-                ${rows ? `<div class="space-y-0 mb-2">${rows}</div>` : ''}
-                <p class="text-[10px] text-slate-500 mt-2">Só vizinhos diretos ficam em destaque. Nem todo nó se liga a todo nó — apenas onde há link no vault.</p>
-            `;
-            panel.classList.add('panel-open');
-            backdrop.classList.add('panel-open');
-            backdrop.setAttribute('aria-hidden', 'false');
+            const rows = Object.entries(node).filter(([k, v]) => !skip.has(k) && v != null && v !== '')
+                .map(([k, v]) => `<div class="flex justify-between gap-3 py-2 border-b border-slate-800/80"><span class="text-slate-500 text-sm">${FIELD_LABELS[k] || k}</span><span class="text-slate-100 text-sm text-right font-medium">${formatValue(k, v)}</span></div>`).join('');
+            document.getElementById('detail-content').innerHTML = `
+                <p class="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">${node.type}</p>
+                <h2 class="text-xl font-bold text-white mb-1">${node.bandeira || ''} ${node.label}</h2>
+                <p class="text-xs text-emerald-400/80 mb-3">${getDirectNeighbors(node.id).size} conexões diretas</p>
+                ${rows ? `<div>${rows}</div>` : ''}`;
+            document.getElementById('detail-panel').classList.add('panel-open');
+            document.getElementById('panel-backdrop').classList.add('panel-open');
         }
 
         function hidePanel() {
             document.getElementById('detail-panel').classList.remove('panel-open');
-            const backdrop = document.getElementById('panel-backdrop');
-            backdrop.classList.remove('panel-open');
-            backdrop.setAttribute('aria-hidden', 'true');
+            document.getElementById('panel-backdrop').classList.remove('panel-open');
         }
 
-        function dismissFocus() {
-            hidePanel();
-            clearFocus();
-        }
+        function dismissFocus() { hidePanel(); clearFocus(); }
 
         function getSearchValue() {
             const mob = document.getElementById('search-node');
             const desk = document.getElementById('search-node-desk');
-            return ((mob && mob.offsetParent !== null ? mob.value : desk?.value) || '').toLowerCase().trim();
+            return ((mob?.offsetParent ? mob.value : desk?.value) || '').toLowerCase().trim();
         }
 
         function getFilterValue() {
             const mob = document.getElementById('filter-type');
             const desk = document.getElementById('filter-type-desk');
-            return (mob && mob.offsetParent !== null ? mob.value : desk?.value) || '';
+            return (mob?.offsetParent ? mob.value : desk?.value) || '';
         }
 
         function applyFilters() {
-            const q = getSearchValue();
-            const typeF = getFilterValue();
-            visibleNodeIds = new Set(
-                allNodes.filter(n => {
-                    if (typeF && n.type !== typeF) return false;
-                    if (q && !(n.label || '').toLowerCase().includes(q) && !(n.id || '').includes(q)) return false;
-                    return true;
-                }).map(n => n.id)
-            );
-            if (q || typeF) {
-                allEdges.forEach(e => {
-                    if (visibleNodeIds.has(e.from)) visibleNodeIds.add(e.to);
-                    if (visibleNodeIds.has(e.to)) visibleNodeIds.add(e.from);
-                });
-            }
+            const q = getSearchValue(), typeF = getFilterValue();
+            visibleNodeIds = new Set(allNodes.filter(n => {
+                if (typeF && n.type !== typeF) return false;
+                if (q && !(n.label || '').toLowerCase().includes(q) && !(n.id || '').includes(q)) return false;
+                return true;
+            }).map(n => n.id));
+            if (q || typeF) allEdges.forEach(e => {
+                if (visibleNodeIds.has(e.from)) visibleNodeIds.add(e.to);
+                if (visibleNodeIds.has(e.to)) visibleNodeIds.add(e.from);
+            });
             if (focusId && !visibleNodeIds.has(focusId)) clearFocus();
             renderGraph();
         }
@@ -394,55 +437,15 @@
         }
 
         function focusNode(id, openPanel = true) {
-            if (!network) return;
             setFocus(id);
-            network.selectNodes([id]);
-            network.focus(id, {
-                scale: isMobile() ? 0.9 : 1.2,
-                animation: { duration: 500, easingFunction: 'easeInOutQuad' },
-            });
             const raw = allNodes.find(n => n.id === id);
+            if (viewMode === '2d' && network) {
+                network.selectNodes([id]);
+                network.focus(id, { scale: isMobile() ? 0.9 : 1.2, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+            } else if (viewMode === '3d') {
+                cameraToNode(id, 200);
+            }
             if (raw && openPanel) showPanel(raw);
-        }
-
-        function populateTypeFilters(types) {
-            ['filter-type', 'filter-type-desk'].forEach(selId => {
-                const sel = document.getElementById(selId);
-                types.forEach(t => {
-                    const o = document.createElement('option');
-                    o.value = t;
-                    o.textContent = t;
-                    sel.appendChild(o);
-                });
-            });
-        }
-
-        function buildNetwork() {
-            if (!network) return;
-            const mob = isMobile();
-            network.setOptions({
-                physics: {
-                    enabled: true,
-                    barnesHut: {
-                        gravitationalConstant: mob ? -2800 : -4200,
-                        springLength: mob ? 90 : 120,
-                        springConstant: 0.04,
-                    },
-                    stabilization: { iterations: mob ? 120 : 180 },
-                },
-                interaction: {
-                    hover: !mob,
-                    tooltipDelay: 120,
-                    multiselect: false,
-                    navigationButtons: !mob,
-                    zoomView: true,
-                    dragView: true,
-                    dragNodes: true,
-                },
-            });
-            nodesDS.clear();
-            nodesDS.add(allNodes.map(n => styleForNode(n)));
-            renderGraph();
         }
 
         async function init() {
@@ -455,79 +458,39 @@
                 visibleNodeIds = new Set(allNodes.map(n => n.id));
 
                 const types = [...new Set(allNodes.map(n => n.type).filter(Boolean))].sort();
-                populateTypeFilters(types);
+                ['filter-type', 'filter-type-desk'].forEach(id => {
+                    types.forEach(t => {
+                        const o = document.createElement('option');
+                        o.value = t; o.textContent = t;
+                        document.getElementById(id).appendChild(o);
+                    });
+                });
 
                 nodesDS = new vis.DataSet([]);
                 edgesDS = new vis.DataSet([]);
-
-                const container = document.getElementById('graph-network');
-                network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
-                    physics: {
-                        enabled: true,
-                        barnesHut: { gravitationalConstant: -2800, springLength: 90, springConstant: 0.04 },
-                        stabilization: { iterations: 120 },
-                    },
-                    interaction: {
-                        hover: false,
-                        tooltipDelay: 120,
-                        multiselect: false,
-                        navigationButtons: false,
-                        zoomView: true,
-                        dragView: true,
-                    },
+                network = new vis.Network(document.getElementById('graph-network'), { nodes: nodesDS, edges: edgesDS }, {
+                    physics: { barnesHut: { gravitationalConstant: -2800, springLength: 90 }, stabilization: { iterations: 120 } },
+                    interaction: { hover: false, navigationButtons: false, zoomView: true, dragView: true },
                     edges: { smooth: { type: 'continuous' } },
                 });
-
-                network.on('click', params => {
-                    if (params.nodes.length) {
-                        const id = params.nodes[0];
-                        focusNode(id, true);
-                    } else {
-                        dismissFocus();
-                    }
-                });
-
-                document.getElementById('focus-chip').addEventListener('click', dismissFocus);
-
+                network.on('click', p => p.nodes.length ? focusNode(p.nodes[0], true) : dismissFocus());
                 network.once('stabilizationIterationsDone', () => {
-                    renderGraph();
-                    network.focus('team-brasil', {
-                        scale: isMobile() ? 0.75 : 1,
-                        animation: { duration: 600, easingFunction: 'easeInOutQuad' },
-                    });
-                    const hint = document.getElementById('btn-close-graph-hint');
-                    if (isMobile() && hint) {
-                        hint.classList.remove('pointer-events-none');
-                        hint.style.opacity = '1';
-                        setTimeout(() => { hint.style.opacity = '0'; }, 4000);
-                    }
+                    render2d();
+                    network.focus('team-brasil', { scale: isMobile() ? 0.75 : 1, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
                 });
 
-                ['search-node', 'search-node-desk'].forEach(id => {
-                    document.getElementById(id).addEventListener('input', () => {
-                        syncInputs(id === 'search-node');
-                        applyFilters();
-                    });
-                });
-                ['filter-type', 'filter-type-desk'].forEach(id => {
-                    document.getElementById(id).addEventListener('change', () => {
-                        syncInputs(id === 'filter-type');
-                        applyFilters();
-                    });
-                });
-                ['btn-focus-brasil', 'btn-focus-brasil-desk'].forEach(id => {
-                    document.getElementById(id).addEventListener('click', () => focusNode('team-brasil', !isMobile()));
-                });
+                ['search-node', 'search-node-desk'].forEach(id => document.getElementById(id).addEventListener('input', () => { syncInputs(id === 'search-node'); applyFilters(); }));
+                ['filter-type', 'filter-type-desk'].forEach(id => document.getElementById(id).addEventListener('change', () => { syncInputs(id === 'filter-type'); applyFilters(); }));
+                ['btn-focus-brasil', 'btn-focus-brasil-desk'].forEach(id => document.getElementById(id).addEventListener('click', () => focusNode('team-brasil', !isMobile())));
+                ['btn-help-mob', 'btn-help-desk'].forEach(id => document.getElementById(id).addEventListener('click', openHelp));
+                ['btn-toggle-view-mob', 'btn-toggle-view-desk'].forEach(id => document.getElementById(id).addEventListener('click', toggleView));
+                document.getElementById('close-help').addEventListener('click', closeHelp);
+                document.getElementById('help-modal').addEventListener('click', e => { if (e.target.id === 'help-modal') closeHelp(); });
+                document.getElementById('focus-chip').addEventListener('click', dismissFocus);
                 document.getElementById('close-panel').addEventListener('click', hidePanel);
                 document.getElementById('panel-backdrop').addEventListener('click', dismissFocus);
 
-                let resizeTimer;
-                window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimer);
-                    resizeTimer = setTimeout(buildNetwork, 200);
-                });
-
-                window.matchMedia('(max-width: 639px)').addEventListener('change', buildNetwork);
+                if (!isMobile()) setViewMode('3d');
             } catch (e) {
                 console.error(e);
                 document.getElementById('load-error').classList.remove('hidden');
