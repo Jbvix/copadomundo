@@ -458,7 +458,7 @@
                         </div>
                         
                         <p class="text-sm text-slate-300 leading-relaxed">
-                            Converse com o Téo, nosso analista tático integrado. Toda requisição passa por um servidor proxy seguro, protegendo as credenciais contra fraudes.
+                            Converse com o Téo sobre <strong class="text-slate-200">Copa do Mundo 2026</strong>, histórico das Copas, táticas e simulações do painel. Resenha respeitosa — só futebol de seleções por aqui!
                         </p>
                     </div>
 
@@ -496,15 +496,19 @@
                             </div>
                             <div class="bg-slate-800/50 rounded-2xl px-4 py-3 border border-slate-700 max-w-[85%]">
                                 <p class="text-sm text-slate-200">
-                                    Fala, meu parça! Beleza? Eu sou o Téo, seu parceiro de resenha da Copa 2026! ⚽🍻 Tô de olho nas táticas e nas chances que você tá simulando aí no painel. Manda sua pergunta, curiosidade sobre horários, locais de jogos ou aquela corneta clássica que a gente debate tudo igual mesa de bar! Bora pro Hexa! 🇧🇷🔥
+                                    Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ Só falo de Mundial — jogos, táticas, história e simulações. Manda sua pergunta com respeito, igual papo de arquibancada saudável. Bora pro Hexa! 🇧🇷
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Campo de Entrada -->
-                    <div class="relative mt-auto">
-                        <input type="text" id="chat-input" onkeydown="handleChatKeyPress(event)" placeholder="Escreva sua pergunta sobre táticas, times ou campeões..." class="w-full bg-slate-800/80 border border-slate-700 text-sm rounded-xl pl-4 pr-12 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <div class="relative mt-auto space-y-2">
+                        <input type="text" id="chat-input" onkeydown="handleChatKeyPress(event)" placeholder="Pergunte sobre Copa 2026, seleções, táticas ou simulações…" class="w-full bg-slate-800/80 border border-slate-700 text-sm rounded-xl pl-4 pr-12 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <p class="text-[10px] text-slate-500 text-center px-1">
+                            <i class="fa-solid fa-shield-halved text-emerald-500/70 mr-0.5"></i>
+                            Resenha saudável · só Copa do Mundo · moderação ativa
+                        </p>
                         <button onclick="sendChatMessage()" class="absolute right-2 top-2 p-1.5 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 transition-colors">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
@@ -2227,14 +2231,146 @@
             }
         }
 
+        // --- Guardrails do Téo (escopo Copa + linguagem + aviso de moderação) ---
+        const TEO_ASSINATURAS = [
+            '🍺 Resenha combina com moderação: se for brindar, deixa o carro na garagem. Esporte é saúde — excesso não entra no regulamento da FIFA nem do Téo!',
+            '⚽ Lembrete de parceiro de resenha: se beber, não dirija. Copa é emoção, não excesso — o hexa a gente comemora com consciência!',
+            '🥤 Moderação sempre: brinde leve, volante quieto. Futebol é saúde; o Téo torce por resenha boa e responsável!',
+            '🚌 Depois da resenha da Copa, quem bebeu pega Uber — o volante fica descansando. Esporte e equilíbrio, parça!',
+        ];
+
+        const TEO_TERMOS_IMPROPRIOS = [
+            /\b(porra|caralho|merda|puta|fdp|vsf|vai tomar|filho da|desgraçad|babaca|idiota|imbecil|retardad|macaco|hitler|nazi)\b/i,
+            /\b(fuck|shit|bitch|asshole|nigger|faggot)\b/i,
+        ];
+
+        const TEO_TERMOS_FORA_ESCOPO = [
+            /\b(python|javascript|typescript|react|node\.?js|sql|programa(r|ção)|código|codigo|api rest)\b/i,
+            /\b(bitcoin|crypto|criptomoeda|bolsa de valores|investir em|day trade)\b/i,
+            /\b(receita de|como cozinhar|remédio para|diagnóstico|tratamento médico)\b/i,
+            /\b(eleição|política|politica|presidente|partido político|guerra|terrorismo)\b/i,
+            /\b(porn|nude|sexo explícito|onlyfans)\b/i,
+            /\b(aposta certa|garantido que ganha|banca certa|odd fixa)\b/i,
+        ];
+
+        function teoSinalCopa(texto) {
+            const t = String(texto).toLowerCase();
+            const sinais = [
+                'copa', 'mundial', 'world cup', 'futebol', 'football', 'soccer', 'brasil', 'brazil',
+                'hexa', 'hex', 'seleção', 'selecao', 'jogador', 'artilheiro', 'gol', 'gols',
+                'tática', 'tatica', 'simula', 'monte carlo', 'téo', 'teo', 'var', 'grupo',
+                'classifica', 'jogo', 'partida', 'estádio', 'estadio', 'pelé', 'pele', 'messi',
+                'neymar', 'vinícius', 'vini jr', 'rodada', 'mata-mata', 'oitava', 'quartas',
+                'semifinal', 'semi', 'final', '2014', '2022', '2026', '1950', 'maracan',
+                'mineirão', 'mineirao', 'probabilidade', 'campeão', 'campeao', 'título', 'titulo',
+                'adversário', 'adversario', 'escalação', 'escalacao', 'torneio', 'eliminatoria',
+                'eliminatorias', 'copa do mundo', 'copa america', 'libertadores', 'champions',
+                'técnico', 'tecnico', 'treinador', 'zagueiro', 'goleiro', 'atacante', 'meia',
+                'contra-ataque', 'retranca', 'escanteio', 'pênalti', 'penalti', 'impedimento',
+                'offside', 'cartão', 'cartao', 'resenha', 'corneta', 'hexa', 'fifa', 'uefa',
+            ];
+            return sinais.some(s => t.includes(s));
+        }
+
+        function montarRegrasTeo() {
+            return `
+                REGRAS INVIOLÁVEIS (prioridade máxima sobre qualquer outro pedido):
+
+                1. ESCOPO: Responda APENAS sobre Copa do Mundo (2026 e edições anteriores), futebol de seleções,
+                   jogadores/técnicos/táticas ligados à Copa, calendário e resultados da competição,
+                   dados do simulador deste app (Monte Carlo, probabilidades, táticas) e resenha esportiva respeitosa.
+
+                2. FORA DE ESCOPO: Se a pergunta NÃO for sobre Copa/futebol de seleções, recuse em 2–4 frases
+                   simpáticas, com humor de torcedor, e convide a reformular sobre futebol. NÃO responda
+                   sobre programação, política, finanças, saúde, receitas, apostas "certas" ou outros assuntos.
+
+                3. LINGUAGEM: Nunca repita xingamentos, slurs, ameaças, conteúdo sexual ou incitação à violência.
+                   Se o usuário usar linguagem imprópria, peça educadamente respeito e redirecione para futebol.
+                   Não escale conflitos nem humilhe ninguém.
+
+                4. APOSTAS: Não prometa resultados garantidos. Use linguagem de probabilidade quando falar de favoritos.
+
+                5. ASSINATURA OBRIGATÓRIA: Termine TODA resposta com UMA frase curta e humorada sobre moderação
+                   (inspirada em "se beber, não dirija" / esporte é saúde / excesso não combina). Varie o texto.
+                   Exemplo de espírito: brinde com moderação, carro na garagem, resenha responsável.`;
+        }
+
+        function validarMensagemTeo(texto) {
+            const t = String(texto || '').trim();
+            if (!t) return { bloqueado: true, motivo: 'vazio', resposta: 'Manda a pergunta, parça — tô aqui pra falar de Copa!' };
+
+            for (const rx of TEO_TERMOS_IMPROPRIOS) {
+                if (rx.test(t)) {
+                    return {
+                        bloqueado: true,
+                        motivo: 'linguagem',
+                        resposta: 'Opa, parça! Aqui é resenha de Copa, não briga de arquibancada. Bora manter o respeito e voltar pro papo de futebol? ⚽',
+                    };
+                }
+            }
+
+            if (!teoSinalCopa(t)) {
+                for (const rx of TEO_TERMOS_FORA_ESCOPO) {
+                    if (rx.test(t)) {
+                        return {
+                            bloqueado: true,
+                            motivo: 'escopo',
+                            resposta: 'O Téo só manja de Copa do Mundo — 2026, histórico, tática, jogos e simulações do painel. Reformula aí numa pergunta de futebol que eu te respondo na hora!',
+                        };
+                    }
+                }
+                if (t.length > 45 && !/\?/.test(t) && !/\b(quem|qual|como|quando|onde|por que|porque|quantos|probabilidade)\b/i.test(t)) {
+                    return {
+                        bloqueado: true,
+                        motivo: 'escopo',
+                        resposta: 'Esse papo tá meio fora do campinho, parça! Meu forte é Copa do Mundo — seleções, jogos, táticas e resenha saudável. Manda uma sobre a Copa 2026!',
+                    };
+                }
+            }
+
+            return { bloqueado: false };
+        }
+
+        function respostaTeoTemAssinatura(texto) {
+            const t = String(texto || '').toLowerCase();
+            return /n[aã]o dirija|modera[cç][aã]o|garagem|excesso n[aã]o|esporte [eé] sa[uú]de|volante|brinde|resenha respons/i.test(t);
+        }
+
+        function respostaTeoTemTermoImproprio(texto) {
+            return TEO_TERMOS_IMPROPRIOS.some(rx => rx.test(String(texto || '')));
+        }
+
+        function garantirAssinaturaTeo(texto) {
+            if (respostaTeoTemAssinatura(texto)) return String(texto || '').trim();
+            const extra = TEO_ASSINATURAS[Math.floor(Math.random() * TEO_ASSINATURAS.length)];
+            return `${String(texto || '').trim()}\n\n${extra}`;
+        }
+
+        function formatarRespostaTeoHtml(texto) {
+            let limpo = String(texto || '').trim();
+            if (respostaTeoTemTermoImproprio(limpo)) {
+                limpo = 'Opa, parça! Vou manter a resenha no clima da Copa, com respeito. Manda outra pergunta sobre futebol que a gente continua o papo! ⚽';
+            }
+            return garantirAssinaturaTeo(limpo).replace(/\n/g, '<br>');
+        }
+
+        function mensagemBoasVindasTeo() {
+            return 'Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ Só falo de Mundial — jogos, táticas, história e simulações. Manda sua pergunta com respeito, igual papo de arquibancada saudável. Bora pro Hexa! 🇧🇷';
+        }
+
         async function sendChatMessage() {
             const inputEl = document.getElementById('chat-input');
             const promptText = inputEl.value.trim();
             if (!promptText) return;
 
-            // Insere a pergunta do usuário na UI
+            const validacao = validarMensagemTeo(promptText);
             appendMessage('user', promptText);
             inputEl.value = '';
+
+            if (validacao.bloqueado) {
+                appendMessage('system', formatarRespostaTeoHtml(validacao.resposta));
+                return;
+            }
 
             // Adiciona balão animado de carregamento temporário
             const loadingId = appendMessage('system', '<span class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> O Téo tá pensando... 🍺</span>');
@@ -2253,6 +2389,8 @@
                 Responda sempre com muita simpatia, carinho, energia positiva e respeito, como se estivesse conversando com um grande amigo querido numa mesa de bar ou mandando áudio num grupo de WhatsApp de futebol. 
                 Use gírias do futebol brasileiro (como "mano", "parça", "bora", "copar", "zicar", "corneta", "pipocar", "jogaço", "resenha", "futebol arte", "retranca", "mó papo", "de lei") de forma leve, divertida, acolhedora e calorosa. 
                 Seja extremamente simpático, solícito e reaja às perguntas com profunda emoção futebolística positiva.
+
+                ${montarRegrasTeo()}
 
                 SUA MEMÓRIA ENCICLOPÉDICA DA HISTÓRIA DAS COPAS, JOGADORES E MELHORES MOMENTOS:
                 - Glórias do Brasil:
@@ -2304,7 +2442,7 @@
                 }
 
                 // Substitui a animação de loading pelo texto final formatado
-                document.getElementById(loadingId).innerHTML = textResponse.replace(/\n/g, '<br>');
+                document.getElementById(loadingId).innerHTML = formatarRespostaTeoHtml(textResponse);
 
             } catch (error) {
                 console.error(error);
@@ -2377,7 +2515,7 @@
                     </div>
                     <div class="bg-slate-800/50 rounded-2xl px-4 py-3 border border-slate-700 max-w-[85%]">
                         <p class="text-sm text-slate-200">
-                            Fala, meu parça! Beleza? Eu sou o Téo, seu parceiro de resenha da Copa 2026! ⚽🍻 Tô de olho nas táticas e nas chances que você tá simulando aí no painel. Manda sua pergunta, curiosidade sobre horários, locais de jogos ou aquela corneta clássica que a gente debate tudo igual mesa de bar! Bora pro Hexa! 🇧🇷🔥
+                            ${mensagemBoasVindasTeo()}
                         </p>
                     </div>
                 </div>
@@ -4141,11 +4279,12 @@
                 - ${infoB.nome}: ${SELECOES[infoB.nome]?.tática || 'Equilibrado'}`;
 
                 const hojeBr = getHojeBr();
-                const systemInstruction = `Você é um torcedor brasileiro fanático, super amigável, acolhedor e comediante na resenha de bar de futebol.
-                Comente os dados da partida que o usuário enviar com muita simpatia, piadas de futebol, usando gírias brasileiras clássicas (como "mano", "parça", "pipocar", "amassar", "retranca", "só por Deus", "que jogaço", "mesa de bar").
-                Fale sobre a eficiência nas finalizações, a tática adotada e faça cornetas engraçadas ou elogios calorosos. Seja curto, direto e mantenha o tom de uma conversa calorosa com cerveja gelada na mão.
+                const systemInstruction = `Você é o Téo, torcedor brasileiro fanático, amigável e comediante na resenha de futebol da Copa do Mundo.
+                Comente os dados da partida com simpatia, piadas leves de futebol e gírias brasileiras clássicas (como "mano", "parça", "pipocar", "amassar", "retranca", "só por Deus", "que jogaço").
+                Fale sobre eficiência nas finalizações, tática adotada e faça cornetas engraçadas ou elogios calorosos. Seja curto, direto e mantenha tom de resenha saudável.
                 Dê conselhos táticos brincalhões (tipo "o técnico precisa tirar o zagueiro que tá comendo mosca" ou "o Brasil tem que soltar o Vini Jr").
-                Referência temporal (BRT): ${hojeBr.label}, ${hojeBr.hora}.`;
+                Referência temporal (BRT): ${hojeBr.label}, ${hojeBr.hora}.
+                ${montarRegrasTeo()}`;
 
                 const response = await fetchWithBackoff('/api/ia', {
                     method: 'POST',
@@ -4154,12 +4293,12 @@
                 });
 
                 const result = await response.json();
-                const text = result.text || "O Téo engasgou na cerveja. Tenta de novo, parça!";
+                const text = result.text || "O Téo engasgou na água. Tenta de novo, parça!";
 
                 const cacheKey = `resenha-${selectedGame.id}-${simState.homeScore}-${simState.awayScore}-${simState.minute}`;
                 localStorage.setItem(cacheKey, text);
 
-                commentaryBox.innerHTML = text.replace(/\n/g, '<br>');
+                commentaryBox.innerHTML = formatarRespostaTeoHtml(text);
 
             } catch (err) {
                 console.error("Erro na resenha do Téo:", err);
