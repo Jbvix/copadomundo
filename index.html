@@ -2676,8 +2676,8 @@
             const tally = new Map();
             const add = (raw, teamEn) => {
                 parseScorers(raw).forEach(s => {
-                    const m = String(s).match(/^(.+?)\s+(\d+)['']?\s*$/);
-                    const name = (m ? m[1] : s).trim();
+                    const m = String(s).match(/^(.+?)\s+(\d+)['']?(?:\s+\([^)]+\))?\s*$/);
+                    const name = (m ? m[1] : String(s).replace(/\s+\d+['']?(?:\s+\([^)]+\))?\s*$/, '')).trim();
                     if (!name) return;
                     const key = name.toLowerCase();
                     const cur = tally.get(key) || {
@@ -2702,11 +2702,68 @@
                 const c = statsCacheGet(key, ttl);
                 if (c) return c;
             }
-            const resp = await fetchWithBackoff(`/api/af?${query}`, {}, 2, 15000);
+            const bust = forcar ? `&_t=${Date.now()}` : '';
+            const resp = await fetchWithBackoff(`/api/af?${query}${bust}`, {}, 2, 15000);
             const data = await resp.json();
             const arr = (data && data.response) || [];
             if (arr.length) statsCacheSet(key, arr);
             return arr;
+        }
+
+        async function aguardarJogosAPI() {
+            let ticks = 0;
+            while (apiCarregando && ticks < 60) { await wait(200); ticks++; }
+            if (!apiGames.length) {
+                await carregarJogosAPI(true, true);
+                ticks = 0;
+                while (apiCarregando && ticks < 60) { await wait(200); ticks++; }
+            }
+        }
+
+        // Carrega eventos de gol dos jogos encerrados (até 20 fixtures por requisição).
+        async function enriquecerJogosEncerrados(limite = 60) {
+            const precisa = apiGames.filter(j => {
+                if (j._src !== 'af' || !j.fixture_id || j.finished !== 'TRUE') return false;
+                const hg = parseInt(j.home_score, 10), ag = parseInt(j.away_score, 10);
+                const temGols = (!isNaN(hg) && hg > 0) || (!isNaN(ag) && ag > 0);
+                if (!temGols) return false;
+                return j.home_scorers === 'null' || j.away_scorers === 'null';
+            });
+            if (!precisa.length) return;
+            const alvo = precisa.slice(0, limite);
+            for (let i = 0; i < alvo.length; i += 20) {
+                const batch = alvo.slice(i, i + 20);
+                const ids = batch.map(j => j.fixture_id).join('-');
+                try {
+                    const resp = await fetchWithBackoff(`/api/af?path=/fixtures&ids=${ids}`, {}, 2, 18000);
+                    const data = await resp.json();
+                    const items = (data && data.response) || [];
+                    const porId = {};
+                    items.forEach(it => { if (it.fixture) porId[it.fixture.id] = it; });
+                    batch.forEach(j => { if (porId[j.fixture_id]) aplicarDetalheAf(j, porId[j.fixture_id]); });
+                } catch (e) { /* mantém o lote anterior */ }
+            }
+            salvarCacheJogos(apiGames);
+        }
+
+        async function carregarArtilheirosCopa(forcar = false) {
+            if (forcar) {
+                await carregarJogosAPI(true, true);
+                let ticks = 0;
+                while (apiCarregando && ticks < 60) { await wait(200); ticks++; }
+            } else {
+                await aguardarJogosAPI();
+            }
+            await enriquecerJogosEncerrados(forcar ? 80 : 40);
+            let scorers = await afFetchCached(
+                `path=/players/topscorers&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`,
+                `wc_topscorers_${AF_SEASON}`, STATS_TTL, forcar);
+            let fonte = 'api';
+            if (!scorers || !scorers.length) {
+                scorers = artilheirosDeJogosApi();
+                fonte = scorers.length ? 'jogos' : 'vazio';
+            }
+            return { scorers, fonte };
         }
 
         function statsVazio(msg) {
@@ -2733,7 +2790,7 @@
                 </div>`;
         }
 
-        function renderRankingJogadores(containerId, lista, tipo, forcar) {
+        function renderRankingJogadores(containerId, lista, tipo, forcar, fonte) {
             const el = document.getElementById(containerId);
             if (!el) return;
             if (!lista || !lista.length) {
@@ -2756,7 +2813,12 @@
                 }
                 return linhaRankingJogador(i + 1, jogador.photo, jogador.name || 'Jogador', time, valor, sufixo);
             }).join('');
-            el.innerHTML = linhas;
+            const notaFonte = (tipo === 'goals' && fonte === 'jogos')
+                ? `<p class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800/60 mt-2">Calculado a partir dos gols dos jogos encerrados</p>`
+                : (tipo === 'goals' && fonte === 'api')
+                    ? `<p class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800/60 mt-2">Fonte: API-Football · Copa 2026</p>`
+                    : '';
+            el.innerHTML = linhas + notaFonte;
         }
 
         function renderRankingSelecoes(containerId, lista, tipo) {
@@ -2925,13 +2987,11 @@
             // Rankings de jogadores da edição atual.
             (async () => {
                 try {
-                    let scorers = await afFetchCached(
-                        `path=/players/topscorers&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`,
-                        `wc_topscorers_${AF_SEASON}`, STATS_TTL, forcar);
-                    if (!scorers || !scorers.length) scorers = artilheirosDeJogosApi();
-                    renderRankingJogadores('stats-scorers', scorers, 'goals', forcar);
+                    const { scorers, fonte } = await carregarArtilheirosCopa(forcar);
+                    renderRankingJogadores('stats-scorers', scorers, 'goals', forcar, fonte);
                 } catch (e) {
-                    renderRankingJogadores('stats-scorers', artilheirosDeJogosApi(), 'goals', forcar);
+                    const fallback = artilheirosDeJogosApi();
+                    renderRankingJogadores('stats-scorers', fallback, 'goals', forcar, fallback.length ? 'jogos' : 'vazio');
                 }
             })();
             afFetchCached(`path=/players/topassists&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, `wc_topassists_${AF_SEASON}`, STATS_TTL, forcar)
