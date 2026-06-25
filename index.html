@@ -418,6 +418,31 @@
 
         <!-- SEÇÃO: CHAT ANALISTA IA -->
         <section id="tab-ia-chat" class="hidden space-y-6">
+            <!-- Calendário & Classificação — largura total, sempre visível ao abrir a aba -->
+            <div id="teo-painel-temporal" class="bg-slate-900/70 border border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-lg shadow-amber-950/20">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i> Calendário & Classificação
+                        </h3>
+                        <p id="teo-data-hoje" class="text-xs sm:text-sm text-slate-300 font-medium mt-1"></p>
+                    </div>
+                    <button type="button" onclick="renderPainelTemporal(true)" class="text-xs text-slate-300 hover:text-amber-300 px-3 py-1.5 rounded-lg border border-slate-600 hover:border-amber-500/50 bg-slate-800/50 shrink-0">
+                        <i class="fa-solid fa-rotate mr-1"></i> Atualizar
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                    <div class="min-h-[120px]">
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase mb-2">Próximos jogos</p>
+                        <div id="teo-proximos-jogos" class="overflow-x-auto -mx-1"></div>
+                    </div>
+                    <div class="min-h-[120px]">
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase mb-2">Classificação (pontos)</p>
+                        <div id="teo-classificacao" class="max-h-[320px] overflow-y-auto pr-1 scrollbar-none"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex flex-col lg:grid lg:grid-cols-3 gap-6">
                 <!-- Painel de Dicas/Instruções -->
                 <div class="space-y-6 mobile-order-last">
@@ -443,9 +468,9 @@
                             <i class="fa-solid fa-chevron-right mt-0.5 text-yellow-400 shrink-0"></i>
                             <span>Qual o impacto da tática de Contra-Ataque do Brasil 🇧🇷 contra a Defesa Sólida da Alemanha 🇩🇪?</span>
                         </button>
-                        <button onclick="sendQuickPrompt('Quem é o jogador com o maior Score de Habilidade e por que ele é decisivo para sua seleção?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
-                            <i class="fa-solid fa-chevron-right mt-0.5 text-yellow-400 shrink-0"></i>
-                            <span>Quem é o jogador com o maior Score de Habilidade e por que ele é decisivo? 🏆</span>
+                        <button onclick="sendQuickPrompt('Quais jogos do Brasil já aconteceram e quais ainda faltam, considerando a data de hoje?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
+                            <i class="fa-solid fa-chevron-right mt-0.5 text-amber-400 shrink-0"></i>
+                            <span>Quais jogos do Brasil 🇧🇷 já rolaram e quais ainda faltam?</span>
                         </button>
                     </div>
                 </div>
@@ -853,8 +878,9 @@
             renderizarJogos();
             renderizarJogadores();
             aplicarDadosReaisNasProbabilidades();
+            renderPainelTemporal();
             // Busca os jogos reais em segundo plano para popular/atualizar o card do Dashboard.
-            carregarJogosAPI(true, true);
+            carregarJogosAPI(true, true).then(() => renderPainelTemporal());
         };
 
         // Carrega a classificação real e, havendo jogos disputados, recalcula as
@@ -1383,6 +1409,208 @@
             return isNaN(d.getTime()) ? 0 : d.getTime();
         }
 
+        // --- Contexto temporal (data/hora real × calendário da Copa) ---
+        const TZ_BR = 'America/Sao_Paulo';
+
+        function getHojeBr() {
+            const now = new Date();
+            const parts = new Intl.DateTimeFormat('pt-BR', {
+                timeZone: TZ_BR, weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+            }).formatToParts(now);
+            const get = t => (parts.find(p => p.type === t) || {}).value || '';
+            const iso = `${get('year')}-${get('month')}-${get('day')}`;
+            return {
+                iso,
+                label: `${get('weekday')}, ${get('day')}/${get('month')}/${get('year')}`,
+                hora: new Intl.DateTimeFormat('pt-BR', { timeZone: TZ_BR, hour: '2-digit', minute: '2-digit' }).format(now),
+            };
+        }
+
+        function inicioDoDiaBr(iso) {
+            const [y, m, d] = iso.split('-').map(Number);
+            return new Date(y, m - 1, d).getTime();
+        }
+
+        function statusTemporalJogo(g) {
+            const st = normalizeStatus(g.time_elapsed);
+            const finished = g.finished === 'TRUE' || st === 'finished';
+            const live = !finished && st && st !== 'notstarted' && st !== 'null';
+            if (live) return 'ao_vivo';
+            if (finished) return 'encerrado';
+            const ms = parseDataLocal(g.local_date);
+            if (!ms) return 'futuro';
+            const hoje = getHojeBr();
+            const diaJogo = new Date(ms);
+            const diaKey = `${diaJogo.getFullYear()}-${String(diaJogo.getMonth() + 1).padStart(2, '0')}-${String(diaJogo.getDate()).padStart(2, '0')}`;
+            if (diaKey === hoje.iso) return 'hoje';
+            if (ms < inicioDoDiaBr(hoje.iso)) return 'atrasado';
+            return 'futuro';
+        }
+
+        function jogoComMeta(g) {
+            const infoA = obterInfoTime(g.home_team_name_en);
+            const infoB = obterInfoTime(g.away_team_name_en);
+            const st = statusTemporalJogo(g);
+            const finished = st === 'encerrado' || st === 'atrasado';
+            const live = st === 'ao_vivo';
+            let placar = 'vs';
+            if (finished || live) {
+                const a = g.home_score != null && g.home_score !== 'null' ? g.home_score : '0';
+                const b = g.away_score != null && g.away_score !== 'null' ? g.away_score : '0';
+                placar = `${a}×${b}`;
+            }
+            return {
+                ...g,
+                statusTemporal: st,
+                dataMs: parseDataLocal(g.local_date),
+                dataFmt: formatarData(g.local_date),
+                infoA, infoB,
+                placar,
+                fase: obterFaseNome(g),
+                brasil: g.home_team_name_en === 'Brazil' || g.away_team_name_en === 'Brazil',
+            };
+        }
+
+        function obterJogosTemporais() {
+            const lista = (apiGames.length ? apiGames : []).map(jogoComMeta).sort((a, b) => (a.dataMs || 0) - (b.dataMs || 0));
+            return {
+                todos: lista,
+                aoVivo: lista.filter(j => j.statusTemporal === 'ao_vivo'),
+                hoje: lista.filter(j => j.statusTemporal === 'hoje'),
+                proximos: lista.filter(j => j.statusTemporal === 'futuro' || j.statusTemporal === 'hoje'),
+                encerrados: lista.filter(j => j.statusTemporal === 'encerrado' || j.statusTemporal === 'atrasado'),
+                brasil: lista.filter(j => j.brasil),
+            };
+        }
+
+        function linhaJogoTemporal(j, compact) {
+            const badge = j.statusTemporal === 'ao_vivo' ? '<span class="text-emerald-400">●</span>'
+                : j.statusTemporal === 'hoje' ? '<span class="text-amber-400">HOJE</span>'
+                : j.statusTemporal === 'encerrado' || j.statusTemporal === 'atrasado' ? '<span class="text-slate-500">✓</span>'
+                : '<span class="text-blue-400">→</span>';
+            if (compact) {
+                return `<tr class="border-b border-slate-800/60 text-[11px]">
+                    <td class="py-1.5 pr-1 whitespace-nowrap text-slate-500">${j.dataFmt.split(' ')[0] || '—'}</td>
+                    <td class="py-1.5 pr-1">${badge}</td>
+                    <td class="py-1.5 pr-1 whitespace-nowrap">${j.infoA.bandeira} ${j.infoA.nome}</td>
+                    <td class="py-1.5 px-1 font-mono font-bold text-center text-slate-200">${j.placar}</td>
+                    <td class="py-1.5 pl-1 whitespace-nowrap text-right">${j.infoB.nome} ${j.infoB.bandeira}</td>
+                </tr>`;
+            }
+            return `${j.infoA.bandeira} ${j.infoA.nome} ${j.placar} ${j.infoB.nome} ${j.infoB.bandeira} (${j.dataFmt}) [${j.statusTemporal}]`;
+        }
+
+        function montarContextoTemporalCopa() {
+            const hoje = getHojeBr();
+            const ctx = obterJogosTemporais();
+            let s = `DATA E HORA ATUAL (obrigatório usar como referência): ${hoje.label}, ${hoje.hora} (BRT / ${TZ_BR}). ISO: ${hoje.iso}.\n`;
+            s += `Regra: classifique cada jogo como PASSADO (encerrado), HOJE, AO VIVO ou FUTURO com base nesta data — nunca trate jogo futuro como se já tivesse acontecido.\n\n`;
+
+            if (ctx.aoVivo.length) {
+                s += `AO VIVO AGORA:\n${ctx.aoVivo.map(j => `- ${linhaJogoTemporal(j)}`).join('\n')}\n\n`;
+            }
+            if (ctx.hoje.length) {
+                s += `JOGOS DE HOJE (${hoje.iso}):\n${ctx.hoje.map(j => `- ${linhaJogoTemporal(j)}`).join('\n')}\n\n`;
+            }
+
+            const prox = ctx.proximos.filter(j => j.statusTemporal === 'futuro').slice(0, 12);
+            if (prox.length) {
+                s += `PRÓXIMOS JOGOS (ainda não realizados):\n${prox.map(j => `- ${linhaJogoTemporal(j)} · ${j.fase}`).join('\n')}\n\n`;
+            }
+
+            const ult = ctx.encerrados.slice(-10);
+            if (ult.length) {
+                s += `ÚLTIMOS RESULTADOS (já ocorreram):\n${ult.map(j => `- ${linhaJogoTemporal(j)} · ${j.fase}`).join('\n')}\n\n`;
+            }
+
+            if (ctx.brasil.length) {
+                s += `JOGOS DO BRASIL 🇧🇷:\n${ctx.brasil.map(j => {
+                    const rel = j.statusTemporal === 'futuro' ? 'FUTURO' : j.statusTemporal === 'hoje' ? 'HOJE' : j.statusTemporal === 'ao_vivo' ? 'AO VIVO' : 'ENCERRADO';
+                    return `- [${rel}] ${linhaJogoTemporal(j)} · ${j.fase}`;
+                }).join('\n')}\n\n`;
+            }
+
+            if (formaRealMap && Object.keys(formaRealMap).some(k => formaRealMap[k].played > 0)) {
+                const topPts = Object.entries(formaRealMap)
+                    .filter(([, r]) => r.played > 0)
+                    .map(([en, r]) => ({ nome: traduzirSelecao(en), pts: r.pts, j: r.played, gf: r.gf, ga: r.ga }))
+                    .sort((a, b) => b.pts - a.pts || b.gf - b.gf - (a.gf - a.ga))
+                    .slice(0, 8);
+                if (topPts.length) {
+                    s += `CLASSIFICAÇÃO PARCIAL (pontos reais):\n${topPts.map(t => `- ${t.nome}: ${t.pts} pts (${t.j}J, ${t.gf}GP ${t.ga}GC)`).join('\n')}\n`;
+                }
+            }
+            return s;
+        }
+
+        async function renderPainelTemporal(forcarStandings = false) {
+            const hojeEl = document.getElementById('teo-data-hoje');
+            const proxEl = document.getElementById('teo-proximos-jogos');
+            const classEl = document.getElementById('teo-classificacao');
+            if (!hojeEl || !proxEl || !classEl) return;
+
+            const hoje = getHojeBr();
+            hojeEl.innerHTML = `<i class="fa-solid fa-calendar-day text-amber-400 mr-1"></i> Hoje: <span class="text-white">${hoje.label}</span> · ${hoje.hora} BRT`;
+
+            const ctx = obterJogosTemporais();
+            const linhas = ctx.proximos.slice(0, 12);
+            if (!linhas.length) {
+                proxEl.innerHTML = `<div class="text-[11px] text-slate-400 py-4 px-2 rounded-xl bg-slate-800/40 border border-slate-700/50 text-center">
+                    <i class="fa-solid fa-spinner fa-spin text-amber-400 mr-1"></i>
+                    Carregando calendário da Copa…
+                </div>`;
+            } else {
+                proxEl.innerHTML = `<table class="w-full text-left border-collapse min-w-[320px]">
+                    <thead><tr class="text-[9px] text-slate-500 uppercase">
+                        <th class="pb-1 font-semibold">Data</th><th></th><th class="pb-1 font-semibold">Casa</th>
+                        <th class="pb-1 font-semibold text-center">Placar</th><th class="pb-1 font-semibold text-right">Fora</th>
+                    </tr></thead>
+                    <tbody>${linhas.map(j => linhaJogoTemporal(j, true)).join('')}</tbody>
+                </table>`;
+            }
+
+            classEl.innerHTML = statsCarregando();
+            try {
+                if (forcarStandings) afStandingsRaw = null;
+                const standings = await obterStandingsApiFootball();
+                if (!standings.length) {
+                    classEl.innerHTML = statsVazio('Classificação disponível após início da fase de grupos.');
+                    return;
+                }
+                let html = '';
+                standings.forEach((grupo, gi) => {
+                    const first = (grupo || [])[0];
+                    const grpLabel = first && first.group
+                        ? String(first.group).replace(/^Group\s*/i, 'Grupo ')
+                        : `Grupo ${String.fromCharCode(65 + gi)}`;
+                    html += `<p class="text-[10px] font-bold text-emerald-400/90 mt-2 mb-1 first:mt-0">${grpLabel}</p>`;
+                    html += `<table class="w-full text-[10px] mb-2"><thead><tr class="text-slate-500">
+                        <th class="text-left pb-0.5">Time</th><th class="text-center px-0.5">J</th><th class="text-center px-0.5">Pts</th>
+                        <th class="text-center px-0.5">GP</th><th class="text-center px-0.5">GC</th><th class="text-center px-0.5">SG</th>
+                    </tr></thead><tbody>`;
+                    (grupo || []).forEach(row => {
+                        const nome = traduzirSelecao(row.team && row.team.name);
+                        const all = row.all || {};
+                        const g = all.goals || {};
+                        const gf = g.for || 0, ga = g.against || 0;
+                        const destaque = nome === 'Brasil' ? ' text-amber-300 font-bold' : ' text-slate-200';
+                        html += `<tr class="border-t border-slate-800/50">
+                            <td class="py-1 pr-1 truncate max-w-[88px]${destaque}">${obterBandeiraPorNome(nome)} ${nome}</td>
+                            <td class="text-center text-slate-400">${all.played || 0}</td>
+                            <td class="text-center font-bold text-emerald-400">${row.points || 0}</td>
+                            <td class="text-center text-slate-400">${gf}</td>
+                            <td class="text-center text-slate-400">${ga}</td>
+                            <td class="text-center text-slate-400">${gf - ga}</td>
+                        </tr>`;
+                    });
+                    html += `</tbody></table>`;
+                });
+                classEl.innerHTML = html;
+            } catch (e) {
+                classEl.innerHTML = statsVazio('Não foi possível carregar a classificação.');
+            }
+        }
+
         function construirJogosDashboard() {
             if (Array.isArray(apiGames) && apiGames.length) {
                 jogosDashboard = apiGames.map(g => {
@@ -1428,6 +1656,7 @@
             construirJogosDashboard();
             popularFiltrosJogos();
             if (document.getElementById('matches-grid')) renderizarJogos();
+            renderPainelTemporal();
         }
 
         // Popula os selects de grupo e data com os valores presentes nos jogos (preserva a seleção atual).
@@ -1948,6 +2177,13 @@
             if (tabId === 'stats') {
                 setTimeout(() => carregarNumerosCopa(), 100);
             }
+
+            if (tabId === 'ia-chat') {
+                setTimeout(() => {
+                    renderPainelTemporal();
+                    if (!apiGames.length) carregarJogosAPI(false, true).then(() => renderPainelTemporal());
+                }, 100);
+            }
         }
 
         // --- 11. COMUNICAÇÃO DE IA (EXPONENTIAL BACKOFF INTEGRADO) ---
@@ -2004,11 +2240,14 @@
             const loadingId = appendMessage('system', '<span class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> O Téo tá pensando... 🍺</span>');
 
             try {
+                try { await carregarFormaReal(); } catch (_) { /* classificação opcional */ }
                 const taticasAtuais = Object.entries(SELECOES).map(([time, info]) => `${time} (${info.tática})`).join(", ");
                 const rankingProbabilidades = Object.entries(probabilidadesCampeao)
                     .sort((a, b) => b[1] - a[1])
                     .map(([time, prob]) => `${time}: ${prob}%`)
                     .join(", ");
+
+                const contextoTemporal = montarContextoTemporalCopa();
 
                 const systemInstruction = `Seu nome é Téo, o parceiro de resenha da Copa 2026. Você é um torcedor brasileiro fanático, super amigável, acolhedor, engraçado e muito apaixonado por futebol na Copa do Mundo 2026. Quando fizer sentido, refira-se a si mesmo como Téo. 
                 Responda sempre com muita simpatia, carinho, energia positiva e respeito, como se estivesse conversando com um grande amigo querido numa mesa de bar ou mandando áudio num grupo de WhatsApp de futebol. 
@@ -2032,14 +2271,10 @@
                   * Zinédine Zidane: Carrasco do Brasil in 98 com cabeçadas na final e gênio em 2006 jogando fino (mas sendo expulso por dar uma cabeçada no peito do Materazzi na final).
                   * Miroslav Klose: O maior artilheiro geral das copas com 16 gols, seguido por Ronaldo Fenômeno com 15, Gerd Müller com 14 e Fontaine com 13 (esse em uma única Copa, em 58).
                 
-                CONTEXTO REAL DA COPA 2026:
-                - Período: 11 de Junho a 19 de Julho de 2026. Sede Tripla: EUA, México e Canadá.
-                - Grupo do Brasil (Grupo C):
-                  * Jogo 1: Brasil 🇧🇷 x Marrocos 🇲🇦 (13/06, Sábado, às 19:00 BRT, no Estádio MetLife, Nova Jersey).
-                  * Jogo 2: Brasil 🇧🇷 x Haiti 🇭🇹 (19/06, Sexta-feira, às 21:30 BRT, no Lincoln Financial Field, Filadélfia) - HOJE!
-                  * Jogo 3: Escócia 🏴 x Brasil 🇧🇷 (24/06, Quarta-feira, às 19:00 BRT, no Estádio Hard Rock, Miami).
-                - Abertura: 11 de Junho de 2026, às 16:00 BRT - México x África do Sul no icônico Estádio Azteca (Cidade do México).
-                - Grande Final: 19 de Julho de 2026, às 16:00 BRT, no MetLife Stadium, Nova Jersey (EUA).
+                CONTEXTO TEMPORAL DA COPA 2026 (dados sincronizados com o app — use como fonte da verdade):
+                ${contextoTemporal}
+
+                - Período oficial: 11 de Junho a 19 de Julho de 2026. Sede tripla: EUA, México e Canadá.
 
                 Contexto Atual do Simulador do Painel (que o usuário está mexendo):
                 - Táticas atuais das Seleções: ${taticasAtuais}.
@@ -2432,6 +2667,34 @@
         function statsCacheSet(key, data) {
             try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), d: data })); } catch (e) { /* cota cheia */ }
         }
+        function statsCacheRemove(key) {
+            try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+        }
+
+        // Monta ranking de artilheiros a partir dos placares/artilheiros dos jogos já carregados (fallback).
+        function artilheirosDeJogosApi() {
+            const tally = new Map();
+            const add = (raw, teamEn) => {
+                parseScorers(raw).forEach(s => {
+                    const m = String(s).match(/^(.+?)\s+(\d+)['']?\s*$/);
+                    const name = (m ? m[1] : s).trim();
+                    if (!name) return;
+                    const key = name.toLowerCase();
+                    const cur = tally.get(key) || {
+                        player: { name, photo: null },
+                        statistics: [{ team: { name: teamEn }, goals: { total: 0 } }],
+                    };
+                    cur.statistics[0].goals.total += 1;
+                    tally.set(key, cur);
+                });
+            };
+            (apiGames || []).filter(g => g.finished === 'TRUE').forEach(g => {
+                add(g.home_scorers, g.home_team_name_en);
+                add(g.away_scorers, g.away_team_name_en);
+            });
+            return [...tally.values()].sort((a, b) =>
+                (b.statistics[0].goals.total || 0) - (a.statistics[0].goals.total || 0));
+        }
 
         // Busca um endpoint da API-Football com cache local; retorna o array "response".
         async function afFetchCached(query, key, ttl, forcar) {
@@ -2474,7 +2737,10 @@
             const el = document.getElementById(containerId);
             if (!el) return;
             if (!lista || !lista.length) {
-                el.innerHTML = statsVazio('Sem dados desta edição ainda. Os números aparecem conforme os jogos acontecem.');
+                const msg = tipo === 'goals' && forcar
+                    ? 'Sem artilheiros na API ainda — aguardando gols registrados nos jogos encerrados.'
+                    : 'Sem dados desta edição ainda. Os números aparecem conforme os jogos acontecem.';
+                el.innerHTML = statsVazio(msg);
                 return;
             }
             const linhas = lista.slice(0, 10).map((item, i) => {
@@ -2644,15 +2910,30 @@
             if (numerosCopaCarregado && !forcar) return;
             numerosCopaCarregado = true;
 
+            if (forcar) {
+                statsCacheRemove(`wc_topscorers_${AF_SEASON}`);
+                statsCacheRemove(`wc_topassists_${AF_SEASON}`);
+                statsCacheRemove(`wc_topcards_${AF_SEASON}`);
+                afStandingsRaw = null;
+            }
+
             ['stats-scorers', 'stats-assists', 'stats-cards', 'stats-attacks', 'stats-defenses', 'stats-historico'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el && !el.children.length) el.innerHTML = statsCarregando();
+                if (el && (forcar || !el.children.length)) el.innerHTML = statsCarregando();
             });
 
             // Rankings de jogadores da edição atual.
-            afFetchCached(`path=/players/topscorers&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, `wc_topscorers_${AF_SEASON}`, STATS_TTL, forcar)
-                .then(l => renderRankingJogadores('stats-scorers', l, 'goals'))
-                .catch(() => renderRankingJogadores('stats-scorers', [], 'goals'));
+            (async () => {
+                try {
+                    let scorers = await afFetchCached(
+                        `path=/players/topscorers&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`,
+                        `wc_topscorers_${AF_SEASON}`, STATS_TTL, forcar);
+                    if (!scorers || !scorers.length) scorers = artilheirosDeJogosApi();
+                    renderRankingJogadores('stats-scorers', scorers, 'goals', forcar);
+                } catch (e) {
+                    renderRankingJogadores('stats-scorers', artilheirosDeJogosApi(), 'goals', forcar);
+                }
+            })();
             afFetchCached(`path=/players/topassists&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, `wc_topassists_${AF_SEASON}`, STATS_TTL, forcar)
                 .then(l => renderRankingJogadores('stats-assists', l, 'assists'))
                 .catch(() => renderRankingJogadores('stats-assists', [], 'assists'));
@@ -3799,10 +4080,12 @@
                 - ${infoA.nome}: ${SELECOES[infoA.nome]?.tática || 'Equilibrado'}
                 - ${infoB.nome}: ${SELECOES[infoB.nome]?.tática || 'Equilibrado'}`;
 
+                const hojeBr = getHojeBr();
                 const systemInstruction = `Você é um torcedor brasileiro fanático, super amigável, acolhedor e comediante na resenha de bar de futebol.
                 Comente os dados da partida que o usuário enviar com muita simpatia, piadas de futebol, usando gírias brasileiras clássicas (como "mano", "parça", "pipocar", "amassar", "retranca", "só por Deus", "que jogaço", "mesa de bar").
                 Fale sobre a eficiência nas finalizações, a tática adotada e faça cornetas engraçadas ou elogios calorosos. Seja curto, direto e mantenha o tom de uma conversa calorosa com cerveja gelada na mão.
-                Dê conselhos táticos brincalhões (tipo "o técnico precisa tirar o zagueiro que tá comendo mosca" ou "o Brasil tem que soltar o Vini Jr").`;
+                Dê conselhos táticos brincalhões (tipo "o técnico precisa tirar o zagueiro que tá comendo mosca" ou "o Brasil tem que soltar o Vini Jr").
+                Referência temporal (BRT): ${hojeBr.label}, ${hojeBr.hora}.`;
 
                 const response = await fetchWithBackoff('/api/ia', {
                     method: 'POST',
