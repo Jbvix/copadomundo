@@ -61,6 +61,65 @@
                 order: 1 !important;
             }
         }
+        /* --- CHAVE DO MATA-MATA (bracket eliminatório) --- */
+        .bracket-wrap {
+            display: flex;
+            align-items: stretch;
+            gap: 1.75rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        .bracket-col {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+            flex-shrink: 0;
+        }
+        .bracket-col-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .bracket-col-matches {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            flex-grow: 1;
+        }
+        .bracket-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            border-radius: 0.65rem;
+            padding: 0.4rem 0.55rem;
+            font-size: 11px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .bracket-card:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+        .bracket-card.is-placeholder {
+            cursor: default;
+        }
+        .bracket-team {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.15rem 0;
+        }
+        .bracket-team + .bracket-team {
+            border-top: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .bracket-team span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         /* --- SPLASHSCREEN DE ABERTURA --- */
         #splash-screen {
             position: fixed;
@@ -186,6 +245,9 @@
                 </button>
                 <button onclick="switchTab('classificacao')" id="btn-tab-classificacao" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-table-list mr-1"></i> Classificação
+                </button>
+                <button onclick="switchTab('matamata')" id="btn-tab-matamata" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
+                    <i class="fa-solid fa-sitemap mr-1"></i> Mata-Mata
                 </button>
                 <button onclick="switchTab('history')" id="btn-tab-history" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-history mr-1"></i> Histórico
@@ -381,6 +443,27 @@
                     <p class="text-xs text-slate-400 mb-3">Os 8 melhores 3ºs colocados entre os 12 grupos avançam à fase eliminatória.</p>
                     <div id="classificacao-terceiros-container" class="overflow-x-auto rounded-xl border border-slate-800"></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: MATA-MATA (chave eliminatória) -->
+        <section id="tab-matamata" class="hidden space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sitemap text-emerald-400"></i> Mata-Mata da Copa 2026
+                        </h2>
+                        <p id="matamata-atualizado" class="text-xs sm:text-sm text-slate-400 mt-1">Carregando…</p>
+                    </div>
+                    <button type="button" onclick="renderMataMataTab(true)" class="text-xs text-slate-300 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-slate-600 hover:border-emerald-500/50 bg-slate-800/50 shrink-0 self-start sm:self-auto">
+                        <i class="fa-solid fa-rotate mr-1"></i> Atualizar
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-4">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i> Toque num confronto para abrir os detalhes e a simulação estatística. Vagas ainda sem seleção definida aparecem como "A definir".
+                </p>
+                <div id="matamata-bracket-container" class="bracket-wrap"></div>
             </div>
         </section>
 
@@ -2187,7 +2270,7 @@
             pararAutoRefreshAPI();
             pararClassificacaoAutoRefresh();
 
-            ['dashboard', 'classificacao', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
+            ['dashboard', 'classificacao', 'matamata', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
                 if (section === tabId) {
                     el.classList.remove('hidden');
@@ -2196,7 +2279,7 @@
                 }
             });
 
-            ['dashboard', 'classificacao', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
+            ['dashboard', 'classificacao', 'matamata', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const btn = document.getElementById(`btn-tab-${section}`);
                 if (btn) {
                     if (section === tabId) {
@@ -2236,6 +2319,18 @@
             if (tabId === 'classificacao') {
                 setTimeout(() => renderClassificacaoTab(), 100);
                 iniciarClassificacaoAutoRefresh();
+            }
+
+            if (tabId === 'matamata') {
+                setTimeout(() => {
+                    if (apiGames.length > 0) {
+                        renderMataMataTab();
+                        carregarJogosAPI(true, true).then(() => renderMataMataTab());
+                    } else {
+                        carregarJogosAPI(false, true).then(() => renderMataMataTab());
+                    }
+                }, 100);
+                iniciarAutoRefreshAPI(); // reaproveita o polling de jogos; mantém a chave atualizada durante partidas ao vivo.
             }
 
             if (tabId === 'ia-chat') {
@@ -2707,6 +2802,7 @@
                 const atualizado = apiGames.find(j => j.id === selectedGame.id);
                 if (atualizado) selecionarJogoAPI(atualizado.id);
             }
+            if (activeTab === 'matamata') renderMataMataTab();
         }
 
         function iniciarAutoRefreshAPI() {
@@ -3470,6 +3566,97 @@
                     type: tipo
                 };
             });
+        }
+
+        // --- ABA MATA-MATA (chave eliminatória: 16-avos a Final + disputa de 3º lugar) ---
+        const MATAMATA_RODADAS = ['r32', 'r16', 'qf', 'sf'];
+        const MATAMATA_LABELS = { r32: '16-avos', r16: 'Oitavas', qf: 'Quartas', sf: 'Semifinal' };
+        const MATAMATA_VAGAS = { r32: 16, r16: 8, qf: 4, sf: 2, final: 1, third: 1 };
+
+        function agruparJogosMataMata() {
+            const porTipo = { r32: [], r16: [], qf: [], sf: [], final: [], third: [] };
+            apiGames.forEach(j => { if (porTipo[j.type]) porTipo[j.type].push(j); });
+            Object.keys(porTipo).forEach(tipo => {
+                porTipo[tipo].sort((a, b) => (parseDataLocal(a.local_date) || 0) - (parseDataLocal(b.local_date) || 0));
+            });
+            return porTipo;
+        }
+
+        // Completa uma rodada até o nº de vagas esperado com placeholders "A definir".
+        function completarVagasMataMata(jogos, esperado) {
+            const lista = jogos.slice(0, esperado);
+            while (lista.length < esperado) lista.push({ _placeholder: true, id: `ph-${lista.length}-${Math.random()}` });
+            return lista;
+        }
+
+        function abrirJogoDoBracket(jogoId) {
+            if (!jogoId) return;
+            switchTab('live');
+            setTimeout(() => selecionarJogoAPI(jogoId), 200);
+        }
+
+        function renderBracketCard(jogo) {
+            if (!jogo || jogo._placeholder) {
+                return `<div class="bracket-card is-placeholder opacity-50">
+                    <div class="bracket-team"><span>❔ A definir</span></div>
+                    <div class="bracket-team"><span>❔ A definir</span></div>
+                </div>`;
+            }
+            const nomeHome = nomePtDe(jogo.home_team_name_en) || jogo.home_team_name_en || 'A definir';
+            const nomeAway = nomePtDe(jogo.away_team_name_en) || jogo.away_team_name_en || 'A definir';
+            const bandeiraHome = BANDEIRA_PT[nomeHome] || FLAG_EN[jogo.home_team_name_en] || '⚽';
+            const bandeiraAway = BANDEIRA_PT[nomeAway] || FLAG_EN[jogo.away_team_name_en] || '⚽';
+            const jogou = jogo.finished === 'TRUE';
+            const placarHome = jogou && jogo.home_score !== 'null' ? jogo.home_score : '-';
+            const placarAway = jogou && jogo.away_score !== 'null' ? jogo.away_score : '-';
+            const homeVenceu = jogou && Number(jogo.home_score) > Number(jogo.away_score);
+            const awayVenceu = jogou && Number(jogo.away_score) > Number(jogo.home_score);
+            return `<div class="bracket-card" onclick="abrirJogoDoBracket('${jogo.id}')">
+                <div class="bracket-team ${homeVenceu ? 'font-bold text-white' : 'text-slate-300'}">
+                    <span title="${nomeHome}">${bandeiraHome} ${nomeHome}</span><span>${placarHome}</span>
+                </div>
+                <div class="bracket-team ${awayVenceu ? 'font-bold text-white' : 'text-slate-300'}">
+                    <span title="${nomeAway}">${bandeiraAway} ${nomeAway}</span><span>${placarAway}</span>
+                </div>
+            </div>`;
+        }
+
+        async function renderMataMataTab(forcar = false) {
+            const atualizadoEl = document.getElementById('matamata-atualizado');
+            const container = document.getElementById('matamata-bracket-container');
+            if (!container) return;
+
+            if (forcar || !apiGames.length) container.innerHTML = statsCarregando();
+            if (forcar) await carregarJogosAPI(true, true);
+
+            const porTipo = agruparJogosMataMata();
+
+            const colsHtml = MATAMATA_RODADAS.map(tipo => {
+                const jogos = completarVagasMataMata(porTipo[tipo], MATAMATA_VAGAS[tipo]);
+                return `<div class="bracket-col" data-round="${tipo}">
+                    <p class="bracket-col-title">${MATAMATA_LABELS[tipo]}</p>
+                    <div class="bracket-col-matches">${jogos.map(renderBracketCard).join('')}</div>
+                </div>`;
+            }).join('');
+
+            const finalJogos = completarVagasMataMata(porTipo.final, MATAMATA_VAGAS.final);
+            const terceiroJogos = completarVagasMataMata(porTipo.third, MATAMATA_VAGAS.third);
+            const finalCol = `<div class="bracket-col">
+                <p class="bracket-col-title text-yellow-400"><i class="fa-solid fa-trophy"></i> Final</p>
+                <div class="bracket-col-matches" style="flex-grow: 0.6;">${finalJogos.map(renderBracketCard).join('')}</div>
+                <p class="bracket-col-title text-amber-600 mt-6">3º Lugar</p>
+                <div class="bracket-col-matches" style="flex-grow: 0.4;">${terceiroJogos.map(renderBracketCard).join('')}</div>
+            </div>`;
+
+            container.innerHTML = colsHtml + finalCol;
+
+            if (atualizadoEl) {
+                const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ_BR, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
+                const temJogos = MATAMATA_RODADAS.some(t => porTipo[t].length) || porTipo.final.length || porTipo.third.length;
+                atualizadoEl.innerHTML = temJogos
+                    ? `Atualizado às <span class="text-white font-semibold">${hora}</span> BRT`
+                    : 'Chave será preenchida após o fim da fase de grupos.';
+            }
         }
 
         // Lê um valor de estatística pelo "type" no array da API-Football.
