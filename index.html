@@ -421,7 +421,7 @@
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400 mb-4">
                     <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> Classificado direto (1º/2º)</span>
                     <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> 3º lugar — depende do ranking dos terceiros</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-slate-600"></span> Eliminado (4º)</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-eye-slash"></i> Times já eliminados matematicamente somem da tabela</span>
                 </div>
 
                 <!-- Busca + navegação rápida por grupo -->
@@ -1714,25 +1714,31 @@
                     classEl.innerHTML = statsVazio('Classificação disponível após início da fase de grupos.');
                     return;
                 }
+                const eliminados = calcularEliminadosFaseDeGrupos(standings);
                 let html = '';
                 standings.forEach((grupo, gi) => {
                     const first = (grupo || [])[0];
-                    const grpLabel = first && first.group
-                        ? String(first.group).replace(/^Group\s*/i, 'Grupo ')
-                        : `Grupo ${String.fromCharCode(65 + gi)}`;
-                    html += `<p class="text-[10px] font-bold text-emerald-400/90 mt-2 mb-1 first:mt-0">${grpLabel}</p>`;
+                    const letra = first && first.group
+                        ? String(first.group).replace(/^Group\s*/i, '').trim()
+                        : String.fromCharCode(65 + gi);
+                    if (!/^[A-Za-z]$/.test(letra) || !(grupo || []).length) return; // descarta entradas fora do padrão "Group X"
+                    const timesAtivos = (grupo || []).filter(row => !eliminados.has(row.team && row.team.name));
+                    if (!timesAtivos.length) return;
+                    html += `<p class="text-[10px] font-bold text-emerald-400/90 mt-2 mb-1 first:mt-0">Grupo ${letra}</p>`;
                     html += `<table class="w-full text-[10px] mb-2"><thead><tr class="text-slate-500">
                         <th class="text-left pb-0.5">Time</th><th class="text-center px-0.5">J</th><th class="text-center px-0.5">Pts</th>
                         <th class="text-center px-0.5">GP</th><th class="text-center px-0.5">GC</th><th class="text-center px-0.5">SG</th>
                     </tr></thead><tbody>`;
-                    (grupo || []).forEach(row => {
-                        const nome = traduzirSelecao(row.team && row.team.name);
+                    timesAtivos.forEach(row => {
+                        const nomeEn = row.team && row.team.name;
+                        const nome = nomePtDe(nomeEn);
+                        const bandeira = BANDEIRA_PT[nome] || FLAG_EN[nomeEn] || '⚽';
                         const all = row.all || {};
                         const g = all.goals || {};
                         const gf = g.for || 0, ga = g.against || 0;
                         const destaque = nome === 'Brasil' ? ' text-amber-300 font-bold' : ' text-slate-200';
                         html += `<tr class="border-t border-slate-800/50">
-                            <td class="py-1 pr-1 truncate max-w-[88px]${destaque}">${obterBandeiraPorNome(nome)} ${nome}</td>
+                            <td class="py-1 pr-1 truncate max-w-[88px]${destaque}" title="${nome}">${bandeira} ${nome}</td>
                             <td class="text-center text-slate-400">${all.played || 0}</td>
                             <td class="text-center font-bold text-emerald-400">${row.points || 0}</td>
                             <td class="text-center text-slate-400">${gf}</td>
@@ -1742,7 +1748,7 @@
                     });
                     html += `</tbody></table>`;
                 });
-                classEl.innerHTML = html;
+                classEl.innerHTML = html || statsVazio('Todos os grupos já têm classificados definidos.');
             } catch (e) {
                 classEl.innerHTML = statsVazio('Não foi possível carregar a classificação.');
             }
@@ -2912,14 +2918,47 @@
             return afStandingsRaw;
         }
 
+        // Times matematicamente eliminados da fase de grupos: 4º colocado com grupo encerrado
+        // (3 jogos), ou 3º colocado com grupo encerrado que já não alcança o top 8 dos melhores
+        // terceiros (existem 8+ outros terceiros, também com grupo encerrado, à sua frente).
+        // Times cujo grupo ainda não terminou nunca são marcados (o resultado ainda pode mudar).
+        function calcularEliminadosFaseDeGrupos(standings) {
+            const eliminados = new Set();
+            const terceiros = [];
+            (standings || []).forEach(grupo => {
+                (grupo || []).forEach((row, idx) => {
+                    const rank = row.rank || (idx + 1);
+                    const encerrado = ((row.all && row.all.played) || 0) === 3;
+                    const nome = row.team && row.team.name;
+                    if (!nome) return;
+                    if (rank === 4 && encerrado) eliminados.add(nome);
+                    if (rank === 3) terceiros.push(row);
+                });
+            });
+            terceiros
+                .filter(row => ((row.all && row.all.played) || 0) === 3)
+                .sort((a, b) => {
+                    const ptsA = a.points || 0, ptsB = b.points || 0;
+                    if (ptsB !== ptsA) return ptsB - ptsA;
+                    const sgA = (a.all?.goals?.for || 0) - (a.all?.goals?.against || 0);
+                    const sgB = (b.all?.goals?.for || 0) - (b.all?.goals?.against || 0);
+                    if (sgB !== sgA) return sgB - sgA;
+                    return (b.all?.goals?.for || 0) - (a.all?.goals?.for || 0);
+                })
+                .slice(8)
+                .forEach(row => eliminados.add(row.team && row.team.name));
+            return eliminados;
+        }
+
         // --- ABA CLASSIFICAÇÃO (tabela completa por grupo + ranking dos melhores terceiros) ---
         function classificacaoSelecionarGrupo(letra) {
             classificacaoGrupoAtivo = (classificacaoGrupoAtivo === letra) ? '' : letra;
             renderClassificacaoTab(false);
         }
 
-        function renderGrupoClassificacaoCard(grupo, busca) {
-            const linhas = grupo.times.map((row, idx) => {
+        function renderGrupoClassificacaoCard(grupo, busca, eliminados) {
+            const timesAtivos = grupo.times.filter(row => !eliminados.has(row.team && row.team.name));
+            const linhas = timesAtivos.map((row, idx) => {
                 const rank = row.rank || (idx + 1);
                 const nomeEn = row.team && row.team.name;
                 const nome = nomePtDe(nomeEn);
@@ -3051,6 +3090,7 @@
             }).join('');
 
             const busca = (document.getElementById('classificacao-busca')?.value || '').trim().toLowerCase();
+            const eliminados = calcularEliminadosFaseDeGrupos(standings);
 
             const gruposVisiveis = grupos.filter(g => {
                 if (classificacaoGrupoAtivo && g.letra !== classificacaoGrupoAtivo) return false;
@@ -3059,7 +3099,7 @@
             });
 
             gruposContainer.innerHTML = gruposVisiveis.length
-                ? gruposVisiveis.map(g => renderGrupoClassificacaoCard(g, busca)).join('')
+                ? gruposVisiveis.map(g => renderGrupoClassificacaoCard(g, busca, eliminados)).join('')
                 : statsVazio('Nenhuma seleção encontrada para essa busca.');
 
             // Ranking dos melhores terceiros: 1 time por grupo (3ª posição), ordenado por Pts, SG e GP.
