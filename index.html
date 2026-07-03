@@ -1017,7 +1017,12 @@
             aplicarDadosReaisNasProbabilidades();
             renderPainelTemporal();
             // Busca os jogos reais em segundo plano para popular/atualizar o card do Dashboard.
-            carregarJogosAPI(true, true).then(() => renderPainelTemporal());
+            // Recalcula a probabilidade de título depois de carregar (garante que reflita o
+            // mata-mata real mesmo se essa busca terminar depois de aplicarDadosReaisNasProbabilidades).
+            carregarJogosAPI(true, true).then(() => {
+                renderPainelTemporal();
+                runMonteCarlo();
+            });
         };
 
         // Carrega a classificação real e, havendo jogos disputados, recalcula as
@@ -1795,7 +1800,9 @@
                     classEl.innerHTML = statsVazio('Classificação disponível após início da fase de grupos.');
                     return;
                 }
-                const eliminados = calcularEliminadosFaseDeGrupos(standings);
+                // Eliminado = fora da fase de grupos OU já derrotado no mata-mata (ex.: 1º/2º
+                // colocado do grupo que perdeu depois nas oitavas de 32/16/quartas/semi).
+                const eliminados = (await construirEstadoTorneio()).eliminados;
                 let html = '';
                 // standings já vem filtrado (só grupos reais) por obterStandingsApiFootball().
                 standings.forEach((grupo, gi) => {
@@ -2887,6 +2894,7 @@
                 if (atualizado) selecionarJogoAPI(atualizado.id);
             }
             if (activeTab === 'matamata') renderMataMataTab();
+            runMonteCarlo(); // mantém a probabilidade de título sincronizada com os resultados reais.
         }
 
         function iniciarAutoRefreshAPI() {
@@ -3094,7 +3102,7 @@
             </div>`;
         }
 
-        function renderTabelaTerceiros(terceiros) {
+        function renderTabelaTerceiros(terceiros, eliminados) {
             if (!terceiros.length) return statsVazio('Ranking de terceiros disponível após rodadas suficientes da fase de grupos.');
             const CORTE = 8; // 8 melhores terceiros avançam entre os 12 grupos.
             const linhas = terceiros.map((t, i) => {
@@ -3105,8 +3113,12 @@
                 const gols = all.goals || {};
                 const gf = gols.for || 0, ga = gols.against || 0;
                 const dentro = i < CORTE;
+                // Classificado nos grupos mas já derrotado depois no mata-mata.
+                const saiuNoMataMata = dentro && eliminados && eliminados.has(nomeEn);
                 const corZona = dentro ? 'border-l-2 border-l-emerald-500' : 'border-l-2 border-l-slate-600 opacity-70';
                 const corte = i === CORTE ? '<tr><td colspan="10" class="p-0"><div class="border-t-2 border-dashed border-amber-500/60"></div></td></tr>' : '';
+                const situacao = !dentro ? 'Fora' : (saiuNoMataMata ? 'Eliminado' : 'Classificado');
+                const corSituacao = !dentro ? 'text-slate-500' : (saiuNoMataMata ? 'text-rose-400' : 'text-emerald-400');
                 return `${corte}<tr class="border-t border-slate-800/50 ${corZona}">
                     <td class="py-1.5 pl-2 text-slate-500">${i + 1}º</td>
                     <td class="py-1.5 pr-2 truncate max-w-[130px] font-medium" title="${nome}">${bandeira} ${nome}</td>
@@ -3117,7 +3129,7 @@
                     <td class="text-center text-slate-400" title="Derrotas">${all.lose || 0}</td>
                     <td class="text-center text-slate-400" title="Saldo de Gols">${gf - ga}</td>
                     <td class="text-center font-bold text-emerald-400" title="Pontos">${t.row.points || 0}</td>
-                    <td class="text-center text-[10px] font-semibold ${dentro ? 'text-emerald-400' : 'text-slate-500'}">${dentro ? 'Classificado' : 'Fora'}</td>
+                    <td class="text-center text-[10px] font-semibold ${corSituacao}">${situacao}</td>
                 </tr>`;
             }).join('');
 
@@ -3177,7 +3189,9 @@
             }).join('');
 
             const busca = (document.getElementById('classificacao-busca')?.value || '').trim().toLowerCase();
-            const eliminados = calcularEliminadosFaseDeGrupos(standings);
+            // Eliminado = fora da fase de grupos OU já derrotado no mata-mata (ex.: 1º/2º
+            // colocado do grupo que perdeu depois nas oitavas de 32/16/quartas/semi).
+            const eliminados = (await construirEstadoTorneio()).eliminados;
 
             const gruposVisiveis = grupos.filter(g => {
                 if (classificacaoGrupoAtivo && g.letra !== classificacaoGrupoAtivo) return false;
@@ -3201,7 +3215,7 @@
                     if (sgB !== sgA) return sgB - sgA;
                     return (b.row.all?.goals?.for || 0) - (a.row.all?.goals?.for || 0);
                 });
-            terceirosContainer.innerHTML = renderTabelaTerceiros(terceiros);
+            terceirosContainer.innerHTML = renderTabelaTerceiros(terceiros, eliminados);
 
             if (atualizadoEl) {
                 const hora = standingsUltimaAtualizacao
