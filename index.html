@@ -1025,17 +1025,10 @@
         async function aplicarDadosReaisNasProbabilidades() {
             try {
                 await carregarFormaReal();
-                const algumComJogo = Object.values(formaRealMap).some(r => r && r.played > 0);
-                const nota = document.getElementById('prob-fonte-nota');
-                if (algumComJogo) {
-                    runMonteCarlo();
-                    if (nota) {
-                        nota.textContent = 'Ajustado com dados reais';
-                        nota.className = 'text-xs text-emerald-400 font-semibold';
-                    }
-                } else if (nota) {
-                    nota.textContent = 'Modelo tático (sem jogos ainda)';
-                }
+                // Sempre recalcula: além da forma de grupo, o runMonteCarlo também precisa do
+                // chaveamento/eliminações do mata-mata, que podem existir mesmo sem forma de grupo
+                // disponível (ex.: API deixa de expor standings após a fase de grupos terminar).
+                await runMonteCarlo();
             } catch (e) { /* mantém o modelo tático puro */ }
         }
 
@@ -1253,35 +1246,116 @@
             return a;
         }
 
-        // Monte Carlo de mata-mata para o campo completo (chaveamento sorteado a cada simulação).
-        function projetarTituloCampo(numSimulacoes = 8000) {
-            const poderes = CAMPO_2026.map(t => ({
-                en: t.en, pt: t.pt, flag: t.flag,
-                poder: Math.max(1, t.r + ajusteFormaRealEn(t.en))
-            }));
-            const vitorias = {};
-            poderes.forEach(t => { vitorias[t.en] = 0; });
+        // Estado real do torneio: quem já está eliminado (fase de grupos ou mata-mata) e se o
+        // campeão já foi decidido. Também devolve os confrontos do mata-mata já publicados pela
+        // API-Football (jogados ou não), usados pra simular o restante respeitando o chaveamento
+        // real em vez de sortear tudo do zero entre as 48 seleções.
+        async function construirEstadoTorneio() {
+            const standings = await obterStandingsApiFootball();
+            const eliminados = calcularEliminadosFaseDeGrupos(standings);
+            let campeaoEn = null;
 
-            for (let s = 0; s < numSimulacoes; s++) {
-                let ativos = embaralhar(poderes);
-                while (ativos.length > 1) {
-                    const proximos = [];
-                    for (let i = 0; i < ativos.length; i += 2) {
-                        const a = ativos[i], b = ativos[i + 1];
-                        if (!b) { proximos.push(a); continue; }
-                        // Expoente acentua a diferença de força nos confrontos.
-                        const pa = Math.pow(a.poder, 2.2);
-                        const pb = Math.pow(b.poder, 2.2);
-                        proximos.push(Math.random() < pa / (pa + pb) ? a : b);
-                    }
-                    ativos = proximos;
+            const partidasPorRodada = agruparJogosMataMata();
+            ['r32', 'r16', 'qf', 'sf', 'final'].forEach(rodada => {
+                (partidasPorRodada[rodada] || []).forEach(jogo => {
+                    const vencedor = vencedorDoJogo(jogo);
+                    if (!vencedor) return;
+                    const homeEn = jogo.home_team_name_en, awayEn = jogo.away_team_name_en;
+                    eliminados.add(vencedor === 'home' ? awayEn : homeEn);
+                    if (rodada === 'final') campeaoEn = vencedor === 'home' ? homeEn : awayEn;
+                });
+            });
+
+            return { eliminados, campeaoEn, partidasPorRodada };
+        }
+
+        // Simula o restante do torneio a partir do estado real: times eliminados nunca entram no
+        // sorteio; confrontos do mata-mata já publicados (jogados ou agendados) são respeitados
+        // em vez de sorteados; só a parte do chaveamento ainda não publicada pela API é sorteada
+        // entre quem sobrou — mesma simplificação já usada para a fase de grupos anteriormente.
+        // `poderDeEn` deve vir com o expoente de força já aplicado (ver runMonteCarlo/projetarTituloCampo).
+        function simularCampeaoApartirDoEstado(estado, poderDeEn, todosEn) {
+            if (estado.campeaoEn) return estado.campeaoEn;
+
+            let vivos = new Set(todosEn.filter(en => !estado.eliminados.has(en)));
+            const rodadasNomeadas = ['r32', 'r16', 'qf', 'sf', 'final'];
+            let rodadaIdx = 0;
+
+            while (vivos.size > 1) {
+                const rodada = rodadasNomeadas[rodadaIdx];
+                const partidas = (rodada && estado.partidasPorRodada[rodada]) || [];
+                const confrontosConhecidos = partidas.filter(j =>
+                    j.finished !== 'TRUE' && vivos.has(j.home_team_name_en) && vivos.has(j.away_team_name_en)
+                );
+
+                const jaTemConfronto = new Set();
+                const vencedoresRodada = [];
+                confrontosConhecidos.forEach(j => {
+                    jaTemConfronto.add(j.home_team_name_en);
+                    jaTemConfronto.add(j.away_team_name_en);
+                    const p1 = poderDeEn[j.home_team_name_en] || 1;
+                    const p2 = poderDeEn[j.away_team_name_en] || 1;
+                    vencedoresRodada.push(Math.random() < p1 / (p1 + p2) ? j.home_team_name_en : j.away_team_name_en);
+                });
+
+                // Times vivos sem confronto conhecido nessa rodada: chaveamento ainda não
+                // publicado pela API, sorteia entre eles (só entre quem sobrou de verdade).
+                const livres = embaralhar([...vivos].filter(t => !jaTemConfronto.has(t)));
+                for (let i = 0; i < livres.length; i += 2) {
+                    const t1 = livres[i], t2 = livres[i + 1];
+                    if (!t2) { vencedoresRodada.push(t1); continue; }
+                    const p1 = poderDeEn[t1] || 1, p2 = poderDeEn[t2] || 1;
+                    vencedoresRodada.push(Math.random() < p1 / (p1 + p2) ? t1 : t2);
                 }
-                vitorias[ativos[0].en]++;
+
+                vivos = new Set(vencedoresRodada);
+                rodadaIdx++;
             }
 
-            return poderes
-                .map(t => ({ ...t, pct: +((vitorias[t.en] / numSimulacoes) * 100).toFixed(1) }))
-                .sort((x, y) => y.pct - x.pct);
+            return vivos.values().next().value;
+        }
+
+        // Texto/estilo do selo "fonte dos dados" a partir do estado real do torneio.
+        function notaProbabilidade(estado) {
+            if (estado.campeaoEn) {
+                return { texto: `🏆 Campeão definido: ${nomePtDe(estado.campeaoEn)}`, classe: 'text-xs text-yellow-400 font-bold' };
+            }
+            if (estado.eliminados.size > 0) {
+                return { texto: `Ajustado com dados reais (${estado.eliminados.size} eliminados)`, classe: 'text-xs text-emerald-400 font-semibold' };
+            }
+            return { texto: 'Modelo tático (sem jogos ainda)', classe: 'text-xs text-slate-400' };
+        }
+
+        // Monte Carlo de mata-mata para o campo completo, a partir do estado real do torneio.
+        async function projetarTituloCampo(numSimulacoes = 8000) {
+            const todosEn = CAMPO_2026.map(t => t.en);
+            const poderDeEn = {};
+            // Expoente acentua a diferença de força nos confrontos.
+            CAMPO_2026.forEach(t => { poderDeEn[t.en] = Math.pow(Math.max(1, t.r + ajusteFormaRealEn(t.en)), 2.2); });
+
+            const estado = await construirEstadoTorneio();
+            const vitorias = {};
+            todosEn.forEach(en => { vitorias[en] = 0; });
+
+            if (estado.campeaoEn) {
+                vitorias[estado.campeaoEn] = numSimulacoes;
+            } else {
+                for (let s = 0; s < numSimulacoes; s++) {
+                    const campeaoEn = simularCampeaoApartirDoEstado(estado, poderDeEn, todosEn);
+                    if (campeaoEn) vitorias[campeaoEn]++;
+                }
+            }
+
+            return {
+                estado,
+                ranking: CAMPO_2026
+                    .map(t => ({
+                        en: t.en, pt: t.pt, flag: t.flag,
+                        pct: +((vitorias[t.en] / numSimulacoes) * 100).toFixed(1),
+                        eliminado: estado.eliminados.has(t.en)
+                    }))
+                    .sort((x, y) => y.pct - x.pct)
+            };
         }
 
         async function carregarProjecaoCampo(forcar) {
@@ -1289,22 +1363,22 @@
             if (lista && !lista.children.length) lista.innerHTML = statsCarregando();
             try { if (!Object.keys(formaRealMap).length || forcar) await carregarFormaReal(); } catch (e) { /* sem forma real */ }
 
-            const ranking = projetarTituloCampo();
-            const temForma = Object.values(formaRealMap).some(r => r && r.played > 0);
+            const { estado, ranking } = await projetarTituloCampo();
             const nota = document.getElementById('campo-fonte-nota');
             if (nota) {
-                nota.textContent = temForma ? 'Ajustado com dados reais' : 'Modelo de força (sem jogos ainda)';
-                nota.className = temForma ? 'text-xs text-emerald-400 font-semibold' : 'text-xs text-slate-400';
+                const { texto, classe } = notaProbabilidade(estado);
+                nota.textContent = texto;
+                nota.className = classe;
             }
 
             if (lista) {
                 lista.innerHTML = ranking.map((t, i) => {
                     const cor = i === 0 ? 'text-yellow-400' : (i === 1 ? 'text-slate-300' : (i === 2 ? 'text-amber-600' : 'text-slate-500'));
                     return `
-                        <div class="flex items-center gap-2 bg-slate-800/40 rounded-lg px-3 py-1.5">
+                        <div class="flex items-center gap-2 bg-slate-800/40 rounded-lg px-3 py-1.5 ${t.eliminado ? 'opacity-50' : ''}">
                             <span class="font-extrabold w-6 text-center text-xs ${cor}">${i + 1}</span>
                             <span class="text-base">${t.flag}</span>
-                            <span class="text-sm font-semibold text-white flex-grow truncate">${t.pt}</span>
+                            <span class="text-sm font-semibold text-white flex-grow truncate">${t.pt}${t.eliminado ? ' <span class=\'text-[9px] text-slate-500 font-normal\'>(eliminado)</span>' : ''}</span>
                             <div class="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                 <div class="h-full bg-gradient-to-r from-yellow-400 to-emerald-500" style="width:${Math.min(100, t.pct * 3)}%"></div>
                             </div>
@@ -1313,7 +1387,7 @@
                 }).join('');
             }
 
-            renderChartCampo(ranking.slice(0, 16));
+            renderChartCampo(ranking.filter(t => t.pct > 0).slice(0, 16));
         }
 
         function renderChartCampo(top) {
@@ -1347,41 +1421,48 @@
         }
 
         // --- 6. MOTOR DE SIMULAÇÃO DE MONTE CARLO ---
-        function runMonteCarlo() {
-            const times = Object.keys(SELECOES);
+        async function runMonteCarlo() {
+            const times = Object.keys(SELECOES); // nomes em PT
             const numSimulacoes = 8000;
 
             // Pré-calcula o "poder" de cada seleção (rating + tática), constante neste run.
             // O expoente acentua a diferença de força, evitando um campo de 48 muito achatado.
-            const poderDe = {};
-            const vitoriasPorTime = {};
+            const poderDeEn = {};
+            const todosEn = [];
             times.forEach(time => {
                 const rating = obterRatingCalculadoTime(time);
                 const mod = MODIFICADORES_TACTICOS[SELECOES[time].tática];
-                poderDe[time] = Math.pow(Math.max(1, rating * mod.ataque * mod.consistência), 2.2);
-                vitoriasPorTime[time] = 0;
+                const en = SELECOES[time].en;
+                poderDeEn[en] = Math.pow(Math.max(1, rating * mod.ataque * mod.consistência), 2.2);
+                todosEn.push(en);
             });
 
-            for (let s = 0; s < numSimulacoes; s++) {
-                let timesAtivos = embaralhar(times); // chaveamento sorteado a cada simulação
-                while (timesAtivos.length > 1) {
-                    const proximosAtivos = [];
-                    for (let i = 0; i < timesAtivos.length; i += 2) {
-                        const time1 = timesAtivos[i];
-                        const time2 = timesAtivos[i + 1];
-                        if (!time2) { proximosAtivos.push(time1); continue; }
-                        const p1 = poderDe[time1];
-                        const p2 = poderDe[time2];
-                        proximosAtivos.push(Math.random() < p1 / (p1 + p2) ? time1 : time2);
-                    }
-                    timesAtivos = proximosAtivos;
+            // Estado real: quem já está eliminado (grupo ou mata-mata) e o chaveamento já publicado
+            // pela API-Football — a simulação só decide o que ainda não foi decidido de verdade.
+            const estado = await construirEstadoTorneio();
+            const vitoriasPorEn = {};
+            todosEn.forEach(en => { vitoriasPorEn[en] = 0; });
+
+            if (estado.campeaoEn) {
+                vitoriasPorEn[estado.campeaoEn] = numSimulacoes;
+            } else {
+                for (let s = 0; s < numSimulacoes; s++) {
+                    const campeaoEn = simularCampeaoApartirDoEstado(estado, poderDeEn, todosEn);
+                    if (campeaoEn) vitoriasPorEn[campeaoEn]++;
                 }
-                vitoriasPorTime[timesAtivos[0]]++;
             }
 
             times.forEach(time => {
-                probabilidadesCampeao[time] = parseFloat(((vitoriasPorTime[time] / numSimulacoes) * 100).toFixed(1));
+                const en = SELECOES[time].en;
+                probabilidadesCampeao[time] = parseFloat(((vitoriasPorEn[en] / numSimulacoes) * 100).toFixed(1));
             });
+
+            const nota = document.getElementById('prob-fonte-nota');
+            if (nota) {
+                const { texto, classe } = notaProbabilidade(estado);
+                nota.textContent = texto;
+                nota.className = classe;
+            }
 
             atualizarGraficosDashboard();
             renderizarTabelaFavoritos();
@@ -1716,12 +1797,9 @@
                 }
                 const eliminados = calcularEliminadosFaseDeGrupos(standings);
                 let html = '';
+                // standings já vem filtrado (só grupos reais) por obterStandingsApiFootball().
                 standings.forEach((grupo, gi) => {
-                    const first = (grupo || [])[0];
-                    const letra = first && first.group
-                        ? String(first.group).replace(/^Group\s*/i, '').trim()
-                        : String.fromCharCode(65 + gi);
-                    if (!/^[A-Za-z]$/.test(letra) || !(grupo || []).length) return; // descarta entradas fora do padrão "Group X"
+                    const letra = letraDoGrupo(grupo, gi);
                     const timesAtivos = (grupo || []).filter(row => !eliminados.has(row.team && row.team.name));
                     if (!timesAtivos.length) return;
                     html += `<p class="text-[10px] font-bold text-emerald-400/90 mt-2 mb-1 first:mt-0">Grupo ${letra}</p>`;
@@ -2904,13 +2982,26 @@
 
         // Busca a tabela de grupos/classificação uma única vez (reaproveitada por grupos,
         // ajuste real das probabilidades e ranking de ataques/defesas).
+        // Deriva a letra do grupo (ex.: "A") a partir do rótulo bruto da API-Football,
+        // caindo para uma letra sequencial quando o rótulo não vem preenchido.
+        function letraDoGrupo(grupo, indiceFallback) {
+            const first = (grupo || [])[0];
+            return (first && first.group)
+                ? String(first.group).replace(/^Group\s*/i, '').trim()
+                : String.fromCharCode(65 + indiceFallback);
+        }
+
         async function obterStandingsApiFootball() {
             if (afStandingsRaw) return afStandingsRaw;
             try {
                 const resp = await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000);
                 const data = await resp.json();
-                const standings = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
-                afStandingsRaw = Array.isArray(standings) ? standings : [];
+                const standingsBrutos = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
+                // Descarta entradas fora do padrão "Group X" (ex.: agregado "Group Stage") que a
+                // API-Football às vezes inclui junto dos grupos reais — não são grupos de verdade.
+                afStandingsRaw = (Array.isArray(standingsBrutos) ? standingsBrutos : []).filter((grupo, i) =>
+                    Array.isArray(grupo) && grupo.length > 0 && /^[A-Za-z]$/.test(letraDoGrupo(grupo, i))
+                );
                 standingsUltimaAtualizacao = new Date();
             } catch (e) {
                 afStandingsRaw = [];
@@ -3072,15 +3163,11 @@
                 return;
             }
 
+            // standings já vem filtrado (só grupos reais) por obterStandingsApiFootball().
             const grupos = standings.map((grupo, gi) => {
-                const first = (grupo || [])[0];
-                const letra = (first && first.group)
-                    ? String(first.group).replace(/^Group\s*/i, '').trim()
-                    : String.fromCharCode(65 + gi);
+                const letra = letraDoGrupo(grupo, gi);
                 return { letra, label: `Grupo ${letra}`, times: grupo || [] };
-            }).filter(g => /^[A-Za-z]$/.test(g.letra) && g.times.length > 0);
-            // Descarta entradas que a API-Football às vezes inclui fora do padrão "Group X"
-            // (ex.: tabela agregada de "Stage"), que não são grupos reais da fase de grupos.
+            });
 
             // Navegação rápida por grupo ("Todos" + uma pílula por letra).
             navContainer.innerHTML = ['', ...grupos.map(g => g.letra)].map(letra => {
@@ -3588,6 +3675,7 @@
                 const jogou = finished === 'TRUE' || (time_elapsed !== 'notstarted');
                 const gh = it.goals && it.goals.home;
                 const ga = it.goals && it.goals.away;
+                const penalty = it.score && it.score.penalty;
                 const tipo = tipoPorRound(round);
 
                 return {
@@ -3598,6 +3686,9 @@
                     away_team_name_en: awayName,
                     home_score: (jogou && gh != null) ? String(gh) : 'null',
                     away_score: (jogou && ga != null) ? String(ga) : 'null',
+                    // Placar dos pênaltis (mata-mata decidido nas cobranças); nulo em tempo normal/prorrogação.
+                    penalty_home: (penalty && penalty.home != null) ? Number(penalty.home) : null,
+                    penalty_away: (penalty && penalty.away != null) ? Number(penalty.away) : null,
                     home_scorers: 'null',
                     away_scorers: 'null',
                     group: tipo === 'group' ? (grupos[homeName] || grupos[awayName] || 'N/A') : 'N/A',
@@ -3608,6 +3699,19 @@
                     type: tipo
                 };
             });
+        }
+
+        // Determina o vencedor de um jogo finalizado ('home'/'away'), considerando pênaltis
+        // quando o placar normal/prorrogação empata (comum no mata-mata). Retorna null se o
+        // jogo não terminou ou se o resultado ainda não é determinável.
+        function vencedorDoJogo(jogo) {
+            if (!jogo || jogo.finished !== 'TRUE') return null;
+            const gh = Number(jogo.home_score), ga = Number(jogo.away_score);
+            if (gh > ga) return 'home';
+            if (ga > gh) return 'away';
+            const ph = jogo.penalty_home, pa = jogo.penalty_away;
+            if (ph != null && pa != null && ph !== pa) return ph > pa ? 'home' : 'away';
+            return null;
         }
 
         // --- ABA MATA-MATA (chave eliminatória: 16-avos a Final + disputa de 3º lugar) ---
@@ -3649,16 +3753,19 @@
             const bandeiraHome = BANDEIRA_PT[nomeHome] || FLAG_EN[jogo.home_team_name_en] || '⚽';
             const bandeiraAway = BANDEIRA_PT[nomeAway] || FLAG_EN[jogo.away_team_name_en] || '⚽';
             const jogou = jogo.finished === 'TRUE';
+            const temPenaltis = jogo.penalty_home != null && jogo.penalty_away != null;
+            const sufixoPen = temPenaltis ? ` (${jogo.penalty_home}-${jogo.penalty_away} pên.)` : '';
             const placarHome = jogou && jogo.home_score !== 'null' ? jogo.home_score : '-';
             const placarAway = jogou && jogo.away_score !== 'null' ? jogo.away_score : '-';
-            const homeVenceu = jogou && Number(jogo.home_score) > Number(jogo.away_score);
-            const awayVenceu = jogou && Number(jogo.away_score) > Number(jogo.home_score);
+            const vencedor = vencedorDoJogo(jogo);
+            const homeVenceu = vencedor === 'home';
+            const awayVenceu = vencedor === 'away';
             return `<div class="bracket-card" onclick="abrirJogoDoBracket('${jogo.id}')">
                 <div class="bracket-team ${homeVenceu ? 'font-bold text-white' : 'text-slate-300'}">
-                    <span title="${nomeHome}">${bandeiraHome} ${nomeHome}</span><span>${placarHome}</span>
+                    <span title="${nomeHome}">${bandeiraHome} ${nomeHome}</span><span>${placarHome}${homeVenceu ? sufixoPen : ''}</span>
                 </div>
                 <div class="bracket-team ${awayVenceu ? 'font-bold text-white' : 'text-slate-300'}">
-                    <span title="${nomeAway}">${bandeiraAway} ${nomeAway}</span><span>${placarAway}</span>
+                    <span title="${nomeAway}">${bandeiraAway} ${nomeAway}</span><span>${placarAway}${awayVenceu ? sufixoPen : ''}</span>
                 </div>
             </div>`;
         }
