@@ -184,6 +184,9 @@
                 <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="px-2.5 py-1.5 rounded-lg font-bold transition-all duration-200 bg-gradient-to-r from-yellow-400 to-emerald-500 text-slate-950 shadow whitespace-nowrap">
                     <i class="fa-solid fa-chart-line mr-1"></i> Dashboard
                 </button>
+                <button onclick="switchTab('classificacao')" id="btn-tab-classificacao" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
+                    <i class="fa-solid fa-table-list mr-1"></i> Classificação
+                </button>
                 <button onclick="switchTab('history')" id="btn-tab-history" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-history mr-1"></i> Histórico
                 </button>
@@ -337,6 +340,50 @@
             </div>
         </section>
 
+        <!-- SEÇÃO: CLASSIFICAÇÃO (fase de grupos) -->
+        <section id="tab-classificacao" class="hidden space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-emerald-400"></i> Classificação da Copa 2026
+                        </h2>
+                        <p id="classificacao-atualizado" class="text-xs sm:text-sm text-slate-400 mt-1">Carregando…</p>
+                    </div>
+                    <button type="button" onclick="renderClassificacaoTab(true)" class="text-xs text-slate-300 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-slate-600 hover:border-emerald-500/50 bg-slate-800/50 shrink-0 self-start sm:self-auto">
+                        <i class="fa-solid fa-rotate mr-1"></i> Atualizar
+                    </button>
+                </div>
+
+                <!-- Legenda das zonas -->
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400 mb-4">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> Classificado direto (1º/2º)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> 3º lugar — depende do ranking dos terceiros</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-slate-600"></span> Eliminado (4º)</span>
+                </div>
+
+                <!-- Busca + navegação rápida por grupo -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-5">
+                    <div class="relative flex-1 sm:max-w-xs">
+                        <input type="text" id="classificacao-busca" oninput="renderClassificacaoTab()" placeholder="Buscar seleção..." class="w-full bg-slate-800/80 border border-slate-700 text-xs rounded-lg pl-3 pr-8 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        <i class="fa-solid fa-search absolute right-2.5 top-2.5 text-[10px] text-slate-400"></i>
+                    </div>
+                    <div id="classificacao-grupos-nav" class="flex flex-wrap gap-1.5 overflow-x-auto scrollbar-none"></div>
+                </div>
+
+                <div id="classificacao-grupos-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+                <!-- Ranking dos melhores terceiros colocados (avançam 8 dos 12) -->
+                <div class="mt-8">
+                    <h3 class="text-sm sm:text-base font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-ranking-star"></i> Ranking dos melhores terceiros
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-3">Os 8 melhores 3ºs colocados entre os 12 grupos avançam à fase eliminatória.</p>
+                    <div id="classificacao-terceiros-container" class="overflow-x-auto rounded-xl border border-slate-800"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- SEÇÃO: HISTÓRICO DE CAMPEÕES -->
         <section id="tab-history" class="hidden space-y-6">
             <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
@@ -437,7 +484,10 @@
                         <div id="teo-proximos-jogos" class="overflow-x-auto -mx-1"></div>
                     </div>
                     <div class="min-h-[120px]">
-                        <p class="text-[10px] font-semibold text-slate-500 uppercase mb-2">Classificação (pontos)</p>
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[10px] font-semibold text-slate-500 uppercase">Classificação (pontos)</p>
+                            <button type="button" onclick="switchTab('classificacao')" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold whitespace-nowrap">Ver tabela completa →</button>
+                        </div>
                         <div id="teo-classificacao" class="max-h-[320px] overflow-y-auto pr-1 scrollbar-none"></div>
                     </div>
                 </div>
@@ -2135,8 +2185,9 @@
 
             // Encerra o auto-refresh ao trocar de aba; ele só roda na aba de estatísticas.
             pararAutoRefreshAPI();
+            pararClassificacaoAutoRefresh();
 
-            ['dashboard', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
+            ['dashboard', 'classificacao', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
                 if (section === tabId) {
                     el.classList.remove('hidden');
@@ -2145,7 +2196,7 @@
                 }
             });
 
-            ['dashboard', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
+            ['dashboard', 'classificacao', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const btn = document.getElementById(`btn-tab-${section}`);
                 if (btn) {
                     if (section === tabId) {
@@ -2180,6 +2231,11 @@
 
             if (tabId === 'stats') {
                 setTimeout(() => carregarNumerosCopa(), 100);
+            }
+
+            if (tabId === 'classificacao') {
+                setTimeout(() => renderClassificacaoTab(), 100);
+                iniciarClassificacaoAutoRefresh();
             }
 
             if (tabId === 'ia-chat') {
@@ -2666,6 +2722,22 @@
             if (typeof pararRelogioAoVivo === 'function') pararRelogioAoVivo();
         }
 
+        // --- AUTO-REFRESH DA CLASSIFICAÇÃO (mais espaçado: a tabela só muda ao fim de cada jogo) ---
+        let classificacaoPollInterval = null;
+        const CLASSIFICACAO_POLL_MS = 60000;
+
+        function iniciarClassificacaoAutoRefresh() {
+            pararClassificacaoAutoRefresh();
+            classificacaoPollInterval = setInterval(() => renderClassificacaoTab(true), CLASSIFICACAO_POLL_MS);
+        }
+
+        function pararClassificacaoAutoRefresh() {
+            if (classificacaoPollInterval) {
+                clearInterval(classificacaoPollInterval);
+                classificacaoPollInterval = null;
+            }
+        }
+
         // Converte o JSON do openfootball/worldcup.json para o formato interno usado pela UI.
         function mapearOpenfootball(matches) {
             const tipoPorRound = (round) => {
@@ -2725,6 +2797,8 @@
         const AF_SEASON = 2026;
         let afGrupoMap = null; // cache (1x por sessão) do mapa seleção -> letra do grupo.
         let afStandingsRaw = null; // cache da tabela bruta (para grupos, forma real e ataques/defesas).
+        let standingsUltimaAtualizacao = null; // Date do último fetch efetivo (não conta cache-hit).
+        let classificacaoGrupoAtivo = ''; // '' = todos os grupos, senão a letra selecionada na navegação rápida.
 
         // Busca a tabela de grupos/classificação uma única vez (reaproveitada por grupos,
         // ajuste real das probabilidades e ranking de ataques/defesas).
@@ -2735,10 +2809,181 @@
                 const data = await resp.json();
                 const standings = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
                 afStandingsRaw = Array.isArray(standings) ? standings : [];
+                standingsUltimaAtualizacao = new Date();
             } catch (e) {
                 afStandingsRaw = [];
             }
             return afStandingsRaw;
+        }
+
+        // --- ABA CLASSIFICAÇÃO (tabela completa por grupo + ranking dos melhores terceiros) ---
+        function classificacaoSelecionarGrupo(letra) {
+            classificacaoGrupoAtivo = (classificacaoGrupoAtivo === letra) ? '' : letra;
+            renderClassificacaoTab(false);
+        }
+
+        function renderGrupoClassificacaoCard(grupo, busca) {
+            const linhas = grupo.times.map((row, idx) => {
+                const rank = row.rank || (idx + 1);
+                const nomeEn = row.team && row.team.name;
+                const nome = nomePtDe(nomeEn);
+                const bandeira = BANDEIRA_PT[nome] || FLAG_EN[nomeEn] || '⚽';
+                const all = row.all || {};
+                const gols = all.goals || {};
+                const gf = gols.for || 0, ga = gols.against || 0;
+                const destaqueBrasil = nome === 'Brasil';
+                const corZona = rank <= 2 ? 'border-l-emerald-500' : (rank === 3 ? 'border-l-amber-500' : 'border-l-slate-600');
+                const corMatch = busca && nome.toLowerCase().includes(busca) ? 'bg-emerald-500/10' : '';
+                return `<tr class="border-t border-slate-800/50 border-l-2 ${corZona} ${corMatch}">
+                    <td class="py-1.5 pl-2 pr-1 truncate max-w-[110px] ${destaqueBrasil ? 'text-amber-300 font-bold' : 'text-slate-200'}" title="${nome}">${bandeira} ${nome}</td>
+                    <td class="text-center text-slate-400" title="Jogos">${all.played || 0}</td>
+                    <td class="text-center text-slate-400" title="Vitórias">${all.win || 0}</td>
+                    <td class="text-center text-slate-400" title="Empates">${all.draw || 0}</td>
+                    <td class="text-center text-slate-400" title="Derrotas">${all.lose || 0}</td>
+                    <td class="text-center text-slate-400" title="Gols Pró">${gf}</td>
+                    <td class="text-center text-slate-400" title="Gols Contra">${ga}</td>
+                    <td class="text-center text-slate-400" title="Saldo de Gols">${gf - ga}</td>
+                    <td class="text-center font-bold text-emerald-400" title="Pontos">${row.points || 0}</td>
+                </tr>`;
+            }).join('');
+
+            return `<div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3">
+                <p class="text-xs font-bold text-emerald-400/90 mb-2">${grupo.label}</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px] min-w-[280px]">
+                        <thead><tr class="text-slate-500">
+                            <th class="text-left pb-1 pl-2">Time</th>
+                            <th class="text-center pb-1" title="Jogos">J</th>
+                            <th class="text-center pb-1" title="Vitórias">V</th>
+                            <th class="text-center pb-1" title="Empates">E</th>
+                            <th class="text-center pb-1" title="Derrotas">D</th>
+                            <th class="text-center pb-1" title="Gols Pró">GP</th>
+                            <th class="text-center pb-1" title="Gols Contra">GC</th>
+                            <th class="text-center pb-1" title="Saldo de Gols">SG</th>
+                            <th class="text-center pb-1" title="Pontos">Pts</th>
+                        </tr></thead>
+                        <tbody>${linhas}</tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
+
+        function renderTabelaTerceiros(terceiros) {
+            if (!terceiros.length) return statsVazio('Ranking de terceiros disponível após rodadas suficientes da fase de grupos.');
+            const CORTE = 8; // 8 melhores terceiros avançam entre os 12 grupos.
+            const linhas = terceiros.map((t, i) => {
+                const nomeEn = t.row.team && t.row.team.name;
+                const nome = nomePtDe(nomeEn);
+                const bandeira = BANDEIRA_PT[nome] || FLAG_EN[nomeEn] || '⚽';
+                const all = t.row.all || {};
+                const gols = all.goals || {};
+                const gf = gols.for || 0, ga = gols.against || 0;
+                const dentro = i < CORTE;
+                const corZona = dentro ? 'border-l-2 border-l-emerald-500' : 'border-l-2 border-l-slate-600 opacity-70';
+                const corte = i === CORTE ? '<tr><td colspan="10" class="p-0"><div class="border-t-2 border-dashed border-amber-500/60"></div></td></tr>' : '';
+                return `${corte}<tr class="border-t border-slate-800/50 ${corZona}">
+                    <td class="py-1.5 pl-2 text-slate-500">${i + 1}º</td>
+                    <td class="py-1.5 pr-2 truncate max-w-[130px] font-medium" title="${nome}">${bandeira} ${nome}</td>
+                    <td class="text-center text-slate-500 whitespace-nowrap">Grupo ${t.grupo}</td>
+                    <td class="text-center text-slate-400" title="Jogos">${all.played || 0}</td>
+                    <td class="text-center text-slate-400" title="Vitórias">${all.win || 0}</td>
+                    <td class="text-center text-slate-400" title="Empates">${all.draw || 0}</td>
+                    <td class="text-center text-slate-400" title="Derrotas">${all.lose || 0}</td>
+                    <td class="text-center text-slate-400" title="Saldo de Gols">${gf - ga}</td>
+                    <td class="text-center font-bold text-emerald-400" title="Pontos">${t.row.points || 0}</td>
+                    <td class="text-center text-[10px] font-semibold ${dentro ? 'text-emerald-400' : 'text-slate-500'}">${dentro ? 'Classificado' : 'Fora'}</td>
+                </tr>`;
+            }).join('');
+
+            return `<table class="w-full text-[11px] min-w-[560px]">
+                <thead class="bg-slate-800/60 text-slate-400 uppercase text-[10px]">
+                    <tr>
+                        <th class="py-2 pl-2 text-left">#</th>
+                        <th class="py-2 text-left">Time</th>
+                        <th class="py-2">Grupo</th>
+                        <th class="py-2" title="Jogos">J</th>
+                        <th class="py-2" title="Vitórias">V</th>
+                        <th class="py-2" title="Empates">E</th>
+                        <th class="py-2" title="Derrotas">D</th>
+                        <th class="py-2" title="Saldo de Gols">SG</th>
+                        <th class="py-2" title="Pontos">Pts</th>
+                        <th class="py-2">Situação</th>
+                    </tr>
+                </thead>
+                <tbody>${linhas}</tbody>
+            </table>`;
+        }
+
+        async function renderClassificacaoTab(forcar = false) {
+            const atualizadoEl = document.getElementById('classificacao-atualizado');
+            const navContainer = document.getElementById('classificacao-grupos-nav');
+            const gruposContainer = document.getElementById('classificacao-grupos-container');
+            const terceirosContainer = document.getElementById('classificacao-terceiros-container');
+            if (!gruposContainer || !navContainer || !terceirosContainer) return;
+
+            if (forcar || !afStandingsRaw) {
+                gruposContainer.innerHTML = statsCarregando();
+                if (atualizadoEl) atualizadoEl.textContent = 'Carregando…';
+            }
+            if (forcar) afStandingsRaw = null;
+
+            const standings = await obterStandingsApiFootball();
+
+            if (!standings.length) {
+                gruposContainer.innerHTML = statsVazio('Classificação disponível após início da fase de grupos.');
+                navContainer.innerHTML = '';
+                terceirosContainer.innerHTML = '';
+                if (atualizadoEl) atualizadoEl.textContent = 'Sem dados no momento.';
+                return;
+            }
+
+            const grupos = standings.map((grupo, gi) => {
+                const first = (grupo || [])[0];
+                const letra = (first && first.group)
+                    ? String(first.group).replace(/^Group\s*/i, '').trim()
+                    : String.fromCharCode(65 + gi);
+                return { letra, label: `Grupo ${letra}`, times: grupo || [] };
+            });
+
+            // Navegação rápida por grupo ("Todos" + uma pílula por letra).
+            navContainer.innerHTML = ['', ...grupos.map(g => g.letra)].map(letra => {
+                const ativo = classificacaoGrupoAtivo === letra;
+                const texto = letra === '' ? 'Todos' : letra;
+                return `<button type="button" onclick="classificacaoSelecionarGrupo('${letra}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold border shrink-0 ${ativo ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'text-slate-300 border-slate-700 hover:border-emerald-500/50'}">${texto}</button>`;
+            }).join('');
+
+            const busca = (document.getElementById('classificacao-busca')?.value || '').trim().toLowerCase();
+
+            const gruposVisiveis = grupos.filter(g => {
+                if (classificacaoGrupoAtivo && g.letra !== classificacaoGrupoAtivo) return false;
+                if (!busca) return true;
+                return g.times.some(row => nomePtDe(row.team && row.team.name).toLowerCase().includes(busca));
+            });
+
+            gruposContainer.innerHTML = gruposVisiveis.length
+                ? gruposVisiveis.map(g => renderGrupoClassificacaoCard(g, busca)).join('')
+                : statsVazio('Nenhuma seleção encontrada para essa busca.');
+
+            // Ranking dos melhores terceiros: 1 time por grupo (3ª posição), ordenado por Pts, SG e GP.
+            const terceiros = grupos
+                .map(g => ({ grupo: g.letra, row: g.times[2] }))
+                .filter(x => x.row)
+                .sort((a, b) => {
+                    const ptsA = a.row.points || 0, ptsB = b.row.points || 0;
+                    if (ptsB !== ptsA) return ptsB - ptsA;
+                    const sgA = (a.row.all?.goals?.for || 0) - (a.row.all?.goals?.against || 0);
+                    const sgB = (b.row.all?.goals?.for || 0) - (b.row.all?.goals?.against || 0);
+                    if (sgB !== sgA) return sgB - sgA;
+                    return (b.row.all?.goals?.for || 0) - (a.row.all?.goals?.for || 0);
+                });
+            terceirosContainer.innerHTML = renderTabelaTerceiros(terceiros);
+
+            if (atualizadoEl) {
+                const hora = standingsUltimaAtualizacao
+                    ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ_BR, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(standingsUltimaAtualizacao)
+                    : '--:--';
+                atualizadoEl.innerHTML = `Atualizado às <span class="text-white font-semibold">${hora}</span> BRT · atualiza sozinho a cada 1 min`;
+            }
         }
 
         // Mapa de nomes PT (usados em SELECOES) -> nomes EN (retornados pela API-Football).
