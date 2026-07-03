@@ -3039,7 +3039,9 @@
                     ? String(first.group).replace(/^Group\s*/i, '').trim()
                     : String.fromCharCode(65 + gi);
                 return { letra, label: `Grupo ${letra}`, times: grupo || [] };
-            });
+            }).filter(g => /^[A-Za-z]$/.test(g.letra) && g.times.length > 0);
+            // Descarta entradas que a API-Football às vezes inclui fora do padrão "Group X"
+            // (ex.: tabela agregada de "Stage"), que não são grupos reais da fase de grupos.
 
             // Navegação rápida por grupo ("Todos" + uma pílula por letra).
             navContainer.innerHTML = ['', ...grupos.map(g => g.letra)].map(letra => {
