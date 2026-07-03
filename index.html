@@ -120,6 +120,15 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        /* --- AVISO DE GOL AO VIVO --- */
+        @keyframes golToastIn {
+            from { transform: translateX(24px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .gol-toast {
+            animation: golToastIn 0.25s ease-out;
+            pointer-events: auto;
+        }
         /* --- SPLASHSCREEN DE ABERTURA --- */
         #splash-screen {
             position: fixed;
@@ -464,6 +473,15 @@
                     <i class="fa-solid fa-hand-pointer mr-1"></i> Toque num confronto para abrir os detalhes e a simulação estatística. Vagas ainda sem seleção definida aparecem como "A definir".
                 </p>
                 <div id="matamata-bracket-container" class="bracket-wrap"></div>
+
+                <!-- Placar de Surpresas: maiores zebras já confirmadas no mata-mata -->
+                <div class="mt-8">
+                    <h3 class="text-sm sm:text-base font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2 mb-1">
+                        🐐 Placar de Surpresas
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-3">Os maiores zebras do mata-mata até agora, pela diferença de força entre quem caiu e quem eliminou.</p>
+                    <div id="matamata-zebras-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
             </div>
         </section>
 
@@ -821,6 +839,12 @@
 
     </main>
 
+    <!-- Avisos de gol ao vivo -->
+    <div id="gol-toast-container" class="fixed top-20 right-3 z-[70] w-[calc(100%-1.5rem)] max-w-xs sm:max-w-sm flex flex-col items-end gap-2 pointer-events-none"></div>
+    <button type="button" id="btn-som-gol" onclick="alternarSomGol()" class="fixed bottom-4 right-4 z-[70] w-11 h-11 rounded-full bg-slate-800/90 border border-slate-700 shadow-lg flex items-center justify-center text-lg text-slate-500 hover:border-emerald-500/50" title="Som de gol desativado (clique pra ativar)">
+        <i class="fa-solid fa-bell-slash"></i>
+    </button>
+
     <!-- RODAPÉ -->
     <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500 w-full">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1016,12 +1040,15 @@
             renderizarJogadores();
             aplicarDadosReaisNasProbabilidades();
             renderPainelTemporal();
+            atualizarBotaoSomGol();
             // Busca os jogos reais em segundo plano para popular/atualizar o card do Dashboard.
             // Recalcula a probabilidade de título depois de carregar (garante que reflita o
             // mata-mata real mesmo se essa busca terminar depois de aplicarDadosReaisNasProbabilidades).
             carregarJogosAPI(true, true).then(() => {
                 renderPainelTemporal();
                 runMonteCarlo();
+                // Só estabelece a linha de base dos placares (sem avisar de gols "antigos").
+                verificarGolsAoVivo();
             });
         };
 
@@ -1151,6 +1178,10 @@
             { en: "New Zealand", pt: "Nova Zelândia", flag: "🇳🇿", r: 70 }
         ];
         let chartCampo = null;
+
+        // Rating base (força/favoritismo) por nome em inglês — usado pra medir zebras no mata-mata.
+        const RATING_BASE_EN = {};
+        CAMPO_2026.forEach(t => { RATING_BASE_EN[t.en] = t.r; });
 
         // Seleções fora das 48 (não entram em probabilidades/táticas), apenas para
         // exibir nome em PT e bandeira corretos nos jogos. Inclui variações de nome da API.
@@ -2888,6 +2919,7 @@
             // Não interrompe uma simulação tática em andamento.
             if (simState.active) return;
             await carregarJogosAPI(true, true);
+            verificarGolsAoVivo();
             // Re-sincroniza o jogo selecionado com os dados novos (placar/status ao vivo).
             if (selectedGame && !simState.active) {
                 const atualizado = apiGames.find(j => j.id === selectedGame.id);
@@ -2895,6 +2927,98 @@
             }
             if (activeTab === 'matamata') renderMataMataTab();
             runMonteCarlo(); // mantém a probabilidade de título sincronizada com os resultados reais.
+        }
+
+        // --- AVISO DE GOL AO VIVO (visual + som opcional) ---
+        // null até o primeiro carregamento: evita "avisar" de gols que já tinham acontecido
+        // antes de abrir o app. Só compara a partir da segunda leitura em diante.
+        let placaresConhecidos = null;
+        let somGolAtivo = localStorage.getItem('somGolAtivo') === '1';
+
+        function verificarGolsAoVivo() {
+            const anterior = placaresConhecidos;
+            const atual = {};
+            apiGames.forEach(j => { atual[j.id] = `${j.home_score}-${j.away_score}`; });
+
+            if (anterior) {
+                apiGames.forEach(j => {
+                    if (statusTemporalJogo(j) !== 'ao_vivo') return;
+                    if (j.home_score === 'null' || j.away_score === 'null') return;
+                    const antes = anterior[j.id];
+                    if (antes == null || antes === atual[j.id]) return;
+
+                    const [antesHome, antesAway] = antes.split('-').map(Number);
+                    if (Number(j.home_score) > antesHome) mostrarToastGol(j, 'home');
+                    if (Number(j.away_score) > antesAway) mostrarToastGol(j, 'away');
+                });
+            }
+            placaresConhecidos = atual;
+        }
+
+        function mostrarToastGol(jogo, lado) {
+            const container = document.getElementById('gol-toast-container');
+            if (!container) return;
+
+            const nomeHome = nomePtDe(jogo.home_team_name_en);
+            const nomeAway = nomePtDe(jogo.away_team_name_en);
+            const bandeiraHome = BANDEIRA_PT[nomeHome] || FLAG_EN[jogo.home_team_name_en] || '⚽';
+            const bandeiraAway = BANDEIRA_PT[nomeAway] || FLAG_EN[jogo.away_team_name_en] || '⚽';
+            const nomeQuemMarcou = lado === 'home' ? nomeHome : nomeAway;
+            const bandeiraQuemMarcou = lado === 'home' ? bandeiraHome : bandeiraAway;
+
+            const toast = document.createElement('div');
+            toast.className = 'gol-toast bg-gradient-to-r from-emerald-500 to-yellow-400 text-slate-950 rounded-xl shadow-2xl px-4 py-3 font-bold text-sm flex items-center gap-2.5 w-full';
+            toast.innerHTML = `
+                <span class="text-2xl leading-none">⚽</span>
+                <div class="min-w-0">
+                    <div class="truncate">${bandeiraQuemMarcou} GOL DO ${nomeQuemMarcou.toUpperCase()}!</div>
+                    <div class="text-xs font-semibold opacity-80 truncate">${nomeHome} ${jogo.home_score} - ${jogo.away_score} ${nomeAway}</div>
+                </div>
+            `;
+            toast.onclick = () => abrirJogoDoBracket(jogo.id);
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 7000);
+
+            tocarSomGolSeAtivo();
+        }
+
+        // Bipe curto sintetizado via Web Audio API (sem depender de arquivo de áudio externo).
+        function tocarSomGolSeAtivo() {
+            if (!somGolAtivo) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const tocarNota = (freq, inicio, duracao) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.0001, ctx.currentTime + inicio);
+                    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + inicio + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + inicio + duracao);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(ctx.currentTime + inicio);
+                    osc.stop(ctx.currentTime + inicio + duracao + 0.05);
+                };
+                tocarNota(660, 0, 0.12);
+                tocarNota(880, 0.12, 0.18);
+                tocarNota(1046.5, 0.30, 0.28);
+            } catch (e) { /* AudioContext indisponível ou bloqueado pelo navegador */ }
+        }
+
+        function alternarSomGol() {
+            somGolAtivo = !somGolAtivo;
+            localStorage.setItem('somGolAtivo', somGolAtivo ? '1' : '0');
+            atualizarBotaoSomGol();
+            if (somGolAtivo) tocarSomGolSeAtivo(); // feedback imediato de que ativou
+        }
+
+        function atualizarBotaoSomGol() {
+            const btn = document.getElementById('btn-som-gol');
+            if (!btn) return;
+            btn.innerHTML = somGolAtivo ? '<i class="fa-solid fa-bell"></i>' : '<i class="fa-solid fa-bell-slash"></i>';
+            btn.title = somGolAtivo ? 'Som de gol ativado (clique pra mutar)' : 'Som de gol desativado (clique pra ativar)';
+            btn.classList.toggle('text-emerald-400', somGolAtivo);
+            btn.classList.toggle('text-slate-500', !somGolAtivo);
         }
 
         function iniciarAutoRefreshAPI() {
@@ -3784,6 +3908,62 @@
             </div>`;
         }
 
+        // Zebras confirmadas do mata-mata: jogos finalizados em que quem caiu tinha rating base
+        // maior do que quem eliminou. "diff" é o quanto o eliminado era mais favorito.
+        function calcularZebras(porTipo) {
+            const zebras = [];
+            ['r32', 'r16', 'qf', 'sf', 'final'].forEach(rodada => {
+                (porTipo[rodada] || []).forEach(jogo => {
+                    const vencedor = vencedorDoJogo(jogo);
+                    if (!vencedor) return;
+                    const vencedorEn = vencedor === 'home' ? jogo.home_team_name_en : jogo.away_team_name_en;
+                    const perdedorEn = vencedor === 'home' ? jogo.away_team_name_en : jogo.home_team_name_en;
+                    const ratingVencedor = RATING_BASE_EN[vencedorEn];
+                    const ratingPerdedor = RATING_BASE_EN[perdedorEn];
+                    if (ratingVencedor == null || ratingPerdedor == null) return;
+                    const diff = ratingPerdedor - ratingVencedor;
+                    if (diff <= 0) return; // favorito venceu, não é zebra
+                    zebras.push({ rodada, vencedorEn, perdedorEn, ratingVencedor, ratingPerdedor, diff, jogo });
+                });
+            });
+            return zebras.sort((a, b) => b.diff - a.diff);
+        }
+
+        function renderCardZebra(z) {
+            const nomeVencedor = nomePtDe(z.vencedorEn);
+            const nomePerdedor = nomePtDe(z.perdedorEn);
+            const bandeiraVencedor = BANDEIRA_PT[nomeVencedor] || FLAG_EN[z.vencedorEn] || '⚽';
+            const bandeiraPerdedor = BANDEIRA_PT[nomePerdedor] || FLAG_EN[z.perdedorEn] || '⚽';
+            const jogou = z.jogo.finished === 'TRUE';
+            const temPenaltis = z.jogo.penalty_home != null && z.jogo.penalty_away != null;
+            const placar = jogou
+                ? `${z.jogo.home_score}-${z.jogo.away_score}${temPenaltis ? ` (${z.jogo.penalty_home}-${z.jogo.penalty_away} pên.)` : ''}`
+                : '';
+            return `<div class="bg-slate-800/40 border border-amber-500/20 rounded-xl p-3">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold text-amber-400 uppercase">${MATAMATA_LABELS[z.rodada] || 'Final'}</span>
+                    <span class="text-[10px] text-slate-500">${placar}</span>
+                </div>
+                <p class="text-sm text-slate-200">
+                    <span class="font-bold text-white">${bandeiraPerdedor} ${nomePerdedor}</span>
+                    <span class="text-slate-500"> (favorito, rating ${z.ratingPerdedor})</span>
+                    caiu para
+                    <span class="font-bold text-emerald-400">${bandeiraVencedor} ${nomeVencedor}</span>
+                    <span class="text-slate-500"> (rating ${z.ratingVencedor})</span>
+                </p>
+                <p class="text-[11px] text-amber-400 font-semibold mt-1">Diferença de força: ${z.diff} pts</p>
+            </div>`;
+        }
+
+        function renderZebras(porTipo) {
+            const container = document.getElementById('matamata-zebras-container');
+            if (!container) return;
+            const zebras = calcularZebras(porTipo).slice(0, 6);
+            container.innerHTML = zebras.length
+                ? zebras.map(renderCardZebra).join('')
+                : statsVazio('Nenhuma zebra confirmada ainda no mata-mata.');
+        }
+
         async function renderMataMataTab(forcar = false) {
             const atualizadoEl = document.getElementById('matamata-atualizado');
             const container = document.getElementById('matamata-bracket-container');
@@ -3793,6 +3973,7 @@
             if (forcar) await carregarJogosAPI(true, true);
 
             const porTipo = agruparJogosMataMata();
+            renderZebras(porTipo);
 
             const colsHtml = MATAMATA_RODADAS.map(tipo => {
                 const jogos = completarVagasMataMata(porTipo[tipo], MATAMATA_VAGAS[tipo]);
