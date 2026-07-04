@@ -1759,16 +1759,32 @@
             container.innerHTML = proximo ? renderCardProximoJogo(proximo) : '';
         }
 
-        function renderCardAoVivo(j) {
+        // Rótulo do momento do jogo ao vivo, distinguindo tempo normal, prorrogação e pênaltis
+        // (status_short vem cru da API-Football: 1H/2H/HT/ET/BT/P/...).
+        function faseAoVivoTxt(j) {
+            const status = (j.status_short || '').toUpperCase();
             const minuto = normalizeStatus(j.time_elapsed);
-            const minutoTxt = /^\d+$/.test(minuto) ? `${minuto}'` : (minuto === 'ht' ? 'Intervalo' : 'Ao vivo');
+            const temMinuto = /^\d+$/.test(minuto);
+            if (status === 'HT') return 'Intervalo';
+            if (status === 'ET') return temMinuto ? `Prorrogação · ${minuto}'` : 'Prorrogação';
+            if (status === 'BT') return 'Intervalo da prorrogação';
+            if (status === 'P') return 'Pênaltis';
+            if (status === 'INT') return 'Interrompido';
+            if (status === 'SUSP') return 'Suspenso';
+            if (temMinuto) return `${minuto}'`;
+            return minuto === 'ht' ? 'Intervalo' : 'Ao vivo';
+        }
+
+        function renderCardAoVivo(j) {
+            const temPenaltis = j.penalty_home != null && j.penalty_away != null;
+            const placarExibido = `${j.placar}${temPenaltis ? ` <span class="text-base text-amber-400">(${j.penalty_home}-${j.penalty_away} pên.)</span>` : ''}`;
             return `<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-900 border border-rose-500/30 p-4 sm:p-5 shadow-xl cursor-pointer" onclick="abrirJogoDoBracket('${j.id}')">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="relative flex h-2.5 w-2.5">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                     </span>
-                    <span class="text-xs font-bold text-rose-400 uppercase tracking-wider">Ao vivo agora · ${minutoTxt}</span>
+                    <span class="text-xs font-bold text-rose-400 uppercase tracking-wider">Ao vivo agora · ${faseAoVivoTxt(j)}</span>
                     <span class="text-[11px] text-slate-500 ml-auto truncate">${j.fase}</span>
                 </div>
                 <div class="flex items-center justify-between gap-3">
@@ -1776,7 +1792,7 @@
                         <span class="text-2xl shrink-0">${j.infoA.bandeira}</span>
                         <span class="font-bold text-white truncate">${j.infoA.nome}</span>
                     </div>
-                    <span class="text-2xl font-extrabold text-white shrink-0 font-mono">${j.placar}</span>
+                    <span class="text-2xl font-extrabold text-white shrink-0 font-mono whitespace-nowrap">${placarExibido}</span>
                     <div class="flex items-center gap-2 min-w-0 justify-end">
                         <span class="font-bold text-white truncate">${j.infoB.nome}</span>
                         <span class="text-2xl shrink-0">${j.infoB.bandeira}</span>
@@ -3905,6 +3921,9 @@
                     local_date: dataDe(fx),
                     finished,
                     time_elapsed,
+                    // Código bruto do status (1H/2H/HT/ET/BT/P/...) — usado pra diferenciar
+                    // prorrogação/pênaltis do tempo normal na exibição ao vivo.
+                    status_short: sShort,
                     type: tipo
                 };
             });
@@ -4327,13 +4346,16 @@
                 let statusBadge = '';
                 let scoreText = 'vs';
 
+                const temPenaltisLista = jogo.penalty_home != null && jogo.penalty_away != null;
+                const sufixoPenLista = temPenaltisLista ? ` (${jogo.penalty_home}-${jogo.penalty_away} pên.)` : '';
                 const statusNorm = normalizeStatus(jogo.time_elapsed);
                 if (jogo.finished === 'TRUE' || statusNorm === 'finished') {
                     statusBadge = `<span class="text-[9px] bg-slate-800 border border-slate-700 text-slate-400 px-2 py-0.5 rounded font-bold uppercase">Encerrado</span>`;
-                    scoreText = `${jogo.home_score} - ${jogo.away_score}`;
+                    scoreText = `${jogo.home_score} - ${jogo.away_score}${sufixoPenLista}`;
                 } else if (statusNorm !== 'notstarted' && statusNorm !== 'null' && statusNorm !== '') {
-                    statusBadge = `<span class="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded font-bold uppercase animate-pulse flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Ao Vivo</span>`;
-                    scoreText = `${jogo.home_score !== 'null' ? jogo.home_score : 0} - ${jogo.away_score !== 'null' ? jogo.away_score : 0}`;
+                    const statusTxt = (jogo.status_short || '').toUpperCase() === 'ET' ? 'Prorrogação' : ((jogo.status_short || '').toUpperCase() === 'P' ? 'Pênaltis' : 'Ao Vivo');
+                    statusBadge = `<span class="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded font-bold uppercase animate-pulse flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>${statusTxt}</span>`;
+                    scoreText = `${jogo.home_score !== 'null' ? jogo.home_score : 0} - ${jogo.away_score !== 'null' ? jogo.away_score : 0}${sufixoPenLista}`;
                 } else {
                     statusBadge = `<span class="text-[9px] bg-blue-500/15 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded font-bold uppercase">Agendado</span>`;
                     scoreText = 'vs';
