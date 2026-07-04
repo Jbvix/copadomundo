@@ -296,6 +296,9 @@
         
         <!-- SEÇÃO: DASHBOARD DE PREVISÃO (TELA PRINCIPAL) -->
         <section id="tab-dashboard" class="space-y-6">
+            <!-- JOGO AO VIVO AGORA / PRÓXIMO JOGO -->
+            <div id="ao-vivo-agora-card"></div>
+
             <!-- Banner Inicial de Simulação de Copa -->
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950/20 to-blue-950/20 border border-emerald-500/20 p-6 sm:p-8 shadow-xl">
                 <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
@@ -1040,12 +1043,14 @@
             renderizarJogadores();
             aplicarDadosReaisNasProbabilidades();
             renderPainelTemporal();
+            renderAoVivoAgora();
             atualizarBotaoSomGol();
             // Busca os jogos reais em segundo plano para popular/atualizar o card do Dashboard.
             // Recalcula a probabilidade de título depois de carregar (garante que reflita o
             // mata-mata real mesmo se essa busca terminar depois de aplicarDadosReaisNasProbabilidades).
             carregarJogosAPI(true, true).then(() => {
                 renderPainelTemporal();
+                renderAoVivoAgora();
                 runMonteCarlo();
                 // Só estabelece a linha de base dos placares (sem avisar de gols "antigos").
                 verificarGolsAoVivo();
@@ -1737,6 +1742,70 @@
             };
         }
 
+        // Card do topo do Dashboard: mostra o(s) jogo(s) ao vivo agora, ou o próximo jogo da Copa
+        // quando não há nenhum rolando.
+        function renderAoVivoAgora() {
+            const container = document.getElementById('ao-vivo-agora-card');
+            if (!container) return;
+
+            const { aoVivo, proximos } = obterJogosTemporais();
+
+            if (aoVivo.length) {
+                container.innerHTML = `<div class="space-y-3">${aoVivo.map(renderCardAoVivo).join('')}</div>`;
+                return;
+            }
+
+            const proximo = proximos[0];
+            container.innerHTML = proximo ? renderCardProximoJogo(proximo) : '';
+        }
+
+        function renderCardAoVivo(j) {
+            const minuto = normalizeStatus(j.time_elapsed);
+            const minutoTxt = /^\d+$/.test(minuto) ? `${minuto}'` : (minuto === 'ht' ? 'Intervalo' : 'Ao vivo');
+            return `<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-900 border border-rose-500/30 p-4 sm:p-5 shadow-xl cursor-pointer" onclick="abrirJogoDoBracket('${j.id}')">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                    </span>
+                    <span class="text-xs font-bold text-rose-400 uppercase tracking-wider">Ao vivo agora · ${minutoTxt}</span>
+                    <span class="text-[11px] text-slate-500 ml-auto truncate">${j.fase}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-2xl shrink-0">${j.infoA.bandeira}</span>
+                        <span class="font-bold text-white truncate">${j.infoA.nome}</span>
+                    </div>
+                    <span class="text-2xl font-extrabold text-white shrink-0 font-mono">${j.placar}</span>
+                    <div class="flex items-center gap-2 min-w-0 justify-end">
+                        <span class="font-bold text-white truncate">${j.infoB.nome}</span>
+                        <span class="text-2xl shrink-0">${j.infoB.bandeira}</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderCardProximoJogo(j) {
+            return `<div class="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800 p-4 sm:p-5 shadow-md cursor-pointer" onclick="abrirJogoDoBracket('${j.id}')">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fa-solid fa-clock text-amber-400"></i>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Próximo jogo · ${j.fase}</span>
+                    <span class="text-[11px] text-slate-500 ml-auto truncate">${j.dataFmt}</span>
+                </div>
+                <div class="flex items-center justify-center gap-4">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-2xl shrink-0">${j.infoA.bandeira}</span>
+                        <span class="font-bold text-white truncate">${j.infoA.nome}</span>
+                    </div>
+                    <span class="text-sm text-slate-500 font-semibold shrink-0">vs</span>
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-bold text-white truncate">${j.infoB.nome}</span>
+                        <span class="text-2xl shrink-0">${j.infoB.bandeira}</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
         function linhaJogoTemporal(j, compact) {
             const badge = j.statusTemporal === 'ao_vivo' ? '<span class="text-emerald-400">●</span>'
                 : j.statusTemporal === 'hoje' ? '<span class="text-amber-400">HOJE</span>'
@@ -2416,7 +2485,8 @@
                 setTimeout(() => {
                     atualizarGraficosDashboard();
                     sincronizarJogosDashboard();
-                    carregarJogosAPI(true, true); // refresca os jogos reais em segundo plano
+                    renderAoVivoAgora();
+                    carregarJogosAPI(true, true).then(() => renderAoVivoAgora()); // refresca os jogos reais em segundo plano
                 }, 100);
                 iniciarAutoRefreshAPI(); // mantém o card de jogos atualizado no Dashboard
             }
@@ -2926,6 +2996,7 @@
                 if (atualizado) selecionarJogoAPI(atualizado.id);
             }
             if (activeTab === 'matamata') renderMataMataTab();
+            if (activeTab === 'dashboard') renderAoVivoAgora();
             runMonteCarlo(); // mantém a probabilidade de título sincronizada com os resultados reais.
         }
 
