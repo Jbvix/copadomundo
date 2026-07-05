@@ -621,9 +621,9 @@
 
                     <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-md space-y-3">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Perguntas Recomendadas</h4>
-                        <button onclick="sendQuickPrompt('Qual o impacto da tática de Contra-Ataque do Brasil contra a Defesa Sólida da Alemanha?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
+                        <button id="pergunta-tatica-brasil" class="hidden w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
                             <i class="fa-solid fa-chevron-right mt-0.5 text-yellow-400 shrink-0"></i>
-                            <span>Qual o impacto da tática de Contra-Ataque do Brasil 🇧🇷 contra a Defesa Sólida da Alemanha 🇩🇪?</span>
+                            <span id="pergunta-tatica-brasil-texto">Carregando adversário do Brasil...</span>
                         </button>
                         <button onclick="sendQuickPrompt('Quais jogos do Brasil já aconteceram e quais ainda faltam, considerando a data de hoje?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
                             <i class="fa-solid fa-chevron-right mt-0.5 text-amber-400 shrink-0"></i>
@@ -1809,6 +1809,44 @@
             };
         }
 
+        // Jogo do Brasil mais relevante agora: ao vivo > próximo agendado > último disputado
+        // (nessa ordem de prioridade). `jogosBrasil` já vem ordenado cronologicamente.
+        function obterProximoAdversarioBrasil(jogosBrasil) {
+            if (!jogosBrasil || !jogosBrasil.length) return null;
+            const aoVivo = jogosBrasil.find(j => j.statusTemporal === 'ao_vivo');
+            if (aoVivo) return aoVivo;
+            const proximo = jogosBrasil.find(j => j.statusTemporal === 'futuro' || j.statusTemporal === 'hoje');
+            if (proximo) return proximo;
+            const encerrados = jogosBrasil.filter(j => j.statusTemporal === 'encerrado' || j.statusTemporal === 'atrasado');
+            return encerrados.length ? encerrados[encerrados.length - 1] : null;
+        }
+
+        // Mantém a pergunta tática recomendada do Téo sempre com o adversário real do Brasil
+        // (em vez de um confronto fixo escrito no HTML, que fica desatualizado assim que o
+        // adversário muda ou é eliminado).
+        function renderizarPerguntaTaticaBrasil(jogosBrasil) {
+            const btn = document.getElementById('pergunta-tatica-brasil');
+            const span = document.getElementById('pergunta-tatica-brasil-texto');
+            if (!btn || !span) return;
+
+            const jogo = obterProximoAdversarioBrasil(jogosBrasil);
+            if (!jogo) {
+                btn.classList.add('hidden');
+                return;
+            }
+
+            const adversarioEn = jogo.home_team_name_en === 'Brazil' ? jogo.away_team_name_en : jogo.home_team_name_en;
+            const nomeAdv = nomePtDe(adversarioEn);
+            const bandeiraAdv = BANDEIRA_PT[nomeAdv] || FLAG_EN[adversarioEn] || '⚽';
+            const taticaBrasil = (SELECOES['Brasil'] && SELECOES['Brasil'].tática) || 'Posse de Bola';
+            const taticaAdv = (SELECOES[nomeAdv] && SELECOES[nomeAdv].tática) || 'Posse de Bola';
+
+            const pergunta = `Qual o impacto da tática de ${taticaBrasil} do Brasil contra a ${taticaAdv} de ${nomeAdv}?`;
+            span.textContent = `Qual o impacto da tática de ${taticaBrasil} do Brasil 🇧🇷 contra a ${taticaAdv} de ${nomeAdv} ${bandeiraAdv}?`;
+            btn.onclick = () => sendQuickPrompt(pergunta);
+            btn.classList.remove('hidden');
+        }
+
         // Card do topo do Dashboard: mostra o(s) jogo(s) ao vivo agora, ou o próximo jogo da Copa
         // quando não há nenhum rolando.
         function renderAoVivoAgora() {
@@ -1959,6 +1997,7 @@
             hojeEl.innerHTML = `<i class="fa-solid fa-calendar-day text-amber-400 mr-1"></i> Hoje: <span class="text-white">${hoje.label}</span> · ${hoje.hora} BRT`;
 
             const ctx = obterJogosTemporais();
+            renderizarPerguntaTaticaBrasil(ctx.brasil);
             const linhas = ctx.proximos.slice(0, 12);
             if (!linhas.length) {
                 proxEl.innerHTML = `<div class="text-[11px] text-slate-400 py-4 px-2 rounded-xl bg-slate-800/40 border border-slate-700/50 text-center">
