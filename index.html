@@ -225,6 +225,9 @@
                 <button id="splash-skip-btn" class="text-xs font-semibold text-slate-400 hover:text-white border border-transparent hover:border-white/10 rounded-full px-4 py-2 transition flex items-center gap-2">
                     Pular <i class="fa-solid fa-forward"></i>
                 </button>
+                <button id="splash-admin-btn" onclick="abrirLoginAdmin()" aria-label="Acesso admin" title="Acesso admin" class="inline-flex items-center justify-center w-10 h-10 text-slate-500 hover:text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                </button>
             </div>
 
             <a href="https://wa.me/5585997737230" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp"
@@ -847,6 +850,70 @@
     <button type="button" id="btn-som-gol" onclick="alternarSomGol()" class="fixed bottom-4 right-4 z-[70] w-11 h-11 rounded-full bg-slate-800/90 border border-slate-700 shadow-lg flex items-center justify-center text-lg text-slate-500 hover:border-emerald-500/50" title="Som de gol desativado (clique pra ativar)">
         <i class="fa-solid fa-bell-slash"></i>
     </button>
+
+    <!-- Botão flutuante da pesquisa de satisfação -->
+    <button type="button" id="btn-feedback" onclick="abrirModalFeedback()" class="fixed bottom-4 left-4 z-[70] w-11 h-11 rounded-full bg-slate-800/90 border border-slate-700 shadow-lg flex items-center justify-center text-lg text-amber-400 hover:border-amber-500/50" title="Deixe sua avaliação">
+        <i class="fa-solid fa-comment-dots"></i>
+    </button>
+
+    <!-- MODAL: PESQUISA DE SATISFAÇÃO -->
+    <div id="feedback-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="fecharModalFeedback()"></div>
+        <div class="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="flex items-center justify-between p-4 border-b border-slate-800">
+                <h3 class="font-extrabold text-white text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-comment-dots text-amber-400"></i> O que você achou do app?
+                </h3>
+                <button onclick="fecharModalFeedback()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4" id="feedback-modal-body">
+                <p class="text-xs text-slate-400">Sua opinião ajuda a melhorar o Predictor. Escolha uma carinha e, se quiser, deixe um comentário.</p>
+                <div class="flex items-center justify-between" id="feedback-emojis">
+                    <button type="button" class="feedback-emoji-btn text-4xl p-2 rounded-xl hover:bg-slate-800 transition" data-rating="5" onclick="selecionarNotaFeedback(5)" title="Muito satisfeito">😄</button>
+                    <button type="button" class="feedback-emoji-btn text-4xl p-2 rounded-xl hover:bg-slate-800 transition" data-rating="4" onclick="selecionarNotaFeedback(4)" title="Satisfeito">🙂</button>
+                    <button type="button" class="feedback-emoji-btn text-4xl p-2 rounded-xl hover:bg-slate-800 transition" data-rating="3" onclick="selecionarNotaFeedback(3)" title="Neutro">🥱</button>
+                    <button type="button" class="feedback-emoji-btn text-4xl p-2 rounded-xl hover:bg-slate-800 transition" data-rating="2" onclick="selecionarNotaFeedback(2)" title="Insatisfeito">😑</button>
+                    <button type="button" class="feedback-emoji-btn text-4xl p-2 rounded-xl hover:bg-slate-800 transition" data-rating="1" onclick="selecionarNotaFeedback(1)" title="Muito insatisfeito">😡</button>
+                </div>
+                <textarea id="feedback-comentario" maxlength="500" rows="3" placeholder="Comentários ou sugestões (opcional)..." class="w-full bg-slate-800/80 border border-slate-700 text-sm rounded-xl p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"></textarea>
+                <p id="feedback-erro" class="text-xs text-rose-400 hidden"></p>
+                <button type="button" onclick="enviarFeedback()" id="feedback-enviar-btn" class="w-full bg-gradient-to-r from-yellow-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Enviar avaliação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN ADMIN -->
+    <div id="admin-login-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="fecharLoginAdmin()"></div>
+        <div class="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-sm p-5">
+            <h3 class="font-extrabold text-white text-lg flex items-center gap-2 mb-3"><i class="fa-solid fa-lock text-amber-400"></i> Acesso admin</h3>
+            <input type="password" id="admin-senha-input" placeholder="Senha" autocomplete="off" class="w-full bg-slate-800/80 border border-slate-700 text-sm rounded-xl p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 mb-3" onkeydown="if(event.key==='Enter') validarLoginAdmin()">
+            <p id="admin-login-erro" class="text-xs text-rose-400 mb-3 hidden"></p>
+            <div class="flex gap-2">
+                <button onclick="fecharLoginAdmin()" class="flex-1 text-xs font-semibold text-slate-300 border border-slate-700 rounded-xl px-4 py-2 hover:bg-slate-800">Cancelar</button>
+                <button onclick="validarLoginAdmin()" class="flex-1 bg-gradient-to-r from-yellow-400 to-emerald-500 text-slate-950 font-bold rounded-xl px-4 py-2 hover:from-yellow-500 hover:to-emerald-600">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PAINEL ADMIN (respostas da pesquisa) -->
+    <div id="admin-painel-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="fecharPainelAdmin()"></div>
+        <div class="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+                <h3 class="font-extrabold text-white text-lg flex items-center gap-2"><i class="fa-solid fa-chart-simple text-amber-400"></i> Pesquisa de Satisfação — Admin</h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="carregarPainelAdmin()" class="text-xs text-slate-300 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-slate-600 hover:border-emerald-500/50"><i class="fa-solid fa-rotate mr-1"></i> Atualizar</button>
+                    <button onclick="fecharPainelAdmin()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div id="admin-painel-body" class="p-5"></div>
+        </div>
+    </div>
 
     <!-- RODAPÉ -->
     <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500 w-full">
@@ -2697,6 +2764,192 @@
 
         function respostaTeoTemTermoImproprio(texto) {
             return TEO_TERMOS_IMPROPRIOS.some(rx => rx.test(String(texto || '')));
+        }
+
+        // --- PESQUISA DE SATISFAÇÃO (5 carinhas + comentário opcional) ---
+        let feedbackNotaSelecionada = null;
+
+        function abrirModalFeedback() {
+            document.getElementById('feedback-modal').classList.remove('hidden');
+        }
+
+        function fecharModalFeedback() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        }
+
+        function selecionarNotaFeedback(nota) {
+            feedbackNotaSelecionada = nota;
+            document.querySelectorAll('.feedback-emoji-btn').forEach(btn => {
+                const ativo = Number(btn.dataset.rating) === nota;
+                btn.classList.toggle('bg-slate-800', ativo);
+                btn.classList.toggle('ring-2', ativo);
+                btn.classList.toggle('ring-emerald-500', ativo);
+            });
+        }
+
+        async function enviarFeedback() {
+            const erroEl = document.getElementById('feedback-erro');
+            erroEl.classList.add('hidden');
+
+            if (!feedbackNotaSelecionada) {
+                erroEl.textContent = 'Escolha uma carinha antes de enviar.';
+                erroEl.classList.remove('hidden');
+                return;
+            }
+
+            const comentarioEl = document.getElementById('feedback-comentario');
+            const comentario = comentarioEl.value.trim();
+
+            // Guardrail no cliente (resposta rápida); o servidor valida de novo antes de gravar.
+            if (comentario && TEO_TERMOS_IMPROPRIOS.some(rx => rx.test(comentario))) {
+                erroEl.textContent = 'Vamos manter o comentário respeitoso, por favor. Reformule e envie de novo.';
+                erroEl.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('feedback-enviar-btn');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const resp = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating: feedbackNotaSelecionada, comentario: comentario || null }),
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) throw new Error(data.error || 'Falha ao enviar.');
+
+                document.getElementById('feedback-modal-body').innerHTML = `
+                    <div class="text-center py-6">
+                        <p class="text-4xl mb-3">🙏</p>
+                        <p class="text-white font-bold">Valeu pela avaliação!</p>
+                        <p class="text-xs text-slate-400 mt-1">Seu feedback ajuda a melhorar o Predictor.</p>
+                    </div>`;
+                setTimeout(() => {
+                    fecharModalFeedback();
+                    feedbackNotaSelecionada = null;
+                }, 2200);
+            } catch (err) {
+                erroEl.textContent = err.message || 'Não foi possível enviar agora. Tente novamente.';
+                erroEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Enviar avaliação';
+            }
+        }
+
+        // Escapa texto de usuário antes de injetar em innerHTML (evita XSS nos comentários).
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto == null ? '' : String(texto);
+            return div.innerHTML;
+        }
+
+        // --- PAINEL ADMIN (acesso pela splash screen) ---
+        let adminSenhaAtual = null;
+        const FEEDBACK_EMOJIS = { 1: '😡', 2: '😑', 3: '🥱', 4: '🙂', 5: '😄' };
+
+        function abrirLoginAdmin() {
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+            const input = document.getElementById('admin-senha-input');
+            input.value = '';
+            document.getElementById('admin-login-erro').classList.add('hidden');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function fecharLoginAdmin() {
+            document.getElementById('admin-login-modal').classList.add('hidden');
+        }
+
+        async function validarLoginAdmin() {
+            const senha = document.getElementById('admin-senha-input').value;
+            const erroEl = document.getElementById('admin-login-erro');
+            erroEl.classList.add('hidden');
+
+            try {
+                const resp = await fetch('/api/feedback', { headers: { 'x-admin-password': senha } });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) throw new Error(data.error || 'Senha inválida.');
+
+                adminSenhaAtual = senha;
+                fecharLoginAdmin();
+                document.getElementById('admin-painel-modal').classList.remove('hidden');
+                renderizarPainelAdmin(data.respostas || []);
+            } catch (err) {
+                erroEl.textContent = err.message || 'Senha inválida.';
+                erroEl.classList.remove('hidden');
+            }
+        }
+
+        function fecharPainelAdmin() {
+            document.getElementById('admin-painel-modal').classList.add('hidden');
+        }
+
+        async function carregarPainelAdmin() {
+            if (!adminSenhaAtual) return;
+            const body = document.getElementById('admin-painel-body');
+            body.innerHTML = statsCarregando();
+            try {
+                const resp = await fetch('/api/feedback', { headers: { 'x-admin-password': adminSenhaAtual } });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) throw new Error(data.error || 'Falha ao carregar.');
+                renderizarPainelAdmin(data.respostas || []);
+            } catch (err) {
+                body.innerHTML = statsVazio(err.message || 'Falha ao carregar as respostas.');
+            }
+        }
+
+        function renderizarPainelAdmin(respostas) {
+            const body = document.getElementById('admin-painel-body');
+            if (!respostas.length) {
+                body.innerHTML = statsVazio('Nenhuma resposta ainda.');
+                return;
+            }
+
+            const total = respostas.length;
+            const soma = respostas.reduce((acc, r) => acc + (r.rating || 0), 0);
+            const media = (soma / total).toFixed(2);
+            const distribuicao = [1, 2, 3, 4, 5].map(n => respostas.filter(r => r.rating === n).length);
+
+            const resumoHtml = `
+                <div class="flex items-start gap-4 mb-5 flex-wrap">
+                    <div class="bg-slate-800/50 rounded-xl p-3 text-center min-w-[90px]">
+                        <p class="text-2xl font-extrabold text-emerald-400">${media}</p>
+                        <p class="text-[10px] text-slate-400 uppercase">Média (1-5)</p>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-3 text-center min-w-[90px]">
+                        <p class="text-2xl font-extrabold text-white">${total}</p>
+                        <p class="text-[10px] text-slate-400 uppercase">Respostas</p>
+                    </div>
+                    <div class="flex-1 min-w-[220px] space-y-1.5">
+                        ${[5, 4, 3, 2, 1].map(n => {
+                            const count = distribuicao[n - 1];
+                            const pct = total ? Math.round((count / total) * 100) : 0;
+                            return `<div class="flex items-center gap-2 text-xs">
+                                <span class="w-5 text-base">${FEEDBACK_EMOJIS[n]}</span>
+                                <div class="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-yellow-400 to-emerald-500" style="width:${pct}%"></div></div>
+                                <span class="w-10 text-right text-slate-400">${count}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            const comentarios = respostas.filter(r => r.comentario);
+            const comentariosHtml = comentarios.length
+                ? comentarios.map(r => `
+                    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 mb-2">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-lg">${FEEDBACK_EMOJIS[r.rating] || '⚽'}</span>
+                            <span class="text-[10px] text-slate-500">${r.criado_em ? new Date(r.criado_em).toLocaleString('pt-BR') : ''}</span>
+                        </div>
+                        <p class="text-sm text-slate-200">${escaparHtml(r.comentario)}</p>
+                    </div>`).join('')
+                : statsVazio('Nenhum comentário com texto ainda.');
+
+            body.innerHTML = resumoHtml
+                + `<h4 class="text-xs font-bold text-slate-400 uppercase mb-2 mt-4">Comentários (${comentarios.length})</h4>`
+                + comentariosHtml;
         }
 
         function garantirAssinaturaTeo(texto) {
