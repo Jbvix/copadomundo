@@ -26,6 +26,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/feedback"
+  to = "/.netlify/functions/feedback"
+  status = 200
+
+[[redirects]]
   from = "/api/games"
   to = "https://worldcup26.ir/get/games"
   status = 200
