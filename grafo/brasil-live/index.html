@@ -46,8 +46,8 @@
             </a>
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                    <h1 class="text-sm sm:text-base font-bold bg-gradient-to-r from-yellow-400 to-emerald-400 bg-clip-text text-transparent truncate">
-                        Brasil Live
+                    <h1 id="page-title" class="text-sm sm:text-base font-bold bg-gradient-to-r from-yellow-400 to-emerald-400 bg-clip-text text-transparent truncate">
+                        🇧🇷 Brasil Live
                     </h1>
                     <span id="status-badge" class="hidden shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                         <span class="live-dot inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1"></span> Ao vivo
@@ -56,6 +56,7 @@
                 <p id="subtitle" class="text-[10px] text-slate-500 truncate">Grafo pós-jogo · API-Football · Copa 2026</p>
             </div>
             <div class="flex items-center gap-1 shrink-0">
+                <select id="team-select" aria-label="Escolher seleção" class="bg-slate-800 border border-slate-700 text-[11px] rounded-lg px-1.5 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 max-w-[104px] sm:max-w-[150px] min-h-[44px]"></select>
                 <button id="btn-refresh" type="button" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-amber-600 hover:bg-amber-500 text-white" aria-label="Atualizar da API">
                     <i class="fa-solid fa-rotate"></i>
                 </button>
@@ -71,16 +72,17 @@
     <div id="empty-state" class="hidden graph-view flex items-center justify-center p-6 text-center">
         <div class="max-w-sm">
             <i class="fa-solid fa-hourglass-half text-4xl text-amber-500/60 mb-4"></i>
-            <p class="text-slate-300 font-medium mb-2">Aguardando jogos do Brasil</p>
+            <p id="empty-state-title" class="text-slate-300 font-medium mb-2">Aguardando jogos do Brasil</p>
             <p class="text-sm text-slate-500">Após cada partida encerrada, o grafo será montado com escalação, gols e conexões reais da API.</p>
         </div>
     </div>
-    <div id="graph-network" class="graph-view" role="img" aria-label="Grafo Brasil Live"></div>
+    <div id="graph-network" class="graph-view" role="img" aria-label="Grafo da seleção"></div>
 
     <div class="fixed bottom-3 left-3 z-10 flex flex-wrap gap-x-3 gap-y-1 px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-700/80 text-[10px] text-slate-400 pointer-events-none">
-        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span>Jogador 🇧🇷</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span><span id="legend-team-jogador">Jogador 🇧🇷</span></span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#fb923c"></span>Jogador adversário</span>
-        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#10b981"></span>Seleção</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#10b981"></span><span id="legend-team-selecao">Seleção 🇧🇷</span></span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#dc2626"></span>Seleção adversária</span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#fbbf24"></span>Gol (minuto)</span>
         <span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#f59e0b"></span>Partida</span>
     </div>
@@ -106,17 +108,12 @@
         const TYPE_COLORS = {
             Time: '#10b981', Partida: '#f59e0b', Edicao: '#8b5cf6', Estadio: '#64748b',
         };
-        const PLAYER_BR = '#38bdf8';
+        // Cor por papel (time selecionado vs adversário), não mais por identidade fixa de time —
+        // isso permite acompanhar qualquer uma das 48 seleções, não só o Brasil.
+        const PLAYER_TEAM = '#38bdf8';
         const PLAYER_OPP = '#fb923c';
-        const TEAM_COLORS = {
-            'team-brasil': '#10b981',
-            'team-marrocos': '#dc2626',
-            'team-haiti': '#6366f1',
-            'team-escocia': '#0ea5e9',
-            'team-argentina': '#75aadb',
-            'team-franca': '#2563eb',
-            'team-alemanha': '#78716c',
-        };
+        const TEAM_SELECTED_COLOR = '#10b981';
+        const TEAM_OPP_COLOR = '#dc2626';
         const REL_LABELS = {
             enfrentou: 'Enfrentou', disputou: 'Disputou', realizada_em: 'Realizada em',
             jogou_na_partida: 'Jogou', jogou_em: 'Seleção', entrou_em: 'Entrou', marcou_gol: 'Gol',
@@ -126,19 +123,78 @@
             placar: 'Placar', fase: 'Fase', data: 'Data', local: 'Local', status: 'Status',
             minuto: 'Minuto', selecao: 'Seleção', cidade: 'Cidade', fixture_id: 'Fixture ID',
         };
-        const TEAM_EN = {
-            Brazil: 'team-brasil', Morocco: 'team-marrocos', Haiti: 'team-haiti',
-            Scotland: 'team-escocia', Argentina: 'team-argentina', France: 'team-franca',
-        };
+        // Catálogo das 48 seleções da Copa 2026 (mesmo do app principal) — nome em inglês
+        // (compatível com a API-Football), nome em PT e bandeira, usados no seletor de time.
+        const TEAM_CATALOG = [
+            { en: "Argentina", pt: "Argentina", flag: "🇦🇷" },
+            { en: "France", pt: "França", flag: "🇫🇷" },
+            { en: "Spain", pt: "Espanha", flag: "🇪🇸" },
+            { en: "England", pt: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+            { en: "Brazil", pt: "Brasil", flag: "🇧🇷" },
+            { en: "Portugal", pt: "Portugal", flag: "🇵🇹" },
+            { en: "Netherlands", pt: "Holanda", flag: "🇳🇱" },
+            { en: "Belgium", pt: "Bélgica", flag: "🇧🇪" },
+            { en: "Italy", pt: "Itália", flag: "🇮🇹" },
+            { en: "Germany", pt: "Alemanha", flag: "🇩🇪" },
+            { en: "Croatia", pt: "Croácia", flag: "🇭🇷" },
+            { en: "Morocco", pt: "Marrocos", flag: "🇲🇦" },
+            { en: "Uruguay", pt: "Uruguai", flag: "🇺🇾" },
+            { en: "Colombia", pt: "Colômbia", flag: "🇨🇴" },
+            { en: "Norway", pt: "Noruega", flag: "🇳🇴" },
+            { en: "Switzerland", pt: "Suíça", flag: "🇨🇭" },
+            { en: "Japan", pt: "Japão", flag: "🇯🇵" },
+            { en: "Senegal", pt: "Senegal", flag: "🇸🇳" },
+            { en: "USA", pt: "EUA", flag: "🇺🇸" },
+            { en: "Mexico", pt: "México", flag: "🇲🇽" },
+            { en: "Denmark", pt: "Dinamarca", flag: "🇩🇰" },
+            { en: "Austria", pt: "Áustria", flag: "🇦🇹" },
+            { en: "Turkey", pt: "Turquia", flag: "🇹🇷" },
+            { en: "Ecuador", pt: "Equador", flag: "🇪🇨" },
+            { en: "Serbia", pt: "Sérvia", flag: "🇷🇸" },
+            { en: "Ukraine", pt: "Ucrânia", flag: "🇺🇦" },
+            { en: "Korea Republic", pt: "Coreia do Sul", flag: "🇰🇷" },
+            { en: "Canada", pt: "Canadá", flag: "🇨🇦" },
+            { en: "Nigeria", pt: "Nigéria", flag: "🇳🇬" },
+            { en: "Egypt", pt: "Egito", flag: "🇪🇬" },
+            { en: "Australia", pt: "Austrália", flag: "🇦🇺" },
+            { en: "Iran", pt: "Irã", flag: "🇮🇷" },
+            { en: "Algeria", pt: "Argélia", flag: "🇩🇿" },
+            { en: "Ivory Coast", pt: "Costa do Marfim", flag: "🇨🇮" },
+            { en: "Paraguay", pt: "Paraguai", flag: "🇵🇾" },
+            { en: "Chile", pt: "Chile", flag: "🇨🇱" },
+            { en: "Venezuela", pt: "Venezuela", flag: "🇻🇪" },
+            { en: "Cameroon", pt: "Camarões", flag: "🇨🇲" },
+            { en: "Peru", pt: "Peru", flag: "🇵🇪" },
+            { en: "Tunisia", pt: "Tunísia", flag: "🇹🇳" },
+            { en: "Ghana", pt: "Gana", flag: "🇬🇭" },
+            { en: "Saudi Arabia", pt: "Arábia Saudita", flag: "🇸🇦" },
+            { en: "Costa Rica", pt: "Costa Rica", flag: "🇨🇷" },
+            { en: "South Africa", pt: "África do Sul", flag: "🇿🇦" },
+            { en: "Qatar", pt: "Catar", flag: "🇶🇦" },
+            { en: "Uzbekistan", pt: "Uzbequistão", flag: "🇺🇿" },
+            { en: "Panama", pt: "Panamá", flag: "🇵🇦" },
+            { en: "New Zealand", pt: "Nova Zelândia", flag: "🇳🇿" },
+        ];
+        const TEAM_BY_EN = {};
+        TEAM_CATALOG.forEach(t => { TEAM_BY_EN[t.en] = t; });
+
         const FINISHED = new Set(['FT', 'AET', 'PEN']);
         const LIVE = new Set(['1H', '2H', 'HT', 'ET', 'PEN', 'LIVE']);
+        const KNOCKOUT_RE = /round of|quarter|semi|\bfinal\b/i;
+        const THIRD_PLACE_RE = /3rd place|third place/i;
 
         let network = null, nodesDS = null, edgesDS = null;
         let allNodes = [], allEdges = [], matches = [];
         let selectedMatchId = 'all', focusId = null;
+        let selectedTeamEn = 'Brazil';
+        let eliminadosSet = new Set();
 
         const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
         const isMobile = () => window.matchMedia('(max-width: 639px)').matches;
+        const teamIdFromName = name => `team-${slug(name)}`;
+        const teamPt = name => (TEAM_BY_EN[name] && TEAM_BY_EN[name].pt) || name;
+        const teamFlag = name => (TEAM_BY_EN[name] && TEAM_BY_EN[name].flag) || '⚽';
+        const getSelectedTeamId = () => teamIdFromName(selectedTeamEn);
 
         function getNeighbors(id) {
             const n = new Set();
@@ -151,7 +207,7 @@
 
         function visibleForMatch(matchId) {
             if (matchId === 'all') return new Set(allNodes.map(n => n.id));
-            const ids = new Set([matchId, 'team-brasil', 'wc-2026']);
+            const ids = new Set([matchId, getSelectedTeamId(), 'wc-2026']);
             allEdges.forEach(e => {
                 if (e.from === matchId || e.to === matchId) {
                     ids.add(e.from); ids.add(e.to);
@@ -273,21 +329,21 @@
 
         function nodeColor(n) {
             const t = n.type || 'Nota';
+            const selectedId = getSelectedTeamId();
             if (t === 'Jogador') {
-                return (n.teamId === 'team-brasil' || n.selecao === 'Brasil' || n.selecao === 'Brazil')
-                    ? PLAYER_BR : PLAYER_OPP;
+                return (n.teamId === selectedId) ? PLAYER_TEAM : PLAYER_OPP;
             }
             if (t === 'Tecnico') {
-                return n.teamId === 'team-brasil' ? '#f472b6' : '#c084fc';
+                return n.teamId === selectedId ? '#f472b6' : '#c084fc';
             }
-            if (t === 'Time') return TEAM_COLORS[n.id] || '#64748b';
+            if (t === 'Time') return n.id === selectedId ? TEAM_SELECTED_COLOR : TEAM_OPP_COLOR;
             return TYPE_COLORS[t] || '#475569';
         }
 
         function nodeStyle(n, dimmed, isFocus) {
             const t = n.type || 'Nota';
             const c = nodeColor(n);
-            const teamHint = n.selecao && n.type === 'Jogador' ? ` · ${n.selecao === 'Brazil' ? 'Brasil' : n.selecao}` : '';
+            const teamHint = n.selecao && n.type === 'Jogador' ? ` · ${n.selecao}` : '';
             if (dimmed) {
                 return {
                     id: n.id, label: '', title: `${n.label} (${t}${teamHint})`,
@@ -311,7 +367,7 @@
                 title: isScorer ? `${n.label} — ${n.gols} gol(is): ${n.golsMinutos}` : `${n.label} (${t}${teamHint})`,
                 color: { background: c, border },
                 font: { color: '#f1f5f9', size: isFocus ? 14 : (isMatch ? 11 : (isScorer ? 12 : 11)), multi: isMatch && !!n.artilheiros },
-                size: isFocus ? 34 : (isMatch ? 30 : (isScorer ? 20 : (n.id === 'team-brasil' ? 22 : (t === 'Time' ? 20 : 14)))),
+                size: isFocus ? 34 : (isMatch ? 30 : (isScorer ? 20 : (n.id === getSelectedTeamId() ? 22 : (t === 'Time' ? 20 : 14)))),
                 borderWidth: isFocus ? 3 : (isScorer ? 3 : (t === 'Jogador' ? 2 : 1)),
             };
         }
@@ -466,8 +522,8 @@
             const matchStatus = FINISHED.has(status) ? 'finished' : LIVE.has(status) ? 'live' : 'scheduled';
 
             [home, away].forEach(t => {
-                const tid = TEAM_EN[t.name] || `team-${slug(t.name)}`;
-                addNode(nodes, { id: tid, type: 'Time', label: t.name, source: 'api' });
+                const tid = teamIdFromName(t.name);
+                addNode(nodes, { id: tid, type: 'Time', label: teamPt(t.name), bandeira: teamFlag(t.name), source: 'api' });
                 addEdge(edges, seen, { from: tid, to: mid, rel: 'enfrentou' });
             });
             addNode(nodes, { id: 'wc-2026', type: 'Edicao', label: 'Copa 2026', ano: 2026, source: 'api' });
@@ -486,8 +542,8 @@
 
             (lineups || []).forEach(lu => {
                 const teamName = (lu.team || {}).name || '';
-                const teamId = TEAM_EN[teamName] || `team-${slug(teamName)}`;
-                const selecao = teamName === 'Brazil' ? 'Brasil' : teamName;
+                const teamId = teamIdFromName(teamName);
+                const selecao = teamPt(teamName);
                 const coach = lu.coach || {};
                 if (coach.name) {
                     const cid = `coach-${slug(coach.name)}`;
@@ -512,8 +568,8 @@
                 const name = (ev.player || {}).name;
                 const min = (ev.time || {}).elapsed;
                 const evTeamName = (ev.team || {}).name || '';
-                const evTeamId = TEAM_EN[evTeamName] || `team-${slug(evTeamName)}`;
-                const evSelecao = evTeamName === 'Brazil' ? 'Brasil' : evTeamName;
+                const evTeamId = teamIdFromName(evTeamName);
+                const evSelecao = teamPt(evTeamName);
                 if (!name) return;
                 const pid = `player-${slug(name)}`;
                 addNode(nodes, { id: pid, type: 'Jogador', label: name, teamId: evTeamId, selecao: evSelecao, source: 'api' });
@@ -540,17 +596,109 @@
             };
         }
 
+        // Times já eliminados no mata-mata (perderam um jogo de Round of 32/16, Quartas, Semi ou
+        // Final já encerrado — considera pênaltis quando o tempo normal/prorrogação empata).
+        // Usa a lista completa de jogos (já buscada de qualquer forma), sem requisição extra.
+        function calcularEliminadosDeFixtures(items) {
+            const eliminados = new Set();
+            items.forEach(it => {
+                const round = (it.league || {}).round || '';
+                if (!KNOCKOUT_RE.test(round) || THIRD_PLACE_RE.test(round)) return;
+                const status = ((it.fixture || {}).status || {}).short || '';
+                if (!FINISHED.has(status.toUpperCase())) return;
+                const gh = (it.goals || {}).home, ga = (it.goals || {}).away;
+                if (gh == null || ga == null) return;
+                const homeName = (it.teams.home || {}).name, awayName = (it.teams.away || {}).name;
+                let perdedor = null;
+                if (gh > ga) perdedor = awayName;
+                else if (ga > gh) perdedor = homeName;
+                else {
+                    const pen = (it.score || {}).penalty || {};
+                    if (pen.home != null && pen.away != null && pen.home !== pen.away) {
+                        perdedor = pen.home > pen.away ? awayName : homeName;
+                    }
+                }
+                if (perdedor) eliminados.add(perdedor);
+            });
+            return eliminados;
+        }
+
+        function montarSeletorDeTimes() {
+            const select = document.getElementById('team-select');
+            if (!select) return;
+            const ordenado = [...TEAM_CATALOG].sort((a, b) => a.pt.localeCompare(b.pt, 'pt-BR'));
+            select.innerHTML = ordenado.map(t =>
+                `<option value="${t.en}">${t.flag} ${t.pt}${eliminadosSet.has(t.en) ? ' — eliminado' : ''}</option>`
+            ).join('');
+            select.value = selectedTeamEn;
+        }
+
+        function atualizarBrandingDoTime() {
+            const nome = teamPt(selectedTeamEn);
+            const flag = teamFlag(selectedTeamEn);
+            document.title = `${nome} Live — Grafo pós-jogo | Copa 2026`;
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.textContent = `${flag} ${nome} Live`;
+            const emptyTitleEl = document.getElementById('empty-state-title');
+            if (emptyTitleEl) emptyTitleEl.textContent = `Aguardando jogos de ${nome}`;
+            const legendJogador = document.getElementById('legend-team-jogador');
+            if (legendJogador) legendJogador.textContent = `Jogador ${flag}`;
+            const legendSelecao = document.getElementById('legend-team-selecao');
+            if (legendSelecao) legendSelecao.textContent = `Seleção ${flag}`;
+            const select = document.getElementById('team-select');
+            if (select) select.value = selectedTeamEn;
+        }
+
+        function lerTimeDaURL() {
+            const params = new URLSearchParams(location.search);
+            const en = params.get('time');
+            return (en && TEAM_BY_EN[en]) ? en : 'Brazil';
+        }
+
+        function atualizarURL(en) {
+            const url = new URL(location.href);
+            url.searchParams.set('time', en);
+            history.replaceState(null, '', url);
+        }
+
+        async function onTrocarTime(ev) {
+            selectedTeamEn = ev.target.value;
+            atualizarURL(selectedTeamEn);
+            atualizarBrandingDoTime();
+            selectedMatchId = 'all';
+            setFocus(null);
+            if (network) network.unselectAll();
+            hidePanel();
+            allNodes = []; allEdges = []; matches = [];
+            document.getElementById('graph-network').classList.add('hidden');
+            const emptyEl = document.getElementById('empty-state');
+            emptyEl.classList.remove('hidden');
+            const emptyTitleEl = document.getElementById('empty-state-title');
+            if (emptyTitleEl) emptyTitleEl.textContent = `Carregando jogos de ${teamPt(selectedTeamEn)}…`;
+            await refreshFromApi();
+        }
+
         async function refreshFromApi() {
             const btn = document.getElementById('btn-refresh');
             btn.querySelector('i').classList.add('fa-spin');
             try {
-                const data = await afFetch('/fixtures', { league: 1, season: 2026, team: 6 });
-                const items = (data.response || []).filter(it => {
+                const data = await afFetch('/fixtures', { league: 1, season: 2026 });
+                const todos = data.response || [];
+                eliminadosSet = calcularEliminadosDeFixtures(todos);
+                montarSeletorDeTimes();
+
+                const items = todos.filter(it => {
                     const h = (it.teams || {}).home || {};
                     const a = (it.teams || {}).away || {};
-                    return h.name === 'Brazil' || a.name === 'Brazil';
+                    return h.name === selectedTeamEn || a.name === selectedTeamEn;
                 });
-                if (!items.length) return false;
+                if (!items.length) {
+                    const emptyTitleEl = document.getElementById('empty-state-title');
+                    if (emptyTitleEl) emptyTitleEl.textContent = `Nenhum jogo encontrado para ${teamPt(selectedTeamEn)}`;
+                    document.getElementById('graph-network').classList.add('hidden');
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    return false;
+                }
 
                 const allNodesMap = new Map(), allEdges = [], allMatches = [], seenE = new Set();
                 for (const item of items) {
@@ -591,9 +739,16 @@
 
         async function init() {
             try {
-                const res = await fetch('/data/brasil-live-graph.json');
-                if (!res.ok) throw new Error(res.status);
-                mergeGraph(await res.json());
+                selectedTeamEn = lerTimeDaURL();
+                montarSeletorDeTimes();
+                atualizarBrandingDoTime();
+
+                if (selectedTeamEn === 'Brazil') {
+                    try {
+                        const res = await fetch('/data/brasil-live-graph.json');
+                        if (res.ok) mergeGraph(await res.json());
+                    } catch (_) { /* seguirá direto para a API */ }
+                }
 
                 nodesDS = new vis.DataSet([]);
                 edgesDS = new vis.DataSet([]);
@@ -605,7 +760,7 @@
                 });
                 network.on('click', p => p.nodes.length ? focusNode(p.nodes[0], true) : (hidePanel(), setFocus(null), network.unselectAll()));
                 network.once('stabilizationIterationsDone', () => {
-                    const target = selectedMatchId !== 'all' ? selectedMatchId : (matches.find(m => m.status === 'finished')?.id || 'team-brasil');
+                    const target = selectedMatchId !== 'all' ? selectedMatchId : (matches.find(m => m.status === 'finished')?.id || getSelectedTeamId());
                     if (target) network.focus(target, { scale: 0.9, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
                 });
 
@@ -613,6 +768,7 @@
                 document.getElementById('focus-chip').addEventListener('click', () => { hidePanel(); setFocus(null); network.unselectAll(); });
                 document.getElementById('close-panel').addEventListener('click', hidePanel);
                 document.getElementById('panel-backdrop').addEventListener('click', () => { hidePanel(); setFocus(null); network.unselectAll(); });
+                document.getElementById('team-select').addEventListener('change', onTrocarTime);
 
                 await refreshFromApi();
             } catch (e) {
