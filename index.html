@@ -2092,6 +2092,9 @@
                     if (sim && j.status !== 'finished') {
                         j.golsA = sim.golsA;
                         j.golsB = sim.golsB;
+                        j.penaltyA = sim.penaltyA;
+                        j.penaltyB = sim.penaltyB;
+                        if (sim.fase) j.fase = sim.fase;
                         j.status = 'finished';
                         j._simulado = true;
                     }
@@ -2169,11 +2172,15 @@
                     const corPlacar = jogo.status === 'live'
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                         : 'bg-slate-800 border-slate-700/60 text-slate-100';
+                    const temPenaltisCard = jogo.penaltyA != null && jogo.penaltyB != null;
                     placarHtml = `
-                        <div class="flex items-center justify-center space-x-2 ${corPlacar} px-3 py-1.5 rounded-lg border font-mono font-bold shrink-0">
-                            <span>${jogo.golsA != null ? jogo.golsA : 0}</span>
-                            <span class="text-slate-500">-</span>
-                            <span>${jogo.golsB != null ? jogo.golsB : 0}</span>
+                        <div class="flex flex-col items-center shrink-0">
+                            <div class="flex items-center justify-center space-x-2 ${corPlacar} px-3 py-1.5 rounded-lg border font-mono font-bold">
+                                <span>${jogo.golsA != null ? jogo.golsA : 0}</span>
+                                <span class="text-slate-500">-</span>
+                                <span>${jogo.golsB != null ? jogo.golsB : 0}</span>
+                            </div>
+                            ${temPenaltisCard ? `<span class="mt-1 text-[9px] text-amber-400 font-bold">${jogo.penaltyA}-${jogo.penaltyB} pên.</span>` : ''}
                         </div>
                     `;
                 } else {
@@ -2228,6 +2235,25 @@
             });
         }
 
+        // Sorteia um placar de pênaltis plausível (nunca empata): 5 cobranças alternadas,
+        // depois morte súbita se seguir empatado, com leve viés pra quem tinha mais chance.
+        function sortearPenaltis(chanceA) {
+            const base = 0.75;
+            const probA = Math.min(0.88, Math.max(0.62, base + (chanceA - 0.5) * 0.2));
+            const probB = Math.min(0.88, Math.max(0.62, base - (chanceA - 0.5) * 0.2));
+
+            let a = 0, b = 0;
+            for (let i = 0; i < 5; i++) {
+                if (Math.random() < probA) a++;
+                if (Math.random() < probB) b++;
+            }
+            while (a === b) {
+                if (Math.random() < probA) a++;
+                if (Math.random() < probB) b++;
+            }
+            return [a, b];
+        }
+
         function simularPartidaEspecifica(id) {
             const jogo = jogosDashboard.find(j => String(j.id) === String(id));
             if (!jogo) return;
@@ -2242,27 +2268,43 @@
             let golsA = Math.max(0, Math.round(Math.random() * 3 + (chanceA > 0.5 ? 1 : 0)));
             let golsB = Math.max(0, Math.round(Math.random() * 3 + (chanceA <= 0.5 ? 1 : 0)));
 
-            if (golsA === golsB) {
-                if (Math.random() > 0.5) {
-                    golsA++;
-                    jogo.fase = `${jogo.fase} (pro)`;
+            // Fase de grupos pode terminar empatada de verdade; só o mata-mata precisa de
+            // prorrogação/pênaltis pra decidir um empate (mesmo o clássico 0x0).
+            const ehMataMata = !/grupo/i.test(jogo.fase || '');
+            const faseBase = jogo.fase;
+            let penaltyA = null, penaltyB = null;
+            let sufixoFase = '';
+
+            if (golsA === golsB && ehMataMata) {
+                // Prorrogação: 30 minutos extras rendem bem menos gols que o tempo normal.
+                if (Math.random() < chanceA * 0.35) golsA++;
+                if (Math.random() < (1 - chanceA) * 0.35) golsB++;
+
+                if (golsA === golsB) {
+                    [penaltyA, penaltyB] = sortearPenaltis(chanceA);
+                    // O placar dos pênaltis já aparece num selo próprio junto do resultado.
                 } else {
-                    golsB++;
-                    jogo.fase = `${jogo.fase} (pro)`;
+                    sufixoFase = ' (pró)';
                 }
             }
 
             jogo.golsA = golsA;
             jogo.golsB = golsB;
+            jogo.penaltyA = penaltyA;
+            jogo.penaltyB = penaltyB;
+            jogo.fase = `${faseBase}${sufixoFase}`;
             jogo.status = 'finished';
+
+            const venceuA = penaltyA != null ? penaltyA > penaltyB : golsA > golsB;
 
             // O encadeamento de semis -> final só faz sentido na chave de demonstração.
             if (!jogo._real) {
-                atualizarProximosConfrontos(jogo, golsA > golsB ? jogo.timeA : jogo.timeB);
+                atualizarProximosConfrontos(jogo, venceuA ? jogo.timeA : jogo.timeB);
             } else {
-                // Guarda a simulação para não ser apagada pelo auto-refresh dos jogos reais.
+                // Guarda a simulação (incl. prorrogação/pênaltis) pra não ser apagada pelo
+                // auto-refresh dos jogos reais.
                 jogo._simulado = true;
-                simuladosManuais[jogo.id] = { golsA, golsB };
+                simuladosManuais[jogo.id] = { golsA, golsB, penaltyA, penaltyB, fase: jogo.fase };
             }
 
             renderizarJogos();
