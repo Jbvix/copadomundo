@@ -4288,22 +4288,35 @@
         const MATAMATA_LABELS = { r32: '16-avos', r16: 'Oitavas', qf: 'Quartas', sf: 'Semifinal' };
         const MATAMATA_VAGAS = { r32: 16, r16: 8, qf: 4, sf: 2, final: 1, third: 1 };
 
+        // Nome (en) de quem venceu (querVencedor=true) ou perdeu (querVencedor=false) um jogo já
+        // finalizado, considerando pênaltis. Retorna null se o jogo não terminou (ou é placeholder).
+        function nomeResultadoDoJogo(jogo, querVencedor) {
+            if (!jogo || jogo._placeholder) return null;
+            const lado = vencedorDoJogo(jogo);
+            if (!lado) return null;
+            const ladoFinal = querVencedor ? lado : (lado === 'home' ? 'away' : 'home');
+            return ladoFinal === 'home' ? jogo.home_team_name_en : jogo.away_team_name_en;
+        }
+
         // Reordena r16/qf/sf pra alinhar visualmente com o jogo do qual cada time realmente
         // veio: a data de kickoff não segue a estrutura da chave (jogos de "quadrantes"
         // diferentes são transmitidos fora de ordem), então ordenar só por data pode colocar
-        // o confronto errado ao lado do par de jogos anteriores que o alimentou.
+        // o confronto errado ao lado do par de jogos anteriores que o alimentou. Quando o
+        // confronto seguinte ainda não existe na API (chave incompleta), mas um dos lados já
+        // tem vencedor definido, mostra esse time em vez de deixar os dois como "A definir".
         function ordenarPorLinhagemDaChave(porTipo) {
             const sequencia = ['r32', 'r16', 'qf', 'sf'];
             for (let i = 1; i < sequencia.length; i++) {
                 const anterior = porTipo[sequencia[i - 1]];
                 const atual = porTipo[sequencia[i]];
-                if (!anterior.length || !atual.length) continue;
+                if (!anterior.length) continue;
 
                 const usados = new Set();
                 const reordenado = [];
                 for (let p = 0; p < anterior.length; p += 2) {
+                    const par = [anterior[p], anterior[p + 1]].filter(Boolean);
                     const timesDoPar = new Set();
-                    [anterior[p], anterior[p + 1]].filter(Boolean).forEach(jogo => {
+                    par.forEach(jogo => {
                         if (jogo.home_team_name_en) timesDoPar.add(jogo.home_team_name_en);
                         if (jogo.away_team_name_en) timesDoPar.add(jogo.away_team_name_en);
                     });
@@ -4312,11 +4325,25 @@
                     if (idx !== -1) {
                         usados.add(idx);
                         reordenado.push(atual[idx]);
+                    } else {
+                        const conhecidos = par.map(j => nomeResultadoDoJogo(j, true)).filter(Boolean);
+                        reordenado.push({ _placeholder: true, id: `ph-${sequencia[i]}-${p}`, _conhecidos: conhecidos });
                     }
                 }
                 // Jogos que não deu pra casar por nome (ex.: chave ainda incompleta) entram no final.
                 atual.forEach((jogo, j) => { if (!usados.has(j)) reordenado.push(jogo); });
                 porTipo[sequencia[i]] = reordenado;
+            }
+
+            // Final e disputa de 3º lugar: saem das duas Semifinais (vencedores e perdedores).
+            const sf = porTipo.sf;
+            if (sf.length && !porTipo.final.length) {
+                const vencedores = sf.map(j => nomeResultadoDoJogo(j, true)).filter(Boolean);
+                if (vencedores.length) porTipo.final = [{ _placeholder: true, id: 'ph-final', _conhecidos: vencedores }];
+            }
+            if (sf.length && !porTipo.third.length) {
+                const perdedores = sf.map(j => nomeResultadoDoJogo(j, false)).filter(Boolean);
+                if (perdedores.length) porTipo.third = [{ _placeholder: true, id: 'ph-third', _conhecidos: perdedores }];
             }
             return porTipo;
         }
@@ -4345,9 +4372,18 @@
 
         function renderBracketCard(jogo) {
             if (!jogo || jogo._placeholder) {
+                // Time(s) já definido(s) por um jogo anterior finalizado (mesmo sem o confronto
+                // seguinte ainda existir na API) aparecem no lugar do "A definir" genérico.
+                const [enConhecidoA, enConhecidoB] = (jogo && jogo._conhecidos) || [];
+                const linhaTime = (en) => {
+                    if (!en) return `<div class="bracket-team"><span>❔ A definir</span></div>`;
+                    const nome = nomePtDe(en) || en;
+                    const bandeira = BANDEIRA_PT[nome] || FLAG_EN[en] || '⚽';
+                    return `<div class="bracket-team text-slate-300"><span>${bandeira} ${nome}</span></div>`;
+                };
                 return `<div class="bracket-card is-placeholder opacity-50">
-                    <div class="bracket-team"><span>❔ A definir</span></div>
-                    <div class="bracket-team"><span>❔ A definir</span></div>
+                    ${linhaTime(enConhecidoA)}
+                    ${linhaTime(enConhecidoB)}
                 </div>`;
             }
             const nomeHome = nomePtDe(jogo.home_team_name_en) || jogo.home_team_name_en || 'A definir';
