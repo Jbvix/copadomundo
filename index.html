@@ -1199,6 +1199,13 @@
         // Força base aproximada (escala ~60-92) inspirada no ranking FIFA.
         // nome em inglês (compatível com a API-Football) | PT | bandeira | rating
         // =====================================================================
+        // As 48 seleções REAIS deste torneio (conferido contra fixtures/standings ao vivo da
+        // API-Football em 2026-07): a lista anterior tinha nomes que nunca batem com a API
+        // (ex.: "Turkey"/"Korea Republic", quando a API usa "Türkiye"/"South Korea" — o que
+        // fazia a eliminação real dessas seleções nunca ser detectada) e incluía seleções que
+        // não fazem parte deste torneio (Itália, Dinamarca, Sérvia, Ucrânia, Nigéria, Chile,
+        // Venezuela, Camarões, Peru, Costa Rica), aparecendo pra sempre como "vivas" na
+        // probabilidade de título mesmo sem nunca disputar um jogo de verdade.
         const CAMPO_2026 = [
             { en: "Argentina", pt: "Argentina", flag: "🇦🇷", r: 91 },
             { en: "France", pt: "França", flag: "🇫🇷", r: 90 },
@@ -1208,7 +1215,6 @@
             { en: "Portugal", pt: "Portugal", flag: "🇵🇹", r: 88 },
             { en: "Netherlands", pt: "Holanda", flag: "🇳🇱", r: 87 },
             { en: "Belgium", pt: "Bélgica", flag: "🇧🇪", r: 85 },
-            { en: "Italy", pt: "Itália", flag: "🇮🇹", r: 85 },
             { en: "Germany", pt: "Alemanha", flag: "🇩🇪", r: 85 },
             { en: "Croatia", pt: "Croácia", flag: "🇭🇷", r: 84 },
             { en: "Morocco", pt: "Marrocos", flag: "🇲🇦", r: 83 },
@@ -1218,35 +1224,36 @@
             { en: "Switzerland", pt: "Suíça", flag: "🇨🇭", r: 81 },
             { en: "Japan", pt: "Japão", flag: "🇯🇵", r: 81 },
             { en: "Senegal", pt: "Senegal", flag: "🇸🇳", r: 81 },
+            { en: "Sweden", pt: "Suécia", flag: "🇸🇪", r: 79 },
             { en: "USA", pt: "EUA", flag: "🇺🇸", r: 80 },
             { en: "Mexico", pt: "México", flag: "🇲🇽", r: 80 },
-            { en: "Denmark", pt: "Dinamarca", flag: "🇩🇰", r: 80 },
             { en: "Austria", pt: "Áustria", flag: "🇦🇹", r: 80 },
-            { en: "Turkey", pt: "Turquia", flag: "🇹🇷", r: 80 },
+            { en: "Scotland", pt: "Escócia", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", r: 76 },
+            { en: "Türkiye", pt: "Turquia", flag: "🇹🇷", r: 80 },
             { en: "Ecuador", pt: "Equador", flag: "🇪🇨", r: 79 },
-            { en: "Serbia", pt: "Sérvia", flag: "🇷🇸", r: 79 },
-            { en: "Ukraine", pt: "Ucrânia", flag: "🇺🇦", r: 78 },
-            { en: "Korea Republic", pt: "Coreia do Sul", flag: "🇰🇷", r: 78 },
             { en: "Canada", pt: "Canadá", flag: "🇨🇦", r: 78 },
-            { en: "Nigeria", pt: "Nigéria", flag: "🇳🇬", r: 78 },
             { en: "Egypt", pt: "Egito", flag: "🇪🇬", r: 78 },
+            { en: "South Korea", pt: "Coreia do Sul", flag: "🇰🇷", r: 78 },
             { en: "Australia", pt: "Austrália", flag: "🇦🇺", r: 77 },
             { en: "Iran", pt: "Irã", flag: "🇮🇷", r: 77 },
             { en: "Algeria", pt: "Argélia", flag: "🇩🇿", r: 77 },
             { en: "Ivory Coast", pt: "Costa do Marfim", flag: "🇨🇮", r: 77 },
             { en: "Paraguay", pt: "Paraguai", flag: "🇵🇾", r: 77 },
-            { en: "Chile", pt: "Chile", flag: "🇨🇱", r: 76 },
-            { en: "Venezuela", pt: "Venezuela", flag: "🇻🇪", r: 76 },
-            { en: "Cameroon", pt: "Camarões", flag: "🇨🇲", r: 76 },
-            { en: "Peru", pt: "Peru", flag: "🇵🇪", r: 75 },
+            { en: "Congo DR", pt: "RD Congo", flag: "🇨🇩", r: 74 },
+            { en: "Cape Verde Islands", pt: "Cabo Verde", flag: "🇨🇻", r: 74 },
+            { en: "Czechia", pt: "Tchéquia", flag: "🇨🇿", r: 75 },
+            { en: "Bosnia & Herzegovina", pt: "Bósnia e Herzeg.", flag: "🇧🇦", r: 74 },
             { en: "Tunisia", pt: "Tunísia", flag: "🇹🇳", r: 75 },
             { en: "Ghana", pt: "Gana", flag: "🇬🇭", r: 75 },
             { en: "Saudi Arabia", pt: "Arábia Saudita", flag: "🇸🇦", r: 74 },
-            { en: "Costa Rica", pt: "Costa Rica", flag: "🇨🇷", r: 74 },
             { en: "South Africa", pt: "África do Sul", flag: "🇿🇦", r: 74 },
             { en: "Qatar", pt: "Catar", flag: "🇶🇦", r: 73 },
             { en: "Uzbekistan", pt: "Uzbequistão", flag: "🇺🇿", r: 73 },
             { en: "Panama", pt: "Panamá", flag: "🇵🇦", r: 73 },
+            { en: "Iraq", pt: "Iraque", flag: "🇮🇶", r: 70 },
+            { en: "Jordan", pt: "Jordânia", flag: "🇯🇴", r: 68 },
+            { en: "Haiti", pt: "Haiti", flag: "🇭🇹", r: 68 },
+            { en: "Curaçao", pt: "Curaçao", flag: "🇨🇼", r: 68 },
             { en: "New Zealand", pt: "Nova Zelândia", flag: "🇳🇿", r: 70 }
         ];
         let chartCampo = null;
