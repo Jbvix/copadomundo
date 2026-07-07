@@ -4288,13 +4288,46 @@
         const MATAMATA_LABELS = { r32: '16-avos', r16: 'Oitavas', qf: 'Quartas', sf: 'Semifinal' };
         const MATAMATA_VAGAS = { r32: 16, r16: 8, qf: 4, sf: 2, final: 1, third: 1 };
 
+        // Reordena r16/qf/sf pra alinhar visualmente com o jogo do qual cada time realmente
+        // veio: a data de kickoff não segue a estrutura da chave (jogos de "quadrantes"
+        // diferentes são transmitidos fora de ordem), então ordenar só por data pode colocar
+        // o confronto errado ao lado do par de jogos anteriores que o alimentou.
+        function ordenarPorLinhagemDaChave(porTipo) {
+            const sequencia = ['r32', 'r16', 'qf', 'sf'];
+            for (let i = 1; i < sequencia.length; i++) {
+                const anterior = porTipo[sequencia[i - 1]];
+                const atual = porTipo[sequencia[i]];
+                if (!anterior.length || !atual.length) continue;
+
+                const usados = new Set();
+                const reordenado = [];
+                for (let p = 0; p < anterior.length; p += 2) {
+                    const timesDoPar = new Set();
+                    [anterior[p], anterior[p + 1]].filter(Boolean).forEach(jogo => {
+                        if (jogo.home_team_name_en) timesDoPar.add(jogo.home_team_name_en);
+                        if (jogo.away_team_name_en) timesDoPar.add(jogo.away_team_name_en);
+                    });
+                    const idx = atual.findIndex((jogo, j) => !usados.has(j) &&
+                        (timesDoPar.has(jogo.home_team_name_en) || timesDoPar.has(jogo.away_team_name_en)));
+                    if (idx !== -1) {
+                        usados.add(idx);
+                        reordenado.push(atual[idx]);
+                    }
+                }
+                // Jogos que não deu pra casar por nome (ex.: chave ainda incompleta) entram no final.
+                atual.forEach((jogo, j) => { if (!usados.has(j)) reordenado.push(jogo); });
+                porTipo[sequencia[i]] = reordenado;
+            }
+            return porTipo;
+        }
+
         function agruparJogosMataMata() {
             const porTipo = { r32: [], r16: [], qf: [], sf: [], final: [], third: [] };
             apiGames.forEach(j => { if (porTipo[j.type]) porTipo[j.type].push(j); });
             Object.keys(porTipo).forEach(tipo => {
                 porTipo[tipo].sort((a, b) => (parseDataLocal(a.local_date) || 0) - (parseDataLocal(b.local_date) || 0));
             });
-            return porTipo;
+            return ordenarPorLinhagemDaChave(porTipo);
         }
 
         // Completa uma rodada até o nº de vagas esperado com placeholders "A definir".
