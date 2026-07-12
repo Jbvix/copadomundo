@@ -4298,11 +4298,20 @@
             return ladoFinal === 'home' ? jogo.home_team_name_en : jogo.away_team_name_en;
         }
 
+        // Nome (en) já conhecido a partir de um jogo da rodada anterior: o vencedor, se o jogo já
+        // terminou, ou o único time já sabido de um placeholder parcialmente preenchido.
+        function nomeConhecidoDoJogo(jogo) {
+            if (!jogo) return null;
+            if (jogo._placeholder) return (jogo._conhecidos && jogo._conhecidos[0]) || null;
+            return nomeResultadoDoJogo(jogo, true);
+        }
+
         // Reordena r16/qf/sf pra alinhar visualmente com o jogo do qual cada time realmente
-        // veio: a data de kickoff não segue a estrutura da chave (jogos de "quadrantes"
-        // diferentes são transmitidos fora de ordem), então ordenar só por data pode colocar
-        // o confronto errado ao lado do par de jogos anteriores que o alimentou. Quando o
-        // confronto seguinte ainda não existe na API (chave incompleta), mas um dos lados já
+        // veio. Importante: a chave NÃO necessariamente liga pares adjacentes da rodada
+        // anterior (ex.: o vencedor do 1º confronto de Quartas pode enfrentar o vencedor do
+        // 3º, não do 2º) — por isso cada confronto real é posicionado pela origem verdadeira
+        // dos seus dois times (rastreada por nome), nunca por uma adjacência presumida. Quando
+        // o confronto seguinte ainda não existe na API (chave incompleta), mas um dos lados já
         // tem vencedor definido, mostra esse time em vez de deixar os dois como "A definir".
         function ordenarPorLinhagemDaChave(porTipo) {
             const sequencia = ['r32', 'r16', 'qf', 'sf'];
@@ -4311,28 +4320,38 @@
                 const atual = porTipo[sequencia[i]];
                 if (!anterior.length) continue;
 
-                const usados = new Set();
-                const reordenado = [];
-                for (let p = 0; p < anterior.length; p += 2) {
-                    const par = [anterior[p], anterior[p + 1]].filter(Boolean);
-                    const timesDoPar = new Set();
-                    par.forEach(jogo => {
-                        if (jogo.home_team_name_en) timesDoPar.add(jogo.home_team_name_en);
-                        if (jogo.away_team_name_en) timesDoPar.add(jogo.away_team_name_en);
-                    });
-                    const idx = atual.findIndex((jogo, j) => !usados.has(j) &&
-                        (timesDoPar.has(jogo.home_team_name_en) || timesDoPar.has(jogo.away_team_name_en)));
-                    if (idx !== -1) {
-                        usados.add(idx);
-                        reordenado.push(atual[idx]);
-                    } else {
-                        const conhecidos = par.map(j => nomeResultadoDoJogo(j, true)).filter(Boolean);
-                        reordenado.push({ _placeholder: true, id: `ph-${sequencia[i]}-${p}`, _conhecidos: conhecidos });
-                    }
+                // Índice (na rodada anterior, já corretamente ordenada) de onde cada time veio.
+                const indiceOrigem = {};
+                anterior.forEach((jogo, idx) => {
+                    if (jogo.home_team_name_en) indiceOrigem[jogo.home_team_name_en] = idx;
+                    if (jogo.away_team_name_en) indiceOrigem[jogo.away_team_name_en] = idx;
+                    (jogo._conhecidos || []).forEach(en => { indiceOrigem[en] = idx; });
+                });
+
+                // 1) Confrontos já reais (publicados pela API): posiciona pela origem verdadeira
+                // dos times, e marca os jogos anteriores que já os alimentaram.
+                const usadosAnterior = new Set();
+                const itens = atual.map(jogo => {
+                    const idxs = [jogo.home_team_name_en, jogo.away_team_name_en]
+                        .map(en => indiceOrigem[en]).filter(v => v != null);
+                    idxs.forEach(idx => usadosAnterior.add(idx));
+                    return { pos: idxs.length ? Math.min(...idxs) : anterior.length, jogo };
+                });
+
+                // 2) Jogos anteriores que ainda não alimentaram nenhum confronto real: agrupa em
+                // pares (na ordem em que sobraram) e sintetiza um placeholder com o(s) time(s)
+                // já definido(s), pra mostrar quem já classificou mesmo sem o confronto seguinte
+                // existir ainda na API.
+                const sobras = anterior.map((_, idx) => idx).filter(idx => !usadosAnterior.has(idx));
+                for (let k = 0; k < sobras.length; k += 2) {
+                    const p = sobras[k], q = sobras[k + 1];
+                    const par = [anterior[p], anterior[q]].filter(Boolean);
+                    const conhecidos = par.map(nomeConhecidoDoJogo).filter(Boolean);
+                    itens.push({ pos: p, jogo: { _placeholder: true, id: `ph-${sequencia[i]}-${p}`, _conhecidos: conhecidos } });
                 }
-                // Jogos que não deu pra casar por nome (ex.: chave ainda incompleta) entram no final.
-                atual.forEach((jogo, j) => { if (!usados.has(j)) reordenado.push(jogo); });
-                porTipo[sequencia[i]] = reordenado;
+
+                itens.sort((a, b) => a.pos - b.pos);
+                porTipo[sequencia[i]] = itens.map(it => it.jogo);
             }
 
             // Final e disputa de 3º lugar: saem das duas Semifinais (vencedores e perdedores).
