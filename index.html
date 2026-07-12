@@ -629,6 +629,7 @@
                             <i class="fa-solid fa-chevron-right mt-0.5 text-amber-400 shrink-0"></i>
                             <span>Quais jogos do Brasil 🇧🇷 já rolaram e quais ainda faltam?</span>
                         </button>
+                        <div id="perguntas-semifinais-container" class="space-y-3"></div>
                     </div>
                 </div>
 
@@ -1854,6 +1855,53 @@
             btn.classList.remove('hidden');
         }
 
+        // Perguntas recomendadas do Téo sobre a Semifinal: uma por confronto, usando os times
+        // reais assim que o mata-mata os define (mesmo antes dos dois lados estarem decididos).
+        function renderizarPerguntasSemifinalistas() {
+            const container = document.getElementById('perguntas-semifinais-container');
+            if (!container) return;
+            if (!apiGames.length) { container.innerHTML = ''; return; }
+
+            const sf = (agruparJogosMataMata().sf) || [];
+            const taticaDe = nomePt => (SELECOES[nomePt] && SELECOES[nomePt].tática) || 'Posse de Bola';
+
+            const perguntas = [];
+            sf.forEach(jogo => {
+                if (jogo._placeholder) {
+                    const [enConhecido] = jogo._conhecidos || [];
+                    if (!enConhecido) return; // nenhum lado dessa semifinal definido ainda
+                    const nome = nomePtDe(enConhecido);
+                    const bandeira = BANDEIRA_PT[nome] || FLAG_EN[enConhecido] || '⚽';
+                    perguntas.push({
+                        label: `${bandeira} A tática de ${nome} aguenta a semifinal, seja qual for o adversário?`,
+                        prompt: `Com a tática de ${taticaDe(nome)}, ${nome} tem o que precisa pra vencer a semifinal, seja qual for o adversário?`,
+                    });
+                } else {
+                    const nomeA = nomePtDe(jogo.home_team_name_en);
+                    const nomeB = nomePtDe(jogo.away_team_name_en);
+                    const bandeiraA = BANDEIRA_PT[nomeA] || FLAG_EN[jogo.home_team_name_en] || '⚽';
+                    const bandeiraB = BANDEIRA_PT[nomeB] || FLAG_EN[jogo.away_team_name_en] || '⚽';
+                    perguntas.push({
+                        label: `${bandeiraA} ${nomeA} x ${nomeB} ${bandeiraB}: qual tática leva a melhor na semifinal?`,
+                        prompt: `Qual o impacto da tática de ${taticaDe(nomeA)} de ${nomeA} contra a ${taticaDe(nomeB)} de ${nomeB} na semifinal?`,
+                    });
+                }
+            });
+
+            if (!perguntas.length) { container.innerHTML = ''; return; }
+
+            container.innerHTML = perguntas.map((_, i) => `
+                <button type="button" data-sf-pergunta="${i}" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-sky-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
+                    <i class="fa-solid fa-chevron-right mt-0.5 text-sky-400 shrink-0"></i>
+                    <span></span>
+                </button>`).join('');
+            container.querySelectorAll('[data-sf-pergunta]').forEach(btn => {
+                const p = perguntas[Number(btn.dataset.sfPergunta)];
+                btn.querySelector('span').textContent = p.label;
+                btn.onclick = () => sendQuickPrompt(p.prompt);
+            });
+        }
+
         // Card do topo do Dashboard: mostra o(s) jogo(s) ao vivo agora, ou o próximo jogo da Copa
         // quando não há nenhum rolando.
         function renderAoVivoAgora() {
@@ -2005,6 +2053,7 @@
 
             const ctx = obterJogosTemporais();
             renderizarPerguntaTaticaBrasil(ctx.brasil);
+            renderizarPerguntasSemifinalistas();
             const linhas = ctx.proximos.slice(0, 12);
             if (!linhas.length) {
                 proxEl.innerHTML = `<div class="text-[11px] text-slate-400 py-4 px-2 rounded-xl bg-slate-800/40 border border-slate-700/50 text-center">
