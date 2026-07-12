@@ -4306,6 +4306,43 @@
             return nomeResultadoDoJogo(jogo, true);
         }
 
+        // Time(s) que um jogo (real ou placeholder) representa, só pra casar por nome.
+        function timesDoJogo(jogo) {
+            if (!jogo) return [];
+            if (jogo._placeholder) return jogo._conhecidos || [];
+            return [jogo.home_team_name_en, jogo.away_team_name_en].filter(Boolean);
+        }
+
+        // Reagrupa "atual" (uma rodada) pela ordem de "proxima" (a rodada seguinte, já
+        // corretamente ordenada): cada par de jogos de "atual" que alimenta o MESMO confronto
+        // de "proxima" é colocado adjacente, na mesma ordem em que "proxima" aparece. Isso é
+        // necessário porque a chave real pode ligar posições não-adjacentes (ex.: o vencedor do
+        // 1º confronto de Quartas enfrentar o vencedor do 3º, não do 2º) — algo que só dá pra
+        // descobrir olhando pra rodada seguinte já confirmada, não só pra anterior.
+        function reagruparPelaProximaRodada(atual, proxima) {
+            const usados = new Set();
+            const reordenado = [];
+            proxima.forEach(jogoProx => {
+                const nomes = new Set(timesDoJogo(jogoProx));
+                const grupo = [];
+                atual.forEach((jogo, idx) => {
+                    if (usados.has(idx)) return;
+                    if (timesDoJogo(jogo).some(t => nomes.has(t))) { usados.add(idx); grupo.push(jogo); }
+                });
+                // Completa o par até 2 com o próximo jogo ainda não usado, quando esse lado da
+                // chave ainda não tem os dois times identificáveis por nome.
+                while (grupo.length < 2) {
+                    const idx = atual.findIndex((_, j) => !usados.has(j));
+                    if (idx === -1) break;
+                    usados.add(idx);
+                    grupo.push(atual[idx]);
+                }
+                reordenado.push(...grupo);
+            });
+            atual.forEach((jogo, idx) => { if (!usados.has(idx)) reordenado.push(jogo); });
+            return reordenado;
+        }
+
         // Reordena r16/qf/sf pra alinhar visualmente com o jogo do qual cada time realmente
         // veio. Importante: a chave NÃO necessariamente liga pares adjacentes da rodada
         // anterior (ex.: o vencedor do 1º confronto de Quartas pode enfrentar o vencedor do
@@ -4352,6 +4389,20 @@
 
                 itens.sort((a, b) => a.pos - b.pos);
                 porTipo[sequencia[i]] = itens.map(it => it.jogo);
+            }
+
+            // Correção "de trás pra frente": o passo acima só olha pra rodada ANTERIOR, então
+            // não enxerga quando a chave real liga posições não-adjacentes dessa mesma rodada
+            // (ex.: 1º confronto de Quartas ligado ao 3º, não ao 2º, pra formar a Semifinal).
+            // Agora que sf/qf/r16 têm uma ordem inicial, realinha cada rodada com a estrutura
+            // real da rodada SEGUINTE (da mais avançada pra mais cedo), reagrupando cada par de
+            // jogos que alimenta o mesmo confronto seguinte.
+            const paraTras = ['sf', 'qf', 'r16'];
+            for (let i = 0; i < paraTras.length - 1; i++) {
+                const proxima = porTipo[paraTras[i]];
+                const atual = porTipo[paraTras[i + 1]];
+                if (!proxima.length || !atual.length) continue;
+                porTipo[paraTras[i + 1]] = reagruparPelaProximaRodada(atual, proxima);
             }
 
             // Final e disputa de 3º lugar: saem das duas Semifinais (vencedores e perdedores).
