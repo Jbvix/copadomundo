@@ -261,6 +261,9 @@
                 <button onclick="switchTab('matamata')" id="btn-tab-matamata" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-sitemap mr-1"></i> Mata-Mata
                 </button>
+                <button onclick="switchTab('semifinalistas')" id="btn-tab-semifinalistas" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
+                    <i class="fa-solid fa-satellite-dish mr-1"></i> Semifinalistas
+                </button>
                 <button onclick="switchTab('history')" id="btn-tab-history" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-history mr-1"></i> Histórico
                 </button>
@@ -488,6 +491,43 @@
                     <p class="text-xs text-slate-400 mb-3">Os maiores zebras do mata-mata até agora, pela diferença de força entre quem caiu e quem eliminou.</p>
                     <div id="matamata-zebras-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: PAINEL ESTRATÉGICO DOS SEMIFINALISTAS -->
+        <section id="tab-semifinalistas" class="hidden space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Mapa de Inteligência dos Semifinalistas
+                        </h2>
+                        <p id="semifinalistas-atualizado" class="text-xs sm:text-sm text-slate-400 mt-1">Carregando…</p>
+                    </div>
+                    <button type="button" onclick="renderPainelSemifinalistas(true)" class="text-xs text-slate-300 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-slate-600 hover:border-emerald-500/50 bg-slate-800/50 shrink-0 self-start sm:self-auto">
+                        <i class="fa-solid fa-rotate mr-1"></i> Atualizar
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-4">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Estatísticas reais desta Copa (jogos, gols, chance de título) combinadas com peso/tática de cada seleção — atualiza sozinho conforme o mata-mata define quem chega na semifinal.
+                </p>
+                <div id="semifinalistas-vazio" class="hidden text-center text-slate-400 text-sm py-10">
+                    <i class="fa-solid fa-hourglass-half text-3xl text-amber-500/60 mb-3 block"></i>
+                    Nenhuma seleção classificada pra semifinal ainda. O painel aparece assim que o mata-mata definir pelo menos um lado.
+                </div>
+                <div id="semifinalistas-graficos" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-slate-950/40 border border-slate-800 rounded-xl p-4">
+                        <p class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1"><i class="fa-solid fa-crosshairs text-amber-400 mr-1"></i> Peso × Potencial Ofensivo</p>
+                        <p class="text-[10px] text-slate-500 mb-3">Eixo X = peso/rating da seleção · Eixo Y = gols marcados nesta Copa · tamanho da bolha = chance de título</p>
+                        <div class="h-64 sm:h-72"><canvas id="chartSemifinalistasPeso"></canvas></div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-slate-800 rounded-xl p-4">
+                        <p class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1"><i class="fa-solid fa-chart-area text-emerald-400 mr-1"></i> Radar Comparativo</p>
+                        <p class="text-[10px] text-slate-500 mb-3">Ataque, defesa, peso, forma real e chance de título — normalizado de 0 a 100.</p>
+                        <div class="h-64 sm:h-72"><canvas id="chartSemifinalistasRadar"></canvas></div>
+                    </div>
+                </div>
+                <div id="semifinalistas-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </section>
 
@@ -1067,7 +1107,27 @@
             // Itália
             { nome: "Nicolò Barella", selecao: "Itália", posicao: "Meio-Campo", clube: "Inter de Milão", golsClube: 5, assistenciasClube: 9, ratingClube: 8.4, ratingSelecao: 8.5 },
             { nome: "Federico Chiesa", selecao: "Itália", posicao: "Atacante", clube: "Juventus", golsClube: 10, assistenciasClube: 6, ratingClube: 8.1, ratingSelecao: 8.2 },
-            { nome: "Alessandro Bastoni", selecao: "Itália", posicao: "Defensor", clube: "Inter de Milão", golsClube: 2, assistenciasClube: 4, ratingClube: 8.5, ratingSelecao: 8.4 }
+            { nome: "Alessandro Bastoni", selecao: "Itália", posicao: "Defensor", clube: "Inter de Milão", golsClube: 2, assistenciasClube: 4, ratingClube: 8.5, ratingSelecao: 8.4 },
+
+            // Bélgica
+            { nome: "Kevin De Bruyne", selecao: "Bélgica", posicao: "Meio-Campo", clube: "Napoli", golsClube: 7, assistenciasClube: 13, ratingClube: 8.6, ratingSelecao: 8.9 },
+            { nome: "Jérémy Doku", selecao: "Bélgica", posicao: "Atacante", clube: "Manchester City", golsClube: 9, assistenciasClube: 10, ratingClube: 8.3, ratingSelecao: 8.2 },
+            { nome: "Youri Tielemans", selecao: "Bélgica", posicao: "Meio-Campo", clube: "Aston Villa", golsClube: 6, assistenciasClube: 7, ratingClube: 7.9, ratingSelecao: 7.8 },
+
+            // Marrocos
+            { nome: "Achraf Hakimi", selecao: "Marrocos", posicao: "Defensor", clube: "Paris Saint-Germain", golsClube: 8, assistenciasClube: 9, ratingClube: 8.5, ratingSelecao: 8.6 },
+            { nome: "Brahim Díaz", selecao: "Marrocos", posicao: "Meio-Campo", clube: "Real Madrid", golsClube: 11, assistenciasClube: 8, ratingClube: 8.2, ratingSelecao: 8.3 },
+            { nome: "Youssef En-Nesyri", selecao: "Marrocos", posicao: "Atacante", clube: "Fenerbahçe", golsClube: 19, assistenciasClube: 4, ratingClube: 8.0, ratingSelecao: 8.1 },
+
+            // Noruega
+            { nome: "Erling Haaland", selecao: "Noruega", posicao: "Atacante", clube: "Manchester City", golsClube: 34, assistenciasClube: 5, ratingClube: 9.2, ratingSelecao: 9.0 },
+            { nome: "Martin Ødegaard", selecao: "Noruega", posicao: "Meio-Campo", clube: "Arsenal", golsClube: 8, assistenciasClube: 12, ratingClube: 8.5, ratingSelecao: 8.6 },
+            { nome: "Alexander Sørloth", selecao: "Noruega", posicao: "Atacante", clube: "Atlético de Madrid", golsClube: 16, assistenciasClube: 5, ratingClube: 7.9, ratingSelecao: 7.8 },
+
+            // Suíça
+            { nome: "Granit Xhaka", selecao: "Suíça", posicao: "Meio-Campo", clube: "Bayer Leverkusen", golsClube: 3, assistenciasClube: 6, ratingClube: 8.1, ratingSelecao: 8.2 },
+            { nome: "Breel Embolo", selecao: "Suíça", posicao: "Atacante", clube: "Monaco", golsClube: 10, assistenciasClube: 5, ratingClube: 7.7, ratingSelecao: 7.7 },
+            { nome: "Manuel Akanji", selecao: "Suíça", posicao: "Defensor", clube: "Manchester City", golsClube: 1, assistenciasClube: 1, ratingClube: 7.8, ratingSelecao: 7.9 }
         ];
 
         // --- 3. BANCO DE DADOS DE JOGOS (PROGRAMADOS & HISTÓRICOS) ---
@@ -2681,7 +2741,7 @@
             pararAutoRefreshAPI();
             pararClassificacaoAutoRefresh();
 
-            ['dashboard', 'classificacao', 'matamata', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
+            ['dashboard', 'classificacao', 'matamata', 'semifinalistas', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
                 if (section === tabId) {
                     el.classList.remove('hidden');
@@ -2690,7 +2750,7 @@
                 }
             });
 
-            ['dashboard', 'classificacao', 'matamata', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
+            ['dashboard', 'classificacao', 'matamata', 'semifinalistas', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const btn = document.getElementById(`btn-tab-${section}`);
                 if (btn) {
                     if (section === tabId) {
@@ -2743,6 +2803,17 @@
                     }
                 }, 100);
                 iniciarAutoRefreshAPI(); // reaproveita o polling de jogos; mantém a chave atualizada durante partidas ao vivo.
+            }
+
+            if (tabId === 'semifinalistas') {
+                setTimeout(() => {
+                    if (apiGames.length > 0) {
+                        renderPainelSemifinalistas();
+                        carregarJogosAPI(true, true).then(() => renderPainelSemifinalistas());
+                    } else {
+                        carregarJogosAPI(false, true).then(() => renderPainelSemifinalistas());
+                    }
+                }, 100);
             }
 
             if (tabId === 'ia-chat') {
@@ -4620,6 +4691,187 @@
                     ? `Atualizado às <span class="text-white font-semibold">${hora}</span> BRT`
                     : 'Chave será preenchida após o fim da fase de grupos.';
             }
+        }
+
+        // Lista os times (en) atualmente classificados/próximos da Semifinal, na ordem do
+        // mata-mata (mesma técnica das perguntas recomendadas do Téo: inclui um time assim que
+        // pelo menos um lado do confronto já é conhecido, mesmo sem o adversário definido).
+        function obterSemifinalistasAtuais() {
+            const sf = (agruparJogosMataMata().sf) || [];
+            const ens = [];
+            sf.forEach(jogo => {
+                const times = jogo._placeholder ? (jogo._conhecidos || []) : [jogo.home_team_name_en, jogo.away_team_name_en].filter(Boolean);
+                times.forEach(en => { if (en && !ens.includes(en)) ens.push(en); });
+            });
+            return ens;
+        }
+
+        // Estatísticas reais desta Copa (fase de grupos + mata-mata) de uma seleção, a partir
+        // dos jogos já finalizados em apiGames.
+        function calcularEstatisticasReaisTime(en) {
+            const jogos = apiGames.filter(j => j.finished === 'TRUE' && (j.home_team_name_en === en || j.away_team_name_en === en));
+            const st = { jogos: jogos.length, vitorias: 0, empates: 0, derrotas: 0, golsPro: 0, golsContra: 0 };
+            jogos.forEach(j => {
+                const casa = j.home_team_name_en === en;
+                const gp = Number(casa ? j.home_score : j.away_score) || 0;
+                const gc = Number(casa ? j.away_score : j.home_score) || 0;
+                st.golsPro += gp;
+                st.golsContra += gc;
+                const vencedor = vencedorDoJogo(j);
+                if (!vencedor) st.empates++;
+                else if (vencedor === (casa ? 'home' : 'away')) st.vitorias++;
+                else st.derrotas++;
+            });
+            st.saldo = st.golsPro - st.golsContra;
+            return st;
+        }
+
+        let chartSemifinalistasPeso = null, chartSemifinalistasRadar = null;
+
+        // Painel estratégico: estatísticas reais + gráficos comparativos dos semifinalistas
+        // atuais (peso x potencial ofensivo, radar de força) e seus jogadores em destaque.
+        async function renderPainelSemifinalistas(forcar = false) {
+            const atualizadoEl = document.getElementById('semifinalistas-atualizado');
+            const vazioEl = document.getElementById('semifinalistas-vazio');
+            const graficosEl = document.getElementById('semifinalistas-graficos');
+            const cardsEl = document.getElementById('semifinalistas-cards');
+            if (!cardsEl) return;
+
+            if (forcar) await carregarJogosAPI(true, true);
+
+            const ens = obterSemifinalistasAtuais();
+            if (!ens.length) {
+                vazioEl.classList.remove('hidden');
+                graficosEl.classList.add('hidden');
+                cardsEl.innerHTML = '';
+                if (atualizadoEl) atualizadoEl.textContent = 'Chave ainda não definiu nenhum semifinalista.';
+                return;
+            }
+            vazioEl.classList.add('hidden');
+            graficosEl.classList.remove('hidden');
+
+            const times = ens.map(en => {
+                const nome = nomePtDe(en);
+                const bandeira = BANDEIRA_PT[nome] || FLAG_EN[en] || '⚽';
+                const rating = RATING_BASE_EN[en] || 75;
+                const st = calcularEstatisticasReaisTime(en);
+                const chance = probabilidadesCampeao[nome] != null ? probabilidadesCampeao[nome] : 0;
+                const tatica = (SELECOES[nome] && SELECOES[nome].tática) || 'Posse de Bola';
+                const jogadores = JOGADORES.filter(j => j.selecao === nome).sort((a, b) => b.ratingSelecao - a.ratingSelecao);
+                return { en, nome, bandeira, rating, st, chance, tatica, jogadores };
+            });
+
+            renderGraficoPesoPotencial(times);
+            renderGraficoRadarSemifinalistas(times);
+
+            cardsEl.innerHTML = times.map(t => `
+                <div class="bg-slate-950/40 border border-slate-800 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">${t.bandeira}</span>
+                            <div>
+                                <p class="font-bold text-white text-sm">${t.nome}</p>
+                                <p class="text-[10px] text-slate-500">Tática: ${t.tatica} · Peso ${t.rating}</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-extrabold text-emerald-400">${t.chance}%</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center mb-3">
+                        <div class="bg-slate-800/60 rounded-lg py-1.5"><p class="text-[9px] text-slate-500">J</p><p class="font-bold text-white text-sm">${t.st.jogos}</p></div>
+                        <div class="bg-slate-800/60 rounded-lg py-1.5"><p class="text-[9px] text-slate-500">V</p><p class="font-bold text-emerald-400 text-sm">${t.st.vitorias}</p></div>
+                        <div class="bg-slate-800/60 rounded-lg py-1.5"><p class="text-[9px] text-slate-500">E</p><p class="font-bold text-slate-300 text-sm">${t.st.empates}</p></div>
+                        <div class="bg-slate-800/60 rounded-lg py-1.5"><p class="text-[9px] text-slate-500">D</p><p class="font-bold text-rose-400 text-sm">${t.st.derrotas}</p></div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-3">⚽ ${t.st.golsPro} pró · ${t.st.golsContra} contra · saldo ${t.st.saldo > 0 ? '+' : ''}${t.st.saldo}</p>
+                    ${t.jogadores.length ? `
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jogadores em destaque</p>
+                        <div class="space-y-1.5">
+                            ${t.jogadores.map(j => `
+                                <div class="flex items-center justify-between text-xs bg-slate-800/40 rounded-lg px-2.5 py-1.5">
+                                    <span class="text-slate-200 truncate">${j.nome} <span class="text-slate-500">(${j.posicao})</span></span>
+                                    <span class="font-mono text-slate-400 shrink-0">${j.golsClube}G/${j.assistenciasClube}A · <span class="text-amber-400">${j.ratingSelecao}</span></span>
+                                </div>`).join('')}
+                        </div>` : `<p class="text-[11px] text-slate-600 italic">Elenco ainda não catalogado.</p>`}
+                </div>`).join('');
+
+            if (atualizadoEl) {
+                const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ_BR, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
+                atualizadoEl.innerHTML = `Atualizado às <span class="text-white font-semibold">${hora}</span> BRT · ${times.length} de 4 vagas definidas`;
+            }
+        }
+
+        function renderGraficoPesoPotencial(times) {
+            const canvas = document.getElementById('chartSemifinalistasPeso');
+            if (!canvas || typeof Chart === 'undefined') return;
+            if (chartSemifinalistasPeso) { chartSemifinalistasPeso.destroy(); chartSemifinalistasPeso = null; }
+            chartSemifinalistasPeso = new Chart(canvas.getContext('2d'), {
+                type: 'bubble',
+                data: {
+                    datasets: times.map((t, i) => ({
+                        label: `${t.bandeira} ${t.nome}`,
+                        data: [{ x: t.rating, y: t.st.golsPro, r: 8 + (t.chance / 100) * 22 }],
+                        backgroundColor: `hsla(${(i * 90) % 360}, 75%, 55%, 0.7)`,
+                        borderColor: `hsla(${(i * 90) % 360}, 75%, 65%, 1)`,
+                        borderWidth: 1.5,
+                    })),
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 10 } } },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: peso ${ctx.raw.x}, ${ctx.raw.y} gols, chance ${times[ctx.datasetIndex].chance}%` } },
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Peso (rating)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        y: { title: { display: true, text: 'Gols marcados na Copa', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' }, beginAtZero: true },
+                    },
+                },
+            });
+        }
+
+        function renderGraficoRadarSemifinalistas(times) {
+            const canvas = document.getElementById('chartSemifinalistasRadar');
+            if (!canvas || typeof Chart === 'undefined') return;
+            if (chartSemifinalistasRadar) { chartSemifinalistasRadar.destroy(); chartSemifinalistasRadar = null; }
+
+            // Normaliza cada dimensão pra 0-100 dentro do grupo de semifinalistas exibido.
+            const maxRating = Math.max(...times.map(t => t.rating), 1);
+            const maxGolsPro = Math.max(...times.map(t => t.st.golsPro), 1);
+            const maxGolsContra = Math.max(...times.map(t => t.st.golsContra), 0);
+            const maxChance = Math.max(...times.map(t => t.chance), 1);
+
+            chartSemifinalistasRadar = new Chart(canvas.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: ['Peso', 'Ataque', 'Defesa', 'Chance de Título'],
+                    datasets: times.map((t, i) => ({
+                        label: `${t.bandeira} ${t.nome}`,
+                        data: [
+                            Math.round((t.rating / maxRating) * 100),
+                            Math.round((t.st.golsPro / maxGolsPro) * 100),
+                            Math.round(100 - (maxGolsContra ? (t.st.golsContra / maxGolsContra) * 100 : 0)),
+                            Math.round((t.chance / maxChance) * 100),
+                        ],
+                        backgroundColor: `hsla(${(i * 90) % 360}, 75%, 55%, 0.15)`,
+                        borderColor: `hsla(${(i * 90) % 360}, 75%, 60%, 1)`,
+                        pointBackgroundColor: `hsla(${(i * 90) % 360}, 75%, 60%, 1)`,
+                        borderWidth: 2,
+                    })),
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 10 } } } },
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(148,163,184,0.15)' },
+                            grid: { color: 'rgba(148,163,184,0.15)' },
+                            pointLabels: { color: '#cbd5e1', font: { size: 10 } },
+                            ticks: { display: false, backdropColor: 'transparent' },
+                            suggestedMin: 0, suggestedMax: 100,
+                        },
+                    },
+                },
+            });
         }
 
         // Lê um valor de estatística pelo "type" no array da API-Football.
