@@ -789,6 +789,28 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Campo 3D: ondas de desempenho + KPIs (só pra jogos do mata-mata) -->
+            <div id="campo3d-secao" class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                    <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cube text-emerald-400"></i> Campo 3D — Ondas de Desempenho
+                    </h3>
+                    <span class="text-[9px] text-slate-500">Ondas ilustrativas · gols no minuto real</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-4">
+                    <i class="fa-solid fa-circle-info mr-1"></i> A intensidade das ondas reflete a estatística real do jogo inteiro (posse, chutes, escanteios), mas a API não dá o minuto exato de cada chute/escanteio — só o dos <strong class="text-slate-400">gols</strong> é 100% real e aparece no instante certo.
+                </p>
+                <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950" style="height: 300px;">
+                    <canvas id="campo3d-canvas" class="w-full h-full block"></canvas>
+                    <div id="campo3d-fallback" class="hidden absolute inset-0 flex items-center justify-center text-center text-xs text-slate-400 bg-slate-950/90 p-6">
+                        Não foi possível carregar o campo 3D agora (conexão instável). As estatísticas completas continuam disponíveis acima.
+                    </div>
+                    <div id="campo3d-legenda" class="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] font-bold pointer-events-none"></div>
+                </div>
+                <div id="campo3d-kpis" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"></div>
+                <div id="campo3d-gols" class="mt-3 flex flex-wrap gap-2"></div>
+            </div>
         </section>
 
         <!-- ABA: NÚMEROS DA COPA -->
@@ -2740,6 +2762,7 @@
             // Encerra o auto-refresh ao trocar de aba; ele só roda na aba de estatísticas.
             pararAutoRefreshAPI();
             pararClassificacaoAutoRefresh();
+            if (tabId !== 'live' && window.pararCampo3D) window.pararCampo3D();
 
             ['dashboard', 'classificacao', 'matamata', 'semifinalistas', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
@@ -2780,6 +2803,7 @@
                     } else {
                         carregarJogosAPI();
                     }
+                    if (selectedGame) atualizarCampo3D(selectedGame); // retoma o Campo 3D ao voltar pra aba
                 }, 100);
                 iniciarAutoRefreshAPI();
             }
@@ -5340,6 +5364,90 @@
 
             renderizarDetalhesJogoAPI();
             renderizarListaJogosAPI();
+            atualizarCampo3D(jogo);
+        }
+
+        // Rodadas do mata-mata (mesma lista usada na chave) — o Campo 3D só vale pra elas.
+        const RODADAS_MATA_MATA_CAMPO3D = ['r32', 'r16', 'qf', 'sf', 'final', 'third'];
+
+        // Mostra/atualiza o painel "Campo 3D" (ondas de desempenho + KPIs) pro jogo selecionado,
+        // só quando é uma partida do mata-mata. Usa os mesmos dados reais já calculados pelo
+        // selecionarJogoAPI (simState.stats já mescla as estatísticas reais da API-Football, e
+        // simState.timeline já tem os gols com o minuto real).
+        function atualizarCampo3D(jogo) {
+            const secao = document.getElementById('campo3d-secao');
+            if (!secao) return;
+
+            if (!jogo || !RODADAS_MATA_MATA_CAMPO3D.includes(jogo.type)) {
+                secao.classList.add('hidden');
+                if (window.pararCampo3D) window.pararCampo3D();
+                return;
+            }
+            secao.classList.remove('hidden');
+
+            const infoA = obterInfoTime(jogo.home_team_name_en);
+            const infoB = obterInfoTime(jogo.away_team_name_en);
+            const st = simState.stats;
+            const gols = simState.timeline.filter(e => e.type === 'goal');
+
+            const kpisEl = document.getElementById('campo3d-kpis');
+            if (kpisEl) {
+                const kpi = (rotulo, valor) => `<div class="bg-slate-800/60 rounded-lg py-2 text-center"><p class="text-[9px] text-slate-500 uppercase">${rotulo}</p><p class="font-bold text-white text-sm">${valor}</p></div>`;
+                kpisEl.innerHTML = [
+                    kpi('Placar', `${simState.homeScore} - ${simState.awayScore}`),
+                    kpi('Posse', `${st.possessionHome}% - ${st.possessionAway}%`),
+                    kpi('Chutes (no gol)', `${st.shotsHome} (${st.shotsOnTargetHome}) - ${st.shotsAway} (${st.shotsOnTargetAway})`),
+                    kpi('Escanteios', `${st.cornersHome} - ${st.cornersAway}`),
+                ].join('');
+            }
+
+            const golsEl = document.getElementById('campo3d-gols');
+            if (golsEl) {
+                golsEl.innerHTML = gols.length
+                    ? gols.map(g => {
+                        const bandeira = g.team === 'home' ? infoA.bandeira : infoB.bandeira;
+                        // O nome do artilheiro já vem com o minuto embutido (ex.: "Mbappé 60'");
+                        // remove pra não duplicar, já que o minuto aparece antes separadamente.
+                        const nomeJogador = g.player.replace(/\d+'\s*/, '').replace(/\s+/g, ' ').trim();
+                        return `<span class="text-[11px] bg-slate-800/60 border border-slate-700/60 rounded-full px-2.5 py-1">⚽ ${g.minute}' ${bandeira} ${escaparHtml(nomeJogador)}</span>`;
+                    }).join('')
+                    : `<span class="text-[11px] text-slate-600 italic">Sem gols registrados até agora.</span>`;
+            }
+
+            const legendaEl = document.getElementById('campo3d-legenda');
+            if (legendaEl) {
+                legendaEl.innerHTML = `
+                    <span class="text-emerald-400">${infoA.bandeira} ${infoA.nome}</span>
+                    <span class="text-sky-400">${infoB.bandeira} ${infoB.nome}</span>`;
+            }
+
+            // Intensidade relativa (0 a 1) de cada lado, a partir de chutes+escanteios+posse reais.
+            const pressaoHome = st.shotsHome * 2 + st.cornersHome + st.possessionHome * 0.3;
+            const pressaoAway = st.shotsAway * 2 + st.cornersAway + st.possessionAway * 0.3;
+            const total = pressaoHome + pressaoAway || 1;
+
+            acionarCampo3D({
+                jogoId: jogo.id,
+                intensidadeHome: pressaoHome / total,
+                intensidadeAway: pressaoAway / total,
+                gols: gols.map(g => ({ minuto: g.minute, lado: g.team })),
+            });
+        }
+
+        // Chama window.iniciarCampo3D (definido no módulo Three.js, carregado à parte via CDN).
+        // Se ainda não tiver carregado, espera um pouco antes de desistir e mostrar o aviso de
+        // fallback — cobre tanto conexão lenta quanto o módulo falhando de vez.
+        function acionarCampo3D(dados, tentativas = 6) {
+            if (window.iniciarCampo3D) {
+                window.iniciarCampo3D(dados);
+                return;
+            }
+            if (tentativas > 0) {
+                setTimeout(() => acionarCampo3D(dados, tentativas - 1), 500);
+                return;
+            }
+            const fallback = document.getElementById('campo3d-fallback');
+            if (fallback) fallback.classList.remove('hidden');
         }
 
         function renderizarDetalhesJogoAPI() {
@@ -6177,6 +6285,180 @@
                 console.warn('WebGL indisponível para a splashscreen 3D.', e);
             }
         }
+    </script>
+
+    <!-- CAMPO 3D: ondas de desempenho por partida do mata-mata. Placar, gols (minuto exato) e
+         estatísticas agregadas são reais; a intensidade das ondas de posse/chutes/escanteios é
+         ilustrativa (a API só dá o total do jogo, não o minuto de cada evento). -->
+    <script type="module">
+        import * as THREE from 'three';
+
+        let campo3d = null;
+
+        function construirTexturaCampo() {
+            const c = document.createElement('canvas');
+            c.width = 1024; c.height = 640;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#0f5132';
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            for (let i = 0; i < 10; i += 2) ctx.fillRect(i * (c.width / 10), 0, c.width / 10, c.height);
+            const pad = 24;
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(pad, pad, c.width - pad * 2, c.height - pad * 2);
+            ctx.beginPath();
+            ctx.moveTo(c.width / 2, pad);
+            ctx.lineTo(c.width / 2, c.height - pad);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(c.width / 2, c.height / 2, 70, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeRect(pad, c.height / 2 - 130, 180, 260);
+            ctx.strokeRect(c.width - pad - 180, c.height / 2 - 130, 180, 260);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function limparCena() {
+            if (!campo3d) return;
+            if (campo3d.raf) cancelAnimationFrame(campo3d.raf);
+            campo3d.renderer.dispose();
+            campo3d = null;
+        }
+
+        function criarOnda(scene, cor, ladoX) {
+            const grupo = new THREE.Group();
+            for (let i = 0; i < 3; i++) {
+                const anel = new THREE.Mesh(
+                    new THREE.RingGeometry(0.3, 0.4, 48),
+                    new THREE.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+                );
+                anel.rotation.x = -Math.PI / 2;
+                anel.position.set(ladoX, 0.02, 0);
+                anel.userData.fase = i / 3;
+                grupo.add(anel);
+            }
+            scene.add(grupo);
+            return grupo;
+        }
+
+        function criarCena(canvas) {
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            const largura = canvas.clientWidth || (canvas.parentElement && canvas.parentElement.clientWidth) || 600;
+            const altura = canvas.clientHeight || 300;
+            renderer.setSize(largura, altura, false);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, largura / altura, 0.1, 100);
+            camera.position.set(0, 7.5, 5.5);
+            camera.lookAt(0, 0, 0.3);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+            const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+            dir.position.set(2, 6, 4);
+            scene.add(dir);
+
+            const pitch = new THREE.Mesh(
+                new THREE.PlaneGeometry(9, 6),
+                new THREE.MeshStandardMaterial({ map: construirTexturaCampo(), roughness: 0.9 })
+            );
+            pitch.rotation.x = -Math.PI / 2;
+            scene.add(pitch);
+
+            const waveHome = criarOnda(scene, 0x34d399, -2.6);
+            const waveAway = criarOnda(scene, 0x38bdf8, 2.6);
+
+            const burst = new THREE.Mesh(
+                new THREE.RingGeometry(0.1, 0.25, 48),
+                new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0, side: THREE.DoubleSide })
+            );
+            burst.rotation.x = -Math.PI / 2;
+            burst.position.y = 0.03;
+            scene.add(burst);
+
+            return { renderer, scene, camera, waveHome, waveAway, burst };
+        }
+
+        function animarOnda(grupo, intensidade, t) {
+            grupo.children.forEach(anel => {
+                const fase = (t * (0.4 + intensidade * 1.1) + anel.userData.fase) % 1;
+                const escala = 0.5 + fase * 3.2;
+                anel.scale.set(escala, escala, 1);
+                anel.material.opacity = Math.max(0, (1 - fase) * 0.55 * (0.4 + intensidade));
+            });
+        }
+
+        // Chamado pelo app (script normal, fora do módulo) toda vez que o jogo selecionado na
+        // aba Estatísticas muda ou tem estatísticas/gols novos. Reconstrói a cena só quando o
+        // jogo muda de verdade; senão só atualiza intensidade e anima gols novos.
+        window.iniciarCampo3D = function (dados) {
+            const canvas = document.getElementById('campo3d-canvas');
+            const fallback = document.getElementById('campo3d-fallback');
+            if (!canvas) return;
+
+            try {
+                if (!campo3d || campo3d.jogoId !== dados.jogoId) {
+                    limparCena();
+                    campo3d = Object.assign(criarCena(canvas), {
+                        jogoId: dados.jogoId,
+                        golsAnimados: 0,
+                        burstAte: 0,
+                        burstInicio: 0,
+                        burstLado: null,
+                        inicio: performance.now(),
+                        raf: null,
+                    });
+                    if (fallback) fallback.classList.add('hidden');
+                }
+
+                campo3d.intensidadeHome = dados.intensidadeHome;
+                campo3d.intensidadeAway = dados.intensidadeAway;
+                campo3d.gols = dados.gols || [];
+
+                if (!campo3d.raf) {
+                    const loop = () => {
+                        if (!campo3d) return;
+                        const t = (performance.now() - campo3d.inicio) / 1000;
+                        animarOnda(campo3d.waveHome, campo3d.intensidadeHome, t);
+                        animarOnda(campo3d.waveAway, campo3d.intensidadeAway, t);
+
+                        // Dispara o próximo gol ainda não animado (um por vez, ~2.2s de burst).
+                        if (campo3d.gols.length > campo3d.golsAnimados && t > campo3d.burstAte) {
+                            const gol = campo3d.gols[campo3d.golsAnimados];
+                            campo3d.burstLado = gol.lado === 'home' ? -2.6 : 2.6;
+                            campo3d.burstInicio = t;
+                            campo3d.burstAte = t + 2.2;
+                            campo3d.golsAnimados++;
+                        }
+                        if (campo3d.burstLado != null && t < campo3d.burstAte) {
+                            const p = (t - campo3d.burstInicio) / 1.4;
+                            const escala = 0.3 + Math.min(p, 1) * 5;
+                            campo3d.burst.position.x = campo3d.burstLado;
+                            campo3d.burst.scale.set(escala, escala, 1);
+                            campo3d.burst.material.opacity = Math.max(0, 1 - p) * 0.85;
+                        } else {
+                            campo3d.burst.material.opacity = 0;
+                        }
+
+                        campo3d.renderer.render(campo3d.scene, campo3d.camera);
+                        campo3d.raf = requestAnimationFrame(loop);
+                    };
+                    campo3d.raf = requestAnimationFrame(loop);
+                }
+            } catch (e) {
+                console.warn('Campo 3D indisponível.', e);
+                if (fallback) fallback.classList.remove('hidden');
+                limparCena();
+            }
+        };
+
+        window.pararCampo3D = function () {
+            if (campo3d && campo3d.raf) {
+                cancelAnimationFrame(campo3d.raf);
+                campo3d.raf = null;
+            }
+        };
     </script>
 </body>
 </html>
