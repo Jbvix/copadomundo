@@ -5417,8 +5417,8 @@
             const legendaEl = document.getElementById('campo3d-legenda');
             if (legendaEl) {
                 legendaEl.innerHTML = `
-                    <span class="text-emerald-400">${infoA.bandeira} ${infoA.nome}</span>
-                    <span class="text-sky-400">${infoB.bandeira} ${infoB.nome}</span>`;
+                    <span class="text-red-400">${infoA.bandeira} ${infoA.nome}</span>
+                    <span class="text-purple-400">${infoB.bandeira} ${infoB.nome}</span>`;
             }
 
             // Intensidade relativa (0 a 1) de cada lado, a partir de chutes+escanteios+posse reais.
@@ -5430,6 +5430,10 @@
                 jogoId: jogo.id,
                 intensidadeHome: pressaoHome / total,
                 intensidadeAway: pressaoAway / total,
+                // Números reais (chutes, chutes no gol, escanteios, posse) que "invadem" o
+                // campo do adversário na onda de dados de cada time.
+                valoresHome: [st.shotsHome, st.shotsOnTargetHome, st.cornersHome, Math.round(st.possessionHome)],
+                valoresAway: [st.shotsAway, st.shotsOnTargetAway, st.cornersAway, Math.round(st.possessionAway)],
                 gols: gols.map(g => ({ minuto: g.minute, lado: g.team })),
             });
         }
@@ -6322,24 +6326,70 @@
         function limparCena() {
             if (!campo3d) return;
             if (campo3d.raf) cancelAnimationFrame(campo3d.raf);
+            descartarOnda(campo3d.ondaHome);
+            descartarOnda(campo3d.ondaAway);
             campo3d.renderer.dispose();
             campo3d = null;
         }
 
-        function criarOnda(scene, cor, ladoX) {
+        function descartarOnda(onda) {
+            if (!onda) return;
+            onda.particulas.forEach(sprite => {
+                sprite.material.map.dispose();
+                sprite.material.dispose();
+            });
+            onda.grupo.parent && onda.grupo.parent.remove(onda.grupo);
+        }
+
+        // Textura de um número com brilho (efeito "dado digital"), numa cor sólida.
+        function criarTexturaDigito(valor, corCss) {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.font = 'bold 60px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = corCss;
+            ctx.shadowBlur = 22;
+            ctx.fillStyle = corCss;
+            ctx.fillText(String(valor), c.width / 2, c.height / 2);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Onda de dados: uma leva de números reais (chutes, escanteios, posse...) que nasce no
+        // campo de defesa do time e avança "invadindo" o campo do adversário, em loop contínuo.
+        function criarOndaDeDados(scene, corCss, direcao, baseX, valores) {
             const grupo = new THREE.Group();
-            for (let i = 0; i < 3; i++) {
-                const anel = new THREE.Mesh(
-                    new THREE.RingGeometry(0.3, 0.4, 48),
-                    new THREE.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
-                );
-                anel.rotation.x = -Math.PI / 2;
-                anel.position.set(ladoX, 0.02, 0);
-                anel.userData.fase = i / 3;
-                grupo.add(anel);
+            const lista = (valores && valores.length ? valores : [0]);
+            const N = 8;
+            const particulas = [];
+            for (let i = 0; i < N; i++) {
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: criarTexturaDigito(lista[i % lista.length], corCss),
+                    transparent: true, depthWrite: false,
+                }));
+                sprite.scale.set(0.55, 0.55, 1);
+                sprite.userData.z = (Math.random() - 0.5) * 5;
+                sprite.userData.offset = i / N;
+                sprite.position.set(baseX, 0.15, sprite.userData.z);
+                grupo.add(sprite);
+                particulas.push(sprite);
             }
             scene.add(grupo);
-            return grupo;
+            return { grupo, particulas, direcao, baseX };
+        }
+
+        function animarOndaDeDados(onda, intensidade, t) {
+            if (!onda) return;
+            const velocidade = 0.12 + intensidade * 0.4;
+            const alcance = 7.2; // atravessa o campo até bem dentro do lado adversário
+            onda.particulas.forEach(sprite => {
+                const fase = ((t * velocidade) + sprite.userData.offset) % 1;
+                sprite.position.x = onda.baseX + onda.direcao * fase * alcance;
+                const entrada = Math.min(fase / 0.12, 1);
+                const saida = Math.min((1 - fase) / 0.12, 1);
+                sprite.material.opacity = Math.min(entrada, saida) * (0.35 + intensidade * 0.65);
+            });
         }
 
         function criarCena(canvas) {
@@ -6366,9 +6416,6 @@
             pitch.rotation.x = -Math.PI / 2;
             scene.add(pitch);
 
-            const waveHome = criarOnda(scene, 0x34d399, -2.6);
-            const waveAway = criarOnda(scene, 0x38bdf8, 2.6);
-
             const burst = new THREE.Mesh(
                 new THREE.RingGeometry(0.1, 0.25, 48),
                 new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0, side: THREE.DoubleSide })
@@ -6377,21 +6424,13 @@
             burst.position.y = 0.03;
             scene.add(burst);
 
-            return { renderer, scene, camera, waveHome, waveAway, burst };
-        }
-
-        function animarOnda(grupo, intensidade, t) {
-            grupo.children.forEach(anel => {
-                const fase = (t * (0.4 + intensidade * 1.1) + anel.userData.fase) % 1;
-                const escala = 0.5 + fase * 3.2;
-                anel.scale.set(escala, escala, 1);
-                anel.material.opacity = Math.max(0, (1 - fase) * 0.55 * (0.4 + intensidade));
-            });
+            return { renderer, scene, camera, burst, ondaHome: null, ondaAway: null };
         }
 
         // Chamado pelo app (script normal, fora do módulo) toda vez que o jogo selecionado na
         // aba Estatísticas muda ou tem estatísticas/gols novos. Reconstrói a cena só quando o
-        // jogo muda de verdade; senão só atualiza intensidade e anima gols novos.
+        // jogo muda de verdade; senão só atualiza intensidade, os números da onda e anima gols
+        // novos. Onda vermelha = time da casa invadindo o campo adversário; onda roxa = visitante.
         window.iniciarCampo3D = function (dados) {
             const canvas = document.getElementById('campo3d-canvas');
             const fallback = document.getElementById('campo3d-fallback');
@@ -6408,6 +6447,8 @@
                         burstLado: null,
                         inicio: performance.now(),
                         raf: null,
+                        chaveHome: null,
+                        chaveAway: null,
                     });
                     if (fallback) fallback.classList.add('hidden');
                 }
@@ -6416,12 +6457,31 @@
                 campo3d.intensidadeAway = dados.intensidadeAway;
                 campo3d.gols = dados.gols || [];
 
+                // Recria a onda de números só quando os valores reais mudaram (evita descartar
+                // e recriar texturas/sprites sem necessidade a cada atualização silenciosa).
+                const chaveHome = JSON.stringify(dados.valoresHome || []);
+                if (chaveHome !== campo3d.chaveHome) {
+                    descartarOnda(campo3d.ondaHome);
+                    // Vermelho: nasce no campo de defesa da casa (x negativo) e avança pro
+                    // ataque (direção +1), invadindo o campo do visitante.
+                    campo3d.ondaHome = criarOndaDeDados(campo3d.scene, '#ef4444', 1, -3.6, dados.valoresHome);
+                    campo3d.chaveHome = chaveHome;
+                }
+                const chaveAway = JSON.stringify(dados.valoresAway || []);
+                if (chaveAway !== campo3d.chaveAway) {
+                    descartarOnda(campo3d.ondaAway);
+                    // Roxo: nasce no campo de defesa do visitante (x positivo) e avança pro
+                    // ataque (direção -1), invadindo o campo da casa.
+                    campo3d.ondaAway = criarOndaDeDados(campo3d.scene, '#a855f7', -1, 3.6, dados.valoresAway);
+                    campo3d.chaveAway = chaveAway;
+                }
+
                 if (!campo3d.raf) {
                     const loop = () => {
                         if (!campo3d) return;
                         const t = (performance.now() - campo3d.inicio) / 1000;
-                        animarOnda(campo3d.waveHome, campo3d.intensidadeHome, t);
-                        animarOnda(campo3d.waveAway, campo3d.intensidadeAway, t);
+                        animarOndaDeDados(campo3d.ondaHome, campo3d.intensidadeHome, t);
+                        animarOndaDeDados(campo3d.ondaAway, campo3d.intensidadeAway, t);
 
                         // Dispara o próximo gol ainda não animado (um por vez, ~2.2s de burst).
                         if (campo3d.gols.length > campo3d.golsAnimados && t > campo3d.burstAte) {
