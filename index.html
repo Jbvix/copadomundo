@@ -262,7 +262,7 @@
                     <i class="fa-solid fa-sitemap mr-1"></i> Mata-Mata
                 </button>
                 <button onclick="switchTab('semifinalistas')" id="btn-tab-semifinalistas" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
-                    <i class="fa-solid fa-satellite-dish mr-1"></i> Semifinalistas
+                    <i class="fa-solid fa-satellite-dish mr-1"></i> Finalistas
                 </button>
                 <button onclick="switchTab('history')" id="btn-tab-history" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-history mr-1"></i> Histórico
@@ -313,16 +313,16 @@
                 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div class="space-y-2">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-400/15 text-yellow-300 border border-yellow-500/20">
-                            Simulador Monte Carlo Ativo
+                            🏆 Copa 2026 encerrada
                         </span>
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Previsões Baseadas em 8.000 Simulações</h2>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Retrospectiva Completa da Copa do Mundo 2026</h2>
                         <p class="text-slate-300 max-w-xl text-sm leading-relaxed">
-                            Nosso algoritmo simula a Copa do Mundo inteira 8.000 vezes, cruzando as habilidades de cada jogador em seus clubes atuais, entrosamento de grupo e a configuração tática escolhida para cada seleção!
+                            O torneio acabou com a Espanha como bicampeã mundial! Reveja a chave completa, os números finais e reviva as partidas do mata-mata no Campo 3D — tudo com o resultado real arquivado.
                         </p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <button onclick="runMonteCarlo()" class="bg-gradient-to-r from-yellow-400 via-emerald-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base">
-                            <i class="fa-solid fa-calculator"></i> Recalcular Probabilidades
+                        <button onclick="switchTab('matamata')" class="bg-gradient-to-r from-yellow-400 via-emerald-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base">
+                            <i class="fa-solid fa-sitemap"></i> Ver a Chave Final
                         </button>
                     </div>
                 </div>
@@ -500,7 +500,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Mapa de Inteligência dos Semifinalistas
+                            <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Mapa de Inteligência da Grande Final
                         </h2>
                         <p id="semifinalistas-atualizado" class="text-xs sm:text-sm text-slate-400 mt-1">Carregando…</p>
                     </div>
@@ -509,7 +509,7 @@
                     </button>
                 </div>
                 <p class="text-[11px] text-slate-500 mb-4">
-                    <i class="fa-solid fa-circle-info mr-1"></i> Estatísticas reais desta Copa (jogos, gols, chance de título) combinadas com peso/tática de cada seleção — atualiza sozinho conforme o mata-mata define quem chega na semifinal.
+                    <i class="fa-solid fa-circle-info mr-1"></i> Estatísticas reais da campanha completa dos dois finalistas (jogos, gols, chance de título que confirmou o campeão) combinadas com peso/tática de cada seleção.
                 </p>
                 <div id="semifinalistas-vazio" class="hidden text-center text-slate-400 text-sm py-10">
                     <i class="fa-solid fa-hourglass-half text-3xl text-amber-500/60 mb-3 block"></i>
@@ -665,9 +665,9 @@
                             <i class="fa-solid fa-chevron-right mt-0.5 text-yellow-400 shrink-0"></i>
                             <span id="pergunta-tatica-brasil-texto">Carregando adversário do Brasil...</span>
                         </button>
-                        <button onclick="sendQuickPrompt('Quais jogos do Brasil já aconteceram e quais ainda faltam, considerando a data de hoje?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
+                        <button onclick="sendQuickPrompt('Como foi a campanha do Brasil nessa Copa 2026, jogo por jogo, e que lições ela deixa pra Copa de 2030?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
                             <i class="fa-solid fa-chevron-right mt-0.5 text-amber-400 shrink-0"></i>
-                            <span>Quais jogos do Brasil 🇧🇷 já rolaram e quais ainda faltam?</span>
+                            <span>Como foi a campanha do Brasil 🇧🇷 nessa Copa, jogo por jogo, e o que fica de lição pra 2030?</span>
                         </button>
                         <div id="perguntas-semifinais-container" class="space-y-3"></div>
                     </div>
@@ -694,7 +694,7 @@
                             </div>
                             <div class="bg-slate-800/50 rounded-2xl px-4 py-3 border border-slate-700 max-w-[85%]">
                                 <p class="text-sm text-slate-200">
-                                    Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ Só falo de Mundial — jogos, táticas, história e simulações. Manda sua pergunta com respeito, igual papo de arquibancada saudável. Bora pro Hexa! 🇧🇷
+                                    Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ A Copa acabou com a Espanha bicampeã — mas o papo sobre jogos, táticas e história do Mundial continua rolando aqui. Manda sua pergunta com respeito, igual arquibancada saudável!
                                 </p>
                             </div>
                         </div>
@@ -788,6 +788,38 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Campo 3D: ondas de desempenho + KPIs (só pra jogos do mata-mata) -->
+            <div id="campo3d-secao" class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                    <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cube text-emerald-400"></i> Campo 3D — Ondas de Desempenho
+                    </h3>
+                    <span class="text-[9px] text-slate-500">Lençóis de dados ilustrativos · gols no minuto real</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-4">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Os dois lençóis (vermelho = casa, roxo = visitante) ondulam com a intensidade real do jogo (posse, chutes, escanteios) disputando o meio-campo, mas a API não dá o minuto exato de cada chute/escanteio — só o dos <strong class="text-slate-400">gols</strong> é 100% real. Use o play pra passar o jogo minuto a minuto.
+                </p>
+                <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950" style="height: 300px;">
+                    <canvas id="campo3d-canvas" class="w-full h-full block"></canvas>
+                    <div id="campo3d-fallback" class="hidden absolute inset-0 flex items-center justify-center text-center text-xs text-slate-400 bg-slate-950/90 p-6">
+                        Não foi possível carregar o campo 3D agora (conexão instável). As estatísticas completas continuam disponíveis acima.
+                    </div>
+                    <div id="campo3d-legenda" class="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] font-bold pointer-events-none"></div>
+                </div>
+                <div class="flex items-center gap-2 mt-3">
+                    <button type="button" id="campo3d-play-btn" onclick="if (window.alternarPlayCampo3D) window.alternarPlayCampo3D()" class="w-9 h-9 shrink-0 rounded-lg bg-slate-800 border border-slate-700 hover:border-emerald-500/50 flex items-center justify-center text-slate-200">
+                        <i class="fa-solid fa-play text-xs"></i>
+                    </button>
+                    <button type="button" id="campo3d-velocidade-btn" onclick="if (window.ciclarVelocidadeCampo3D) window.ciclarVelocidadeCampo3D()" class="px-2.5 h-9 shrink-0 rounded-lg bg-slate-800 border border-slate-700 hover:border-emerald-500/50 text-[11px] font-bold text-slate-300">1x</button>
+                    <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="campo3d-progresso" class="h-full bg-gradient-to-r from-red-500 to-purple-500" style="width:0%"></div>
+                    </div>
+                    <span id="campo3d-minuto" class="text-xs font-mono text-slate-300 w-9 text-right shrink-0">0'</span>
+                </div>
+                <div id="campo3d-kpis" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"></div>
+                <div id="campo3d-gols" class="mt-3 flex flex-wrap gap-2"></div>
             </div>
         </section>
 
@@ -1903,14 +1935,30 @@
                 return;
             }
 
-            const adversarioEn = jogo.home_team_name_en === 'Brazil' ? jogo.away_team_name_en : jogo.home_team_name_en;
+            const brasilEmCasa = jogo.home_team_name_en === 'Brazil';
+            const adversarioEn = brasilEmCasa ? jogo.away_team_name_en : jogo.home_team_name_en;
             const nomeAdv = nomePtDe(adversarioEn);
             const bandeiraAdv = BANDEIRA_PT[nomeAdv] || FLAG_EN[adversarioEn] || '⚽';
             const taticaBrasil = (SELECOES['Brasil'] && SELECOES['Brasil'].tática) || 'Posse de Bola';
             const taticaAdv = (SELECOES[nomeAdv] && SELECOES[nomeAdv].tática) || 'Posse de Bola';
 
-            const pergunta = `Qual o impacto da tática de ${taticaBrasil} do Brasil contra a ${taticaAdv} de ${nomeAdv}?`;
-            span.textContent = `Qual o impacto da tática de ${taticaBrasil} do Brasil 🇧🇷 contra a ${taticaAdv} de ${nomeAdv} ${bandeiraAdv}?`;
+            let pergunta, texto;
+            if (COPA_ENCERRADA) {
+                // Copa encerrada: essa pergunta vira "o que fica de lição" em vez de "qual o
+                // impacto" (que soa como se o jogo ainda estivesse por vir).
+                const golsBrasil = Number(brasilEmCasa ? jogo.home_score : jogo.away_score) || 0;
+                const golsAdv = Number(brasilEmCasa ? jogo.away_score : jogo.home_score) || 0;
+                const fase = jogo.fase || 'a Copa';
+                const resultado = golsBrasil > golsAdv
+                    ? `venceu ${nomeAdv} na ${fase}`
+                    : (golsBrasil < golsAdv ? `caiu diante de ${nomeAdv} na ${fase}` : `empatou com ${nomeAdv} na ${fase}`);
+                pergunta = `O Brasil ${resultado} jogando ${taticaBrasil} contra a ${taticaAdv} de ${nomeAdv}. Que lições o Brasil deve tirar dessa Copa 2026 pra chegar mais forte na Copa de 2030?`;
+                texto = `🇧🇷 Brasil ${resultado.replace(nomeAdv, nomeAdv + ' ' + bandeiraAdv)}: que lição fica pra 2030?`;
+            } else {
+                pergunta = `Qual o impacto da tática de ${taticaBrasil} do Brasil contra a ${taticaAdv} de ${nomeAdv}?`;
+                texto = `Qual o impacto da tática de ${taticaBrasil} do Brasil 🇧🇷 contra a ${taticaAdv} de ${nomeAdv} ${bandeiraAdv}?`;
+            }
+            span.textContent = texto;
             btn.onclick = () => sendQuickPrompt(pergunta);
             btn.classList.remove('hidden');
         }
@@ -1922,19 +1970,22 @@
             if (!container) return;
             if (!apiGames.length) { container.innerHTML = ''; return; }
 
-            const sf = (agruparJogosMataMata().sf) || [];
+            // Copa encerrada: a pergunta interessante agora é sobre a Grande Final (já
+            // disputada de verdade), não mais sobre uma semifinal futura.
+            const rodada = COPA_ENCERRADA ? (agruparJogosMataMata().final || []) : (agruparJogosMataMata().sf || []);
+            const faseTxt = COPA_ENCERRADA ? 'Final' : 'semifinal';
             const taticaDe = nomePt => (SELECOES[nomePt] && SELECOES[nomePt].tática) || 'Posse de Bola';
 
             const perguntas = [];
-            sf.forEach(jogo => {
+            rodada.forEach(jogo => {
                 if (jogo._placeholder) {
                     const [enConhecido] = jogo._conhecidos || [];
-                    if (!enConhecido) return; // nenhum lado dessa semifinal definido ainda
+                    if (!enConhecido) return; // nenhum lado dessa fase definido ainda
                     const nome = nomePtDe(enConhecido);
                     const bandeira = BANDEIRA_PT[nome] || FLAG_EN[enConhecido] || '⚽';
                     perguntas.push({
-                        label: `${bandeira} A tática de ${nome} aguenta a semifinal, seja qual for o adversário?`,
-                        prompt: `Com a tática de ${taticaDe(nome)}, ${nome} tem o que precisa pra vencer a semifinal, seja qual for o adversário?`,
+                        label: `${bandeira} A tática de ${nome} aguenta a ${faseTxt}, seja qual for o adversário?`,
+                        prompt: `Com a tática de ${taticaDe(nome)}, ${nome} tem o que precisa pra vencer a ${faseTxt}, seja qual for o adversário?`,
                     });
                 } else {
                     const nomeA = nomePtDe(jogo.home_team_name_en);
@@ -1942,8 +1993,8 @@
                     const bandeiraA = BANDEIRA_PT[nomeA] || FLAG_EN[jogo.home_team_name_en] || '⚽';
                     const bandeiraB = BANDEIRA_PT[nomeB] || FLAG_EN[jogo.away_team_name_en] || '⚽';
                     perguntas.push({
-                        label: `${bandeiraA} ${nomeA} x ${nomeB} ${bandeiraB}: qual tática leva a melhor na semifinal?`,
-                        prompt: `Qual o impacto da tática de ${taticaDe(nomeA)} de ${nomeA} contra a ${taticaDe(nomeB)} de ${nomeB} na semifinal?`,
+                        label: `${bandeiraA} ${nomeA} x ${nomeB} ${bandeiraB}: qual tática levou a melhor na ${faseTxt}?`,
+                        prompt: `Qual foi o impacto da tática de ${taticaDe(nomeA)} de ${nomeA} contra a ${taticaDe(nomeB)} de ${nomeB} na ${faseTxt} da Copa 2026?`,
                     });
                 }
             });
@@ -1968,6 +2019,11 @@
             const container = document.getElementById('ao-vivo-agora-card');
             if (!container) return;
 
+            if (COPA_ENCERRADA) {
+                container.innerHTML = renderCardCampeao();
+                return;
+            }
+
             const { aoVivo, proximos } = obterJogosTemporais();
 
             if (aoVivo.length) {
@@ -1977,6 +2033,23 @@
 
             const proximo = proximos[0];
             container.innerHTML = proximo ? renderCardProximoJogo(proximo) : '';
+        }
+
+        // Card de encerramento da Copa: substitui o "Ao Vivo Agora" quando o torneio já acabou.
+        function renderCardCampeao() {
+            const bandeira = BANDEIRA_PT[CAMPEAO_2026.pt] || FLAG_EN[CAMPEAO_2026.en] || '🏆';
+            return `<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-950/40 via-slate-900 to-slate-900 border border-yellow-500/30 p-5 sm:p-6 shadow-xl text-center">
+                <div class="absolute -right-10 -top-10 w-56 h-56 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <p class="text-5xl mb-2">🏆</p>
+                    <p class="text-xs sm:text-sm font-bold text-yellow-400 uppercase tracking-wider mb-1">Copa do Mundo 2026 encerrada</p>
+                    <p class="text-xl sm:text-2xl font-extrabold text-white">${bandeira} ${CAMPEAO_2026.pt} é a Bicampeã Mundial!</p>
+                    <p class="text-sm text-slate-300 mt-2">Final: Espanha 1x0 Argentina (prorrogação) · gol de F. Torres aos 106'</p>
+                    <button type="button" onclick="switchTab('matamata')" class="mt-4 text-xs font-semibold text-yellow-300 hover:text-yellow-200 border border-yellow-500/30 hover:border-yellow-400/50 rounded-lg px-3 py-1.5">
+                        <i class="fa-solid fa-sitemap mr-1"></i> Ver a chave completa
+                    </button>
+                </div>
+            </div>`;
         }
 
         // Rótulo do momento do jogo ao vivo, distinguindo tempo normal, prorrogação e pênaltis
@@ -2740,6 +2813,7 @@
             // Encerra o auto-refresh ao trocar de aba; ele só roda na aba de estatísticas.
             pararAutoRefreshAPI();
             pararClassificacaoAutoRefresh();
+            if (tabId !== 'live' && window.pararCampo3D) window.pararCampo3D();
 
             ['dashboard', 'classificacao', 'matamata', 'semifinalistas', 'history', 'players', 'live', 'stats', 'ia-chat'].forEach(section => {
                 const el = document.getElementById(`tab-${section}`);
@@ -2780,6 +2854,7 @@
                     } else {
                         carregarJogosAPI();
                     }
+                    if (selectedGame) atualizarCampo3D(selectedGame); // retoma o Campo 3D ao voltar pra aba
                 }, 100);
                 iniciarAutoRefreshAPI();
             }
@@ -3175,7 +3250,7 @@
         }
 
         function mensagemBoasVindasTeo() {
-            return 'Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ Só falo de Mundial — jogos, táticas, história e simulações. Manda sua pergunta com respeito, igual papo de arquibancada saudável. Bora pro Hexa! 🇧🇷';
+            return 'Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ A Copa acabou com a Espanha bicampeã — mas o papo sobre jogos, táticas e história do Mundial continua rolando aqui. Manda sua pergunta com respeito, igual arquibancada saudável!';
         }
 
         async function sendChatMessage() {
@@ -3571,6 +3646,9 @@
 
         function iniciarAutoRefreshAPI() {
             pararAutoRefreshAPI();
+            // Copa encerrada: não existe placar ao vivo pra atualizar, então não faz sentido
+            // ficar repetindo o polling (o resultado final já está no arquivo estático).
+            if (COPA_ENCERRADA) return;
             apiPollInterval = setInterval(autoAtualizarJogosAPI, API_POLL_MS);
         }
 
@@ -3588,6 +3666,8 @@
 
         function iniciarClassificacaoAutoRefresh() {
             pararClassificacaoAutoRefresh();
+            // Copa encerrada: a classificação final não muda mais.
+            if (COPA_ENCERRADA) return;
             classificacaoPollInterval = setInterval(() => renderClassificacaoTab(true), CLASSIFICACAO_POLL_MS);
         }
 
@@ -3660,6 +3740,20 @@
         let standingsUltimaAtualizacao = null; // Date do último fetch efetivo (não conta cache-hit).
         let classificacaoGrupoAtivo = ''; // '' = todos os grupos, senão a letra selecionada na navegação rápida.
 
+        // A Copa 2026 terminou (Espanha bicampeã) e a assinatura da API-Football foi encerrada
+        // logo depois da Final. A partir daqui o app roda 100% a partir do arquivo estático
+        // arquivado com o resultado real final (data/copa2026-arquivo-final.json), em vez de
+        // bater na API ao vivo — que pararia de responder de qualquer forma.
+        const COPA_ENCERRADA = true;
+        const CAMPEAO_2026 = { en: 'Spain', pt: 'Espanha' };
+        let arquivoCopaPromise = null;
+        async function carregarArquivoCopa() {
+            if (!arquivoCopaPromise) {
+                arquivoCopaPromise = fetch('/data/copa2026-arquivo-final.json').then(r => r.json());
+            }
+            return arquivoCopaPromise;
+        }
+
         // Busca a tabela de grupos/classificação uma única vez (reaproveitada por grupos,
         // ajuste real das probabilidades e ranking de ataques/defesas).
         // Deriva a letra do grupo (ex.: "A") a partir do rótulo bruto da API-Football,
@@ -3674,8 +3768,9 @@
         async function obterStandingsApiFootball() {
             if (afStandingsRaw) return afStandingsRaw;
             try {
-                const resp = await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000);
-                const data = await resp.json();
+                const data = COPA_ENCERRADA
+                    ? { response: (await carregarArquivoCopa()).standings }
+                    : await (await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000)).json();
                 const standingsBrutos = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
                 // Descarta entradas fora do padrão "Group X" (ex.: agregado "Group Stage") que a
                 // API-Football às vezes inclui junto dos grupos reais — não são grupos de verdade.
@@ -3996,6 +4091,24 @@
                 const c = statsCacheGet(key, ttl);
                 if (c) return c;
             }
+            // Copa encerrada: os 3 rankings da temporada 2026 (artilheiros, assistências,
+            // cartões) já estão arquivados estaticamente. Comparações com outras temporadas
+            // continuam pela API ao vivo (fora do escopo do arquivo).
+            if (COPA_ENCERRADA && query.includes(`season=${AF_SEASON}`)) {
+                const mapaEndpoint = {
+                    'path=/players/topscorers': 'topscorers',
+                    'path=/players/topassists': 'topassists',
+                    'path=/players/topyellowcards': 'topcards',
+                    'path=/fixtures': 'fixtures',
+                };
+                const prefixo = Object.keys(mapaEndpoint).find(p => query.startsWith(p));
+                if (prefixo) {
+                    const arquivo = await carregarArquivoCopa();
+                    const arr = arquivo[mapaEndpoint[prefixo]] || [];
+                    if (arr.length) statsCacheSet(key, arr);
+                    return arr;
+                }
+            }
             const bust = forcar ? `&_t=${Date.now()}` : '';
             const resp = await fetchWithBackoff(`/api/af?${query}${bust}`, {}, 2, 15000);
             const data = await resp.json();
@@ -4025,6 +4138,19 @@
             });
             if (!precisa.length) return;
             const alvo = precisa.slice(0, limite);
+
+            // Copa encerrada: todo mundo (fase de grupos + mata-mata) já está no arquivo
+            // estático, então nem precisa dar batch — só busca no dicionário local.
+            if (COPA_ENCERRADA) {
+                const arquivo = await carregarArquivoCopa();
+                alvo.forEach(j => {
+                    const item = arquivo.detalhes[String(j.fixture_id)];
+                    if (item) aplicarDetalheAf(j, item);
+                });
+                salvarCacheJogos(apiGames);
+                return;
+            }
+
             for (let i = 0; i < alvo.length; i += 20) {
                 const batch = alvo.slice(i, i + 20);
                 const ids = batch.map(j => j.fixture_id).join('-');
@@ -4697,9 +4823,12 @@
         // mata-mata (mesma técnica das perguntas recomendadas do Téo: inclui um time assim que
         // pelo menos um lado do confronto já é conhecido, mesmo sem o adversário definido).
         function obterSemifinalistasAtuais() {
-            const sf = (agruparJogosMataMata().sf) || [];
+            const porTipo = agruparJogosMataMata();
+            // Copa encerrada: o confronto que interessa agora é a Grande Final, não mais a
+            // semifinal (que já virou história assim que os dois times finalistas surgiram dela).
+            const rodada = COPA_ENCERRADA ? (porTipo.final || []) : (porTipo.sf || []);
             const ens = [];
-            sf.forEach(jogo => {
+            rodada.forEach(jogo => {
                 const times = jogo._placeholder ? (jogo._conhecidos || []) : [jogo.home_team_name_en, jogo.away_team_name_en].filter(Boolean);
                 times.forEach(en => { if (en && !ens.includes(en)) ens.push(en); });
             });
@@ -4956,13 +5085,18 @@
             jogo._afDetailLoaded = true;
         }
 
-        // Carrega o detalhe completo de UMA partida (sob demanda, ao selecioná-la).
+        // Carrega o detalhe completo de UMA partida (sob demanda, ao selecioná-la). Com a Copa
+        // encerrada, vem do arquivo estático (só o mata-mata foi arquivado com detalhe completo).
         async function carregarDetalheAf(jogo) {
             if (!jogo || jogo._src !== 'af' || !jogo.fixture_id) return false;
             try {
-                const resp = await fetchWithBackoff(`/api/af?path=/fixtures&id=${jogo.fixture_id}`, {}, 2, 15000);
-                const data = await resp.json();
-                const item = data && data.response && data.response[0];
+                const item = COPA_ENCERRADA
+                    ? (await carregarArquivoCopa()).detalhes[String(jogo.fixture_id)]
+                    : await (async () => {
+                        const resp = await fetchWithBackoff(`/api/af?path=/fixtures&id=${jogo.fixture_id}`, {}, 2, 15000);
+                        const data = await resp.json();
+                        return data && data.response && data.response[0];
+                    })();
                 if (item) { aplicarDetalheAf(jogo, item); salvarCacheJogos(apiGames); return true; }
             } catch (e) { /* mantém o jogo com os dados básicos */ }
             return false;
@@ -5011,10 +5145,15 @@
 
             let usouAf = false;
             try {
-                // FONTE PRIMÁRIA: API-Football (confiável, livescore a cada ~15s).
-                const tentativas = silencioso ? 2 : 3;
-                const response = await fetchWithBackoff(`/api/af?path=/fixtures&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, tentativas, 20000);
-                const data = await response.json();
+                // Copa encerrada: usa o arquivo estático arquivado (resultado real final) em
+                // vez de bater na API ao vivo, que já não responde mais.
+                const data = COPA_ENCERRADA
+                    ? { response: (await carregarArquivoCopa()).fixtures }
+                    : await (async () => {
+                        const tentativas = silencioso ? 2 : 3;
+                        const resp = await fetchWithBackoff(`/api/af?path=/fixtures&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, tentativas, 20000);
+                        return resp.json();
+                    })();
 
                 if (data && Array.isArray(data.response) && data.response.length) {
                     const grupos = await obterGruposApiFootball();
@@ -5340,6 +5479,96 @@
 
             renderizarDetalhesJogoAPI();
             renderizarListaJogosAPI();
+            atualizarCampo3D(jogo);
+        }
+
+        // Rodadas do mata-mata (mesma lista usada na chave) — o Campo 3D só vale pra elas.
+        const RODADAS_MATA_MATA_CAMPO3D = ['r32', 'r16', 'qf', 'sf', 'final', 'third'];
+
+        // Mostra/atualiza o painel "Campo 3D" (ondas de desempenho + KPIs) pro jogo selecionado,
+        // só quando é uma partida do mata-mata. Usa os mesmos dados reais já calculados pelo
+        // selecionarJogoAPI (simState.stats já mescla as estatísticas reais da API-Football, e
+        // simState.timeline já tem os gols com o minuto real).
+        function atualizarCampo3D(jogo) {
+            const secao = document.getElementById('campo3d-secao');
+            if (!secao) return;
+
+            if (!jogo || !RODADAS_MATA_MATA_CAMPO3D.includes(jogo.type)) {
+                secao.classList.add('hidden');
+                if (window.pararCampo3D) window.pararCampo3D();
+                return;
+            }
+            secao.classList.remove('hidden');
+
+            const infoA = obterInfoTime(jogo.home_team_name_en);
+            const infoB = obterInfoTime(jogo.away_team_name_en);
+            const st = simState.stats;
+            const gols = simState.timeline.filter(e => e.type === 'goal');
+
+            const kpisEl = document.getElementById('campo3d-kpis');
+            if (kpisEl) {
+                const kpi = (rotulo, valor) => `<div class="bg-slate-800/60 rounded-lg py-2 text-center"><p class="text-[9px] text-slate-500 uppercase">${rotulo}</p><p class="font-bold text-white text-sm">${valor}</p></div>`;
+                kpisEl.innerHTML = [
+                    kpi('Placar', `${simState.homeScore} - ${simState.awayScore}`),
+                    kpi('Posse', `${st.possessionHome}% - ${st.possessionAway}%`),
+                    kpi('Chutes (no gol)', `${st.shotsHome} (${st.shotsOnTargetHome}) - ${st.shotsAway} (${st.shotsOnTargetAway})`),
+                    kpi('Escanteios', `${st.cornersHome} - ${st.cornersAway}`),
+                ].join('');
+            }
+
+            const golsEl = document.getElementById('campo3d-gols');
+            if (golsEl) {
+                golsEl.innerHTML = gols.length
+                    ? gols.map(g => {
+                        const bandeira = g.team === 'home' ? infoA.bandeira : infoB.bandeira;
+                        // O nome do artilheiro já vem com o minuto embutido (ex.: "Mbappé 60'");
+                        // remove pra não duplicar, já que o minuto aparece antes separadamente.
+                        const nomeJogador = g.player.replace(/\d+'\s*/, '').replace(/\s+/g, ' ').trim();
+                        return `<span class="text-[11px] bg-slate-800/60 border border-slate-700/60 rounded-full px-2.5 py-1">⚽ ${g.minute}' ${bandeira} ${escaparHtml(nomeJogador)}</span>`;
+                    }).join('')
+                    : `<span class="text-[11px] text-slate-600 italic">Sem gols registrados até agora.</span>`;
+            }
+
+            const legendaEl = document.getElementById('campo3d-legenda');
+            if (legendaEl) {
+                legendaEl.innerHTML = `
+                    <span class="text-red-400">${infoA.bandeira} ${infoA.nome}</span>
+                    <span class="text-purple-400">${infoB.bandeira} ${infoB.nome}</span>`;
+            }
+
+            // Intensidade relativa (0 a 1) de cada lado, a partir de chutes+escanteios+posse reais.
+            const pressaoHome = st.shotsHome * 2 + st.cornersHome + st.possessionHome * 0.3;
+            const pressaoAway = st.shotsAway * 2 + st.cornersAway + st.possessionAway * 0.3;
+            const total = pressaoHome + pressaoAway || 1;
+
+            // Prorrogação real (AET/pênaltis) joga 120 minutos, não 90 — o relógio do play
+            // precisa saber disso pra não cortar o jogo antes da hora.
+            const statusCru = (jogo.status_short || '').toUpperCase();
+            const minutoMax = (statusCru === 'AET' || statusCru === 'PEN') ? 120 : 90;
+
+            acionarCampo3D({
+                jogoId: jogo.id,
+                intensidadeHome: pressaoHome / total,
+                intensidadeAway: pressaoAway / total,
+                minutoMax,
+                gols: gols.map(g => ({ minuto: g.minute, lado: g.team })),
+            });
+        }
+
+        // Chama window.iniciarCampo3D (definido no módulo Three.js, carregado à parte via CDN).
+        // Se ainda não tiver carregado, espera um pouco antes de desistir e mostrar o aviso de
+        // fallback — cobre tanto conexão lenta quanto o módulo falhando de vez.
+        function acionarCampo3D(dados, tentativas = 6) {
+            if (window.iniciarCampo3D) {
+                window.iniciarCampo3D(dados);
+                return;
+            }
+            if (tentativas > 0) {
+                setTimeout(() => acionarCampo3D(dados, tentativas - 1), 500);
+                return;
+            }
+            const fallback = document.getElementById('campo3d-fallback');
+            if (fallback) fallback.classList.remove('hidden');
         }
 
         function renderizarDetalhesJogoAPI() {
@@ -6177,6 +6406,271 @@
                 console.warn('WebGL indisponível para a splashscreen 3D.', e);
             }
         }
+    </script>
+
+    <!-- CAMPO 3D: ondas de desempenho por partida do mata-mata. Placar, gols (minuto exato) e
+         estatísticas agregadas são reais; a intensidade das ondas de posse/chutes/escanteios é
+         ilustrativa (a API só dá o total do jogo, não o minuto de cada evento). -->
+    <script type="module">
+        import * as THREE from 'three';
+
+        let campo3d = null;
+        const COR_HOME = [0.937, 0.267, 0.267]; // #ef4444
+        const COR_AWAY = [0.659, 0.333, 0.969]; // #a855f7
+        const VELOCIDADES = [1, 2, 4, 8];
+
+        function construirTexturaCampo() {
+            const c = document.createElement('canvas');
+            c.width = 1024; c.height = 640;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#0f5132';
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            for (let i = 0; i < 10; i += 2) ctx.fillRect(i * (c.width / 10), 0, c.width / 10, c.height);
+            const pad = 24;
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(pad, pad, c.width - pad * 2, c.height - pad * 2);
+            ctx.beginPath();
+            ctx.moveTo(c.width / 2, pad);
+            ctx.lineTo(c.width / 2, c.height - pad);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(c.width / 2, c.height / 2, 70, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeRect(pad, c.height / 2 - 130, 180, 260);
+            ctx.strokeRect(c.width - pad - 180, c.height / 2 - 130, 180, 260);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function limparCena() {
+            if (!campo3d) return;
+            if (campo3d.raf) cancelAnimationFrame(campo3d.raf);
+            campo3d.superficie.geometry.dispose();
+            campo3d.superficie.material.dispose();
+            campo3d.renderer.dispose();
+            campo3d = null;
+        }
+
+        // Lençol único cobrindo o campo inteiro: a altura e a cor de cada vértice são
+        // recalculadas a cada frame a partir das duas ondas (ver alturaOnda), criando o efeito
+        // de dois lençóis de dados disputando o meio-campo com picos e cristas dinâmicos.
+        function criarSuperficieOndas(scene) {
+            const geo = new THREE.PlaneGeometry(9, 6, 36, 22);
+            const n = geo.attributes.position.count;
+            geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+            const mat = new THREE.MeshStandardMaterial({
+                vertexColors: true, transparent: true, opacity: 0.88,
+                side: THREE.DoubleSide, roughness: 0.35, metalness: 0.15,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.position.y = 0.04;
+            scene.add(mesh);
+            return mesh;
+        }
+
+        // Altura da onda de um time num ponto do campo: dois trens de onda combinados (avanço
+        // rumo ao adversário + ondulação lateral) com decaimento perto da borda mais distante,
+        // dando a textura de um lençol balançando em vez de círculos concêntricos perfeitos.
+        function alturaOnda(distAvanco, z, t, intensidade) {
+            const amplitude = 0.15 + intensidade * 0.55;
+            const velocidade = 1.1 + intensidade * 2.2;
+            const onda1 = Math.sin(distAvanco * 1.05 - t * velocidade);
+            const onda2 = Math.sin(z * 0.85 + t * 0.75) * 0.45;
+            const envelope = Math.max(0, 1 - Math.abs(distAvanco) / 9.5);
+            return (onda1 + onda2) * amplitude * envelope;
+        }
+
+        // Recalcula altura e cor de cada vértice do lençol: a cor mistura vermelho/roxo pela
+        // dominância local de cada onda (quem "vence" a disputa naquele ponto do campo), e o
+        // brilho acentua os picos/cristas.
+        function atualizarSuperficieOndas(mesh, intensidadeHome, intensidadeAway, t) {
+            const pos = mesh.geometry.attributes.position;
+            const cor = mesh.geometry.attributes.color;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const z = pos.getY(i);
+                const alturaH = alturaOnda(x + 4.0, z, t, intensidadeHome);
+                const alturaA = alturaOnda(4.0 - x, z, t, intensidadeAway);
+                pos.setZ(i, alturaH + alturaA);
+
+                const totalAbs = Math.abs(alturaH) + Math.abs(alturaA) + 0.0001;
+                const pesoHome = Math.abs(alturaH) / totalAbs;
+                const brilho = 0.45 + Math.min(1, Math.abs(alturaH + alturaA) * 1.3) * 0.55;
+                cor.setXYZ(i,
+                    (COR_AWAY[0] * (1 - pesoHome) + COR_HOME[0] * pesoHome) * brilho,
+                    (COR_AWAY[1] * (1 - pesoHome) + COR_HOME[1] * pesoHome) * brilho,
+                    (COR_AWAY[2] * (1 - pesoHome) + COR_HOME[2] * pesoHome) * brilho
+                );
+            }
+            pos.needsUpdate = true;
+            cor.needsUpdate = true;
+            mesh.geometry.computeVertexNormals();
+        }
+
+        function criarCena(canvas) {
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            const largura = canvas.clientWidth || (canvas.parentElement && canvas.parentElement.clientWidth) || 600;
+            const altura = canvas.clientHeight || 300;
+            renderer.setSize(largura, altura, false);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, largura / altura, 0.1, 100);
+            camera.position.set(0, 7.5, 5.5);
+            camera.lookAt(0, 0, 0.3);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+            const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+            dir.position.set(2, 6, 4);
+            scene.add(dir);
+
+            const pitch = new THREE.Mesh(
+                new THREE.PlaneGeometry(9, 6),
+                new THREE.MeshStandardMaterial({ map: construirTexturaCampo(), roughness: 0.9 })
+            );
+            pitch.rotation.x = -Math.PI / 2;
+            scene.add(pitch);
+
+            const superficie = criarSuperficieOndas(scene);
+
+            const burst = new THREE.Mesh(
+                new THREE.RingGeometry(0.1, 0.25, 48),
+                new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0, side: THREE.DoubleSide })
+            );
+            burst.rotation.x = -Math.PI / 2;
+            burst.position.y = 1.1; // acima do pico máximo dos lençóis, pra não ficar encoberto
+            scene.add(burst);
+
+            return { renderer, scene, camera, superficie, burst };
+        }
+
+        // Atualiza os controles de play/pause, velocidade e o relógio na tela.
+        function atualizarControlesDom() {
+            if (!campo3d) return;
+            const btnPlay = document.getElementById('campo3d-play-btn');
+            if (btnPlay) btnPlay.innerHTML = campo3d.tocando
+                ? '<i class="fa-solid fa-pause text-xs"></i>'
+                : '<i class="fa-solid fa-play text-xs"></i>';
+            const btnVel = document.getElementById('campo3d-velocidade-btn');
+            if (btnVel) btnVel.textContent = campo3d.velocidade + 'x';
+            const minutoEl = document.getElementById('campo3d-minuto');
+            if (minutoEl) minutoEl.textContent = Math.floor(campo3d.minutoAtual) + "'";
+            const progressoEl = document.getElementById('campo3d-progresso');
+            if (progressoEl) progressoEl.style.width = Math.min(100, (campo3d.minutoAtual / campo3d.minutoMax) * 100) + '%';
+        }
+
+        // Chamado pelo app (script normal, fora do módulo) toda vez que o jogo selecionado na
+        // aba Estatísticas muda ou tem estatísticas/gols novos. Reconstrói a cena só quando o
+        // jogo muda de verdade; senão só atualiza intensidade e a lista de gols. Vermelho = time
+        // da casa, roxo = visitante; os dois lençóis disputam o meio-campo em tempo real,
+        // acelerado/pausado pelo relógio de minutos controlado pelo usuário.
+        window.iniciarCampo3D = function (dados) {
+            const canvas = document.getElementById('campo3d-canvas');
+            const fallback = document.getElementById('campo3d-fallback');
+            if (!canvas) return;
+
+            try {
+                if (!campo3d || campo3d.jogoId !== dados.jogoId) {
+                    limparCena();
+                    campo3d = Object.assign(criarCena(canvas), {
+                        jogoId: dados.jogoId,
+                        golsAnimados: 0,
+                        burstAte: 0,
+                        burstInicio: 0,
+                        burstLado: null,
+                        tempoAnim: 0,
+                        minutoAtual: 0,
+                        minutoMax: dados.minutoMax || 90,
+                        tocando: false,
+                        velocidade: 1,
+                        ultimoFrame: null,
+                        raf: null,
+                    });
+                    if (fallback) fallback.classList.add('hidden');
+                    atualizarControlesDom();
+                }
+
+                campo3d.intensidadeHome = dados.intensidadeHome;
+                campo3d.intensidadeAway = dados.intensidadeAway;
+                campo3d.gols = dados.gols || [];
+                campo3d.minutoMax = dados.minutoMax || campo3d.minutoMax;
+
+                if (!campo3d.raf) {
+                    const loop = (agora) => {
+                        if (!campo3d) return;
+                        if (campo3d.ultimoFrame == null) campo3d.ultimoFrame = agora;
+                        const dt = (agora - campo3d.ultimoFrame) / 1000;
+                        campo3d.ultimoFrame = agora;
+                        campo3d.tempoAnim += dt;
+
+                        const minutoAnterior = campo3d.minutoAtual;
+                        if (campo3d.tocando) {
+                            // 1 minuto de jogo por segundo real, multiplicado pela velocidade
+                            // escolhida (1x/2x/4x/8x) — "minuto a minuto com aceleração".
+                            campo3d.minutoAtual = Math.min(campo3d.minutoMax, campo3d.minutoAtual + dt * campo3d.velocidade);
+                            if (campo3d.minutoAtual >= campo3d.minutoMax) campo3d.tocando = false;
+                            atualizarControlesDom();
+                        }
+
+                        atualizarSuperficieOndas(campo3d.superficie, campo3d.intensidadeHome, campo3d.intensidadeAway, campo3d.tempoAnim);
+
+                        // Dispara o burst de gol exatamente quando o relógio cruza o minuto real
+                        // daquele gol (só avança enquanto o usuário está no "play").
+                        campo3d.gols.forEach((gol, idx) => {
+                            if (idx < campo3d.golsAnimados) return;
+                            if (gol.minuto <= campo3d.minutoAtual && gol.minuto > minutoAnterior) {
+                                campo3d.burstLado = gol.lado === 'home' ? -2.6 : 2.6;
+                                campo3d.burstInicio = campo3d.tempoAnim;
+                                campo3d.burstAte = campo3d.tempoAnim + 2.2;
+                                campo3d.golsAnimados = idx + 1;
+                            }
+                        });
+                        if (campo3d.burstLado != null && campo3d.tempoAnim < campo3d.burstAte) {
+                            const p = (campo3d.tempoAnim - campo3d.burstInicio) / 1.4;
+                            const escala = 0.3 + Math.min(p, 1) * 5;
+                            campo3d.burst.position.x = campo3d.burstLado;
+                            campo3d.burst.scale.set(escala, escala, 1);
+                            campo3d.burst.material.opacity = Math.max(0, 1 - p) * 0.85;
+                        } else {
+                            campo3d.burst.material.opacity = 0;
+                        }
+
+                        campo3d.renderer.render(campo3d.scene, campo3d.camera);
+                        campo3d.raf = requestAnimationFrame(loop);
+                    };
+                    campo3d.raf = requestAnimationFrame(loop);
+                }
+            } catch (e) {
+                console.warn('Campo 3D indisponível.', e);
+                if (fallback) fallback.classList.remove('hidden');
+                limparCena();
+            }
+        };
+
+        window.pararCampo3D = function () {
+            if (campo3d && campo3d.raf) {
+                cancelAnimationFrame(campo3d.raf);
+                campo3d.raf = null;
+            }
+        };
+
+        window.alternarPlayCampo3D = function () {
+            if (!campo3d) return;
+            // Reinicia do começo se já tinha chegado ao fim do jogo.
+            if (!campo3d.tocando && campo3d.minutoAtual >= campo3d.minutoMax) campo3d.minutoAtual = 0;
+            campo3d.tocando = !campo3d.tocando;
+            campo3d.ultimoFrame = null;
+            atualizarControlesDom();
+        };
+
+        window.ciclarVelocidadeCampo3D = function () {
+            if (!campo3d) return;
+            const idx = VELOCIDADES.indexOf(campo3d.velocidade);
+            campo3d.velocidade = VELOCIDADES[(idx + 1) % VELOCIDADES.length];
+            atualizarControlesDom();
+        };
     </script>
 </body>
 </html>
