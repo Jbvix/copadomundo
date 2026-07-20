@@ -262,7 +262,7 @@
                     <i class="fa-solid fa-sitemap mr-1"></i> Mata-Mata
                 </button>
                 <button onclick="switchTab('semifinalistas')" id="btn-tab-semifinalistas" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
-                    <i class="fa-solid fa-satellite-dish mr-1"></i> Semifinalistas
+                    <i class="fa-solid fa-satellite-dish mr-1"></i> Finalistas
                 </button>
                 <button onclick="switchTab('history')" id="btn-tab-history" class="px-2.5 py-1.5 rounded-lg font-semibold transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap">
                     <i class="fa-solid fa-history mr-1"></i> Histórico
@@ -313,16 +313,16 @@
                 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div class="space-y-2">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-400/15 text-yellow-300 border border-yellow-500/20">
-                            Simulador Monte Carlo Ativo
+                            🏆 Copa 2026 encerrada
                         </span>
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Previsões Baseadas em 8.000 Simulações</h2>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Retrospectiva Completa da Copa do Mundo 2026</h2>
                         <p class="text-slate-300 max-w-xl text-sm leading-relaxed">
-                            Nosso algoritmo simula a Copa do Mundo inteira 8.000 vezes, cruzando as habilidades de cada jogador em seus clubes atuais, entrosamento de grupo e a configuração tática escolhida para cada seleção!
+                            O torneio acabou com a Espanha como bicampeã mundial! Reveja a chave completa, os números finais e reviva as partidas do mata-mata no Campo 3D — tudo com o resultado real arquivado.
                         </p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <button onclick="runMonteCarlo()" class="bg-gradient-to-r from-yellow-400 via-emerald-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base">
-                            <i class="fa-solid fa-calculator"></i> Recalcular Probabilidades
+                        <button onclick="switchTab('matamata')" class="bg-gradient-to-r from-yellow-400 via-emerald-400 to-emerald-500 hover:from-yellow-500 hover:to-emerald-600 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base">
+                            <i class="fa-solid fa-sitemap"></i> Ver a Chave Final
                         </button>
                     </div>
                 </div>
@@ -500,7 +500,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Mapa de Inteligência dos Semifinalistas
+                            <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Mapa de Inteligência da Grande Final
                         </h2>
                         <p id="semifinalistas-atualizado" class="text-xs sm:text-sm text-slate-400 mt-1">Carregando…</p>
                     </div>
@@ -509,7 +509,7 @@
                     </button>
                 </div>
                 <p class="text-[11px] text-slate-500 mb-4">
-                    <i class="fa-solid fa-circle-info mr-1"></i> Estatísticas reais desta Copa (jogos, gols, chance de título) combinadas com peso/tática de cada seleção — atualiza sozinho conforme o mata-mata define quem chega na semifinal.
+                    <i class="fa-solid fa-circle-info mr-1"></i> Estatísticas reais da campanha completa dos dois finalistas (jogos, gols, chance de título que confirmou o campeão) combinadas com peso/tática de cada seleção.
                 </p>
                 <div id="semifinalistas-vazio" class="hidden text-center text-slate-400 text-sm py-10">
                     <i class="fa-solid fa-hourglass-half text-3xl text-amber-500/60 mb-3 block"></i>
@@ -665,9 +665,9 @@
                             <i class="fa-solid fa-chevron-right mt-0.5 text-yellow-400 shrink-0"></i>
                             <span id="pergunta-tatica-brasil-texto">Carregando adversário do Brasil...</span>
                         </button>
-                        <button onclick="sendQuickPrompt('Quais jogos do Brasil já aconteceram e quais ainda faltam, considerando a data de hoje?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
+                        <button onclick="sendQuickPrompt('Como foi a campanha do Brasil nessa Copa 2026, jogo por jogo?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
                             <i class="fa-solid fa-chevron-right mt-0.5 text-amber-400 shrink-0"></i>
-                            <span>Quais jogos do Brasil 🇧🇷 já rolaram e quais ainda faltam?</span>
+                            <span>Como foi a campanha do Brasil 🇧🇷 nessa Copa, jogo por jogo?</span>
                         </button>
                         <div id="perguntas-semifinais-container" class="space-y-3"></div>
                     </div>
@@ -694,7 +694,7 @@
                             </div>
                             <div class="bg-slate-800/50 rounded-2xl px-4 py-3 border border-slate-700 max-w-[85%]">
                                 <p class="text-sm text-slate-200">
-                                    Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ Só falo de Mundial — jogos, táticas, história e simulações. Manda sua pergunta com respeito, igual papo de arquibancada saudável. Bora pro Hexa! 🇧🇷
+                                    Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ A Copa acabou com a Espanha bicampeã — mas o papo sobre jogos, táticas e história do Mundial continua rolando aqui. Manda sua pergunta com respeito, igual arquibancada saudável!
                                 </p>
                             </div>
                         </div>
@@ -1954,19 +1954,22 @@
             if (!container) return;
             if (!apiGames.length) { container.innerHTML = ''; return; }
 
-            const sf = (agruparJogosMataMata().sf) || [];
+            // Copa encerrada: a pergunta interessante agora é sobre a Grande Final (já
+            // disputada de verdade), não mais sobre uma semifinal futura.
+            const rodada = COPA_ENCERRADA ? (agruparJogosMataMata().final || []) : (agruparJogosMataMata().sf || []);
+            const faseTxt = COPA_ENCERRADA ? 'Final' : 'semifinal';
             const taticaDe = nomePt => (SELECOES[nomePt] && SELECOES[nomePt].tática) || 'Posse de Bola';
 
             const perguntas = [];
-            sf.forEach(jogo => {
+            rodada.forEach(jogo => {
                 if (jogo._placeholder) {
                     const [enConhecido] = jogo._conhecidos || [];
-                    if (!enConhecido) return; // nenhum lado dessa semifinal definido ainda
+                    if (!enConhecido) return; // nenhum lado dessa fase definido ainda
                     const nome = nomePtDe(enConhecido);
                     const bandeira = BANDEIRA_PT[nome] || FLAG_EN[enConhecido] || '⚽';
                     perguntas.push({
-                        label: `${bandeira} A tática de ${nome} aguenta a semifinal, seja qual for o adversário?`,
-                        prompt: `Com a tática de ${taticaDe(nome)}, ${nome} tem o que precisa pra vencer a semifinal, seja qual for o adversário?`,
+                        label: `${bandeira} A tática de ${nome} aguenta a ${faseTxt}, seja qual for o adversário?`,
+                        prompt: `Com a tática de ${taticaDe(nome)}, ${nome} tem o que precisa pra vencer a ${faseTxt}, seja qual for o adversário?`,
                     });
                 } else {
                     const nomeA = nomePtDe(jogo.home_team_name_en);
@@ -1974,8 +1977,8 @@
                     const bandeiraA = BANDEIRA_PT[nomeA] || FLAG_EN[jogo.home_team_name_en] || '⚽';
                     const bandeiraB = BANDEIRA_PT[nomeB] || FLAG_EN[jogo.away_team_name_en] || '⚽';
                     perguntas.push({
-                        label: `${bandeiraA} ${nomeA} x ${nomeB} ${bandeiraB}: qual tática leva a melhor na semifinal?`,
-                        prompt: `Qual o impacto da tática de ${taticaDe(nomeA)} de ${nomeA} contra a ${taticaDe(nomeB)} de ${nomeB} na semifinal?`,
+                        label: `${bandeiraA} ${nomeA} x ${nomeB} ${bandeiraB}: qual tática levou a melhor na ${faseTxt}?`,
+                        prompt: `Qual foi o impacto da tática de ${taticaDe(nomeA)} de ${nomeA} contra a ${taticaDe(nomeB)} de ${nomeB} na ${faseTxt} da Copa 2026?`,
                     });
                 }
             });
@@ -2000,6 +2003,11 @@
             const container = document.getElementById('ao-vivo-agora-card');
             if (!container) return;
 
+            if (COPA_ENCERRADA) {
+                container.innerHTML = renderCardCampeao();
+                return;
+            }
+
             const { aoVivo, proximos } = obterJogosTemporais();
 
             if (aoVivo.length) {
@@ -2009,6 +2017,23 @@
 
             const proximo = proximos[0];
             container.innerHTML = proximo ? renderCardProximoJogo(proximo) : '';
+        }
+
+        // Card de encerramento da Copa: substitui o "Ao Vivo Agora" quando o torneio já acabou.
+        function renderCardCampeao() {
+            const bandeira = BANDEIRA_PT[CAMPEAO_2026.pt] || FLAG_EN[CAMPEAO_2026.en] || '🏆';
+            return `<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-950/40 via-slate-900 to-slate-900 border border-yellow-500/30 p-5 sm:p-6 shadow-xl text-center">
+                <div class="absolute -right-10 -top-10 w-56 h-56 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <p class="text-5xl mb-2">🏆</p>
+                    <p class="text-xs sm:text-sm font-bold text-yellow-400 uppercase tracking-wider mb-1">Copa do Mundo 2026 encerrada</p>
+                    <p class="text-xl sm:text-2xl font-extrabold text-white">${bandeira} ${CAMPEAO_2026.pt} é a Bicampeã Mundial!</p>
+                    <p class="text-sm text-slate-300 mt-2">Final: Espanha 1x0 Argentina (prorrogação) · gol de F. Torres aos 106'</p>
+                    <button type="button" onclick="switchTab('matamata')" class="mt-4 text-xs font-semibold text-yellow-300 hover:text-yellow-200 border border-yellow-500/30 hover:border-yellow-400/50 rounded-lg px-3 py-1.5">
+                        <i class="fa-solid fa-sitemap mr-1"></i> Ver a chave completa
+                    </button>
+                </div>
+            </div>`;
         }
 
         // Rótulo do momento do jogo ao vivo, distinguindo tempo normal, prorrogação e pênaltis
@@ -3209,7 +3234,7 @@
         }
 
         function mensagemBoasVindasTeo() {
-            return 'Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ Só falo de Mundial — jogos, táticas, história e simulações. Manda sua pergunta com respeito, igual papo de arquibancada saudável. Bora pro Hexa! 🇧🇷';
+            return 'Fala, meu parça! Eu sou o Téo, parceiro de resenha da Copa 2026! ⚽ A Copa acabou com a Espanha bicampeã — mas o papo sobre jogos, táticas e história do Mundial continua rolando aqui. Manda sua pergunta com respeito, igual arquibancada saudável!';
         }
 
         async function sendChatMessage() {
@@ -3605,6 +3630,9 @@
 
         function iniciarAutoRefreshAPI() {
             pararAutoRefreshAPI();
+            // Copa encerrada: não existe placar ao vivo pra atualizar, então não faz sentido
+            // ficar repetindo o polling (o resultado final já está no arquivo estático).
+            if (COPA_ENCERRADA) return;
             apiPollInterval = setInterval(autoAtualizarJogosAPI, API_POLL_MS);
         }
 
@@ -3622,6 +3650,8 @@
 
         function iniciarClassificacaoAutoRefresh() {
             pararClassificacaoAutoRefresh();
+            // Copa encerrada: a classificação final não muda mais.
+            if (COPA_ENCERRADA) return;
             classificacaoPollInterval = setInterval(() => renderClassificacaoTab(true), CLASSIFICACAO_POLL_MS);
         }
 
@@ -3694,6 +3724,20 @@
         let standingsUltimaAtualizacao = null; // Date do último fetch efetivo (não conta cache-hit).
         let classificacaoGrupoAtivo = ''; // '' = todos os grupos, senão a letra selecionada na navegação rápida.
 
+        // A Copa 2026 terminou (Espanha bicampeã) e a assinatura da API-Football foi encerrada
+        // logo depois da Final. A partir daqui o app roda 100% a partir do arquivo estático
+        // arquivado com o resultado real final (data/copa2026-arquivo-final.json), em vez de
+        // bater na API ao vivo — que pararia de responder de qualquer forma.
+        const COPA_ENCERRADA = true;
+        const CAMPEAO_2026 = { en: 'Spain', pt: 'Espanha' };
+        let arquivoCopaPromise = null;
+        async function carregarArquivoCopa() {
+            if (!arquivoCopaPromise) {
+                arquivoCopaPromise = fetch('/data/copa2026-arquivo-final.json').then(r => r.json());
+            }
+            return arquivoCopaPromise;
+        }
+
         // Busca a tabela de grupos/classificação uma única vez (reaproveitada por grupos,
         // ajuste real das probabilidades e ranking de ataques/defesas).
         // Deriva a letra do grupo (ex.: "A") a partir do rótulo bruto da API-Football,
@@ -3708,8 +3752,9 @@
         async function obterStandingsApiFootball() {
             if (afStandingsRaw) return afStandingsRaw;
             try {
-                const resp = await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000);
-                const data = await resp.json();
+                const data = COPA_ENCERRADA
+                    ? { response: (await carregarArquivoCopa()).standings }
+                    : await (await fetchWithBackoff(`/api/af?path=/standings&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, 1, 12000)).json();
                 const standingsBrutos = data && data.response && data.response[0] && data.response[0].league && data.response[0].league.standings;
                 // Descarta entradas fora do padrão "Group X" (ex.: agregado "Group Stage") que a
                 // API-Football às vezes inclui junto dos grupos reais — não são grupos de verdade.
@@ -4030,6 +4075,24 @@
                 const c = statsCacheGet(key, ttl);
                 if (c) return c;
             }
+            // Copa encerrada: os 3 rankings da temporada 2026 (artilheiros, assistências,
+            // cartões) já estão arquivados estaticamente. Comparações com outras temporadas
+            // continuam pela API ao vivo (fora do escopo do arquivo).
+            if (COPA_ENCERRADA && query.includes(`season=${AF_SEASON}`)) {
+                const mapaEndpoint = {
+                    'path=/players/topscorers': 'topscorers',
+                    'path=/players/topassists': 'topassists',
+                    'path=/players/topyellowcards': 'topcards',
+                    'path=/fixtures': 'fixtures',
+                };
+                const prefixo = Object.keys(mapaEndpoint).find(p => query.startsWith(p));
+                if (prefixo) {
+                    const arquivo = await carregarArquivoCopa();
+                    const arr = arquivo[mapaEndpoint[prefixo]] || [];
+                    if (arr.length) statsCacheSet(key, arr);
+                    return arr;
+                }
+            }
             const bust = forcar ? `&_t=${Date.now()}` : '';
             const resp = await fetchWithBackoff(`/api/af?${query}${bust}`, {}, 2, 15000);
             const data = await resp.json();
@@ -4059,6 +4122,19 @@
             });
             if (!precisa.length) return;
             const alvo = precisa.slice(0, limite);
+
+            // Copa encerrada: todo mundo (fase de grupos + mata-mata) já está no arquivo
+            // estático, então nem precisa dar batch — só busca no dicionário local.
+            if (COPA_ENCERRADA) {
+                const arquivo = await carregarArquivoCopa();
+                alvo.forEach(j => {
+                    const item = arquivo.detalhes[String(j.fixture_id)];
+                    if (item) aplicarDetalheAf(j, item);
+                });
+                salvarCacheJogos(apiGames);
+                return;
+            }
+
             for (let i = 0; i < alvo.length; i += 20) {
                 const batch = alvo.slice(i, i + 20);
                 const ids = batch.map(j => j.fixture_id).join('-');
@@ -4731,9 +4807,12 @@
         // mata-mata (mesma técnica das perguntas recomendadas do Téo: inclui um time assim que
         // pelo menos um lado do confronto já é conhecido, mesmo sem o adversário definido).
         function obterSemifinalistasAtuais() {
-            const sf = (agruparJogosMataMata().sf) || [];
+            const porTipo = agruparJogosMataMata();
+            // Copa encerrada: o confronto que interessa agora é a Grande Final, não mais a
+            // semifinal (que já virou história assim que os dois times finalistas surgiram dela).
+            const rodada = COPA_ENCERRADA ? (porTipo.final || []) : (porTipo.sf || []);
             const ens = [];
-            sf.forEach(jogo => {
+            rodada.forEach(jogo => {
                 const times = jogo._placeholder ? (jogo._conhecidos || []) : [jogo.home_team_name_en, jogo.away_team_name_en].filter(Boolean);
                 times.forEach(en => { if (en && !ens.includes(en)) ens.push(en); });
             });
@@ -4990,13 +5069,18 @@
             jogo._afDetailLoaded = true;
         }
 
-        // Carrega o detalhe completo de UMA partida (sob demanda, ao selecioná-la).
+        // Carrega o detalhe completo de UMA partida (sob demanda, ao selecioná-la). Com a Copa
+        // encerrada, vem do arquivo estático (só o mata-mata foi arquivado com detalhe completo).
         async function carregarDetalheAf(jogo) {
             if (!jogo || jogo._src !== 'af' || !jogo.fixture_id) return false;
             try {
-                const resp = await fetchWithBackoff(`/api/af?path=/fixtures&id=${jogo.fixture_id}`, {}, 2, 15000);
-                const data = await resp.json();
-                const item = data && data.response && data.response[0];
+                const item = COPA_ENCERRADA
+                    ? (await carregarArquivoCopa()).detalhes[String(jogo.fixture_id)]
+                    : await (async () => {
+                        const resp = await fetchWithBackoff(`/api/af?path=/fixtures&id=${jogo.fixture_id}`, {}, 2, 15000);
+                        const data = await resp.json();
+                        return data && data.response && data.response[0];
+                    })();
                 if (item) { aplicarDetalheAf(jogo, item); salvarCacheJogos(apiGames); return true; }
             } catch (e) { /* mantém o jogo com os dados básicos */ }
             return false;
@@ -5045,10 +5129,15 @@
 
             let usouAf = false;
             try {
-                // FONTE PRIMÁRIA: API-Football (confiável, livescore a cada ~15s).
-                const tentativas = silencioso ? 2 : 3;
-                const response = await fetchWithBackoff(`/api/af?path=/fixtures&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, tentativas, 20000);
-                const data = await response.json();
+                // Copa encerrada: usa o arquivo estático arquivado (resultado real final) em
+                // vez de bater na API ao vivo, que já não responde mais.
+                const data = COPA_ENCERRADA
+                    ? { response: (await carregarArquivoCopa()).fixtures }
+                    : await (async () => {
+                        const tentativas = silencioso ? 2 : 3;
+                        const resp = await fetchWithBackoff(`/api/af?path=/fixtures&league=${AF_LEAGUE_ID}&season=${AF_SEASON}`, {}, tentativas, 20000);
+                        return resp.json();
+                    })();
 
                 if (data && Array.isArray(data.response) && data.response.length) {
                     const grupos = await obterGruposApiFootball();
