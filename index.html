@@ -665,9 +665,9 @@
                             <i class="fa-solid fa-chevron-right mt-0.5 text-yellow-400 shrink-0"></i>
                             <span id="pergunta-tatica-brasil-texto">Carregando adversário do Brasil...</span>
                         </button>
-                        <button onclick="sendQuickPrompt('Como foi a campanha do Brasil nessa Copa 2026, jogo por jogo?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
+                        <button onclick="sendQuickPrompt('Como foi a campanha do Brasil nessa Copa 2026, jogo por jogo, e que lições ela deixa pra Copa de 2030?')" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-150 text-xs text-slate-300 flex items-start gap-2">
                             <i class="fa-solid fa-chevron-right mt-0.5 text-amber-400 shrink-0"></i>
-                            <span>Como foi a campanha do Brasil 🇧🇷 nessa Copa, jogo por jogo?</span>
+                            <span>Como foi a campanha do Brasil 🇧🇷 nessa Copa, jogo por jogo, e o que fica de lição pra 2030?</span>
                         </button>
                         <div id="perguntas-semifinais-container" class="space-y-3"></div>
                     </div>
@@ -1935,14 +1935,30 @@
                 return;
             }
 
-            const adversarioEn = jogo.home_team_name_en === 'Brazil' ? jogo.away_team_name_en : jogo.home_team_name_en;
+            const brasilEmCasa = jogo.home_team_name_en === 'Brazil';
+            const adversarioEn = brasilEmCasa ? jogo.away_team_name_en : jogo.home_team_name_en;
             const nomeAdv = nomePtDe(adversarioEn);
             const bandeiraAdv = BANDEIRA_PT[nomeAdv] || FLAG_EN[adversarioEn] || '⚽';
             const taticaBrasil = (SELECOES['Brasil'] && SELECOES['Brasil'].tática) || 'Posse de Bola';
             const taticaAdv = (SELECOES[nomeAdv] && SELECOES[nomeAdv].tática) || 'Posse de Bola';
 
-            const pergunta = `Qual o impacto da tática de ${taticaBrasil} do Brasil contra a ${taticaAdv} de ${nomeAdv}?`;
-            span.textContent = `Qual o impacto da tática de ${taticaBrasil} do Brasil 🇧🇷 contra a ${taticaAdv} de ${nomeAdv} ${bandeiraAdv}?`;
+            let pergunta, texto;
+            if (COPA_ENCERRADA) {
+                // Copa encerrada: essa pergunta vira "o que fica de lição" em vez de "qual o
+                // impacto" (que soa como se o jogo ainda estivesse por vir).
+                const golsBrasil = Number(brasilEmCasa ? jogo.home_score : jogo.away_score) || 0;
+                const golsAdv = Number(brasilEmCasa ? jogo.away_score : jogo.home_score) || 0;
+                const fase = jogo.fase || 'a Copa';
+                const resultado = golsBrasil > golsAdv
+                    ? `venceu ${nomeAdv} na ${fase}`
+                    : (golsBrasil < golsAdv ? `caiu diante de ${nomeAdv} na ${fase}` : `empatou com ${nomeAdv} na ${fase}`);
+                pergunta = `O Brasil ${resultado} jogando ${taticaBrasil} contra a ${taticaAdv} de ${nomeAdv}. Que lições o Brasil deve tirar dessa Copa 2026 pra chegar mais forte na Copa de 2030?`;
+                texto = `🇧🇷 Brasil ${resultado.replace(nomeAdv, nomeAdv + ' ' + bandeiraAdv)}: que lição fica pra 2030?`;
+            } else {
+                pergunta = `Qual o impacto da tática de ${taticaBrasil} do Brasil contra a ${taticaAdv} de ${nomeAdv}?`;
+                texto = `Qual o impacto da tática de ${taticaBrasil} do Brasil 🇧🇷 contra a ${taticaAdv} de ${nomeAdv} ${bandeiraAdv}?`;
+            }
+            span.textContent = texto;
             btn.onclick = () => sendQuickPrompt(pergunta);
             btn.classList.remove('hidden');
         }
